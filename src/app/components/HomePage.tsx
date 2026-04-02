@@ -23,7 +23,7 @@ Now, I'm open to new opportunities and excited for what's next.
 
 Thanks for reading!`;
 
-const landingText = "Nice to meet you — I'm Alex,\na product designer who loves making complex things feel simple. I care deeply about craft, usability, and creating experiences that feel clear, intuitive, and easy to use.\nThanks for stopping by!";
+const landingText = "Nice to meet you — I'm Aleks,\na product designer who loves making complex things feel simple. I care deeply about craft, usability, and creating experiences that feel clear, intuitive, and easy to use.\nThanks for stopping by!";
 
 export function HomePage({ onAboutMeClick }: HomePageProps) {
   // Dark mode state
