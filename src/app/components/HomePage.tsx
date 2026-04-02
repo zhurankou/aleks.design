@@ -7,23 +7,15 @@ interface HomePageProps {
 
 const storyText = `My story
 
-I'm a Product designer based in Seattle, WA. My path into design wasn't exactly traditional — I've worked as a turret machine operator, a janitor, and a navy sailor — but I eventually found my way to what I'd always been passionate about.
+I'm a designer based in Seattle, WA. My path into design wasn't the usual one — I've worked as a turret machine operator, a janitor, and a Navy sailor — but each step led me closer to what I've always loved: creating thoughtful, human-centered products.
 
-Beyond product design, I love learning and experimenting with new technologies. I'm especially interested in areas like ML and AR, vibe coding prototypes, using AI to improve workflows, and building UI kits for design systems.
+After leaving the Navy, I studied design at the University of Washington, then joined the OneDrive team at Microsoft, where I helped make sharing and collaboration simpler and more intuitive.
 
-After getting out of the Navy, I chose to study design at the University of Washington. While there, I built a strong foundation in design principles and worked on the Graduate Student office website, improving its information architecture and making it easier to use.
+At eero, I worked on making home networking feel more approachable and helped shape the company's first design system. Most recently at Olympus, I designed data visualization tools that help endoscopists improve procedure quality.
 
-After graduation, I joined the OneDrive team at Microsoft, where I led the sharing experience effort. My work focused on making sharing and collaboration feel simpler, clearer, and more intuitive at scale.
+I'm always learning, whether that's experimenting with new tech, playing with AI and AR ideas, or building tools to make design workflows smoother. I'm currently looking for my next opportunity — and excited for what's ahead.`;
 
-At eero, I helped make home networking feel more approachable and intuitive, and contributed to the first iteration of the design system to support more consistent and scalable experiences.
-
-At Olympus, I designed data visualization experiences that helped endoscopists improve procedure quality by making complex clinical data easier to understand and act on.
-
-Now, I'm open to new opportunities and excited for what's next.
-
-Thanks for reading!`;
-
-const landingText = "Nice to meet you — I'm Aleks,\na product designer who loves making complex things feel simple. I care deeply about craft, usability, and creating experiences that feel clear, intuitive, and easy to use.\nThanks for stopping by!";
+const landingText = "I'm Aleks — a designer who loves making complex things feel simple. I care about craft, the details, and products with taste.";
 
 export function HomePage({ onAboutMeClick }: HomePageProps) {
   // Dark mode state
@@ -750,7 +742,7 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
             <p className="font-semibold" style={{ fontSize: '16px', lineHeight: '30px', marginTop: 36, marginBottom: 12, color: theme.text }}>New chapter</p>
             <textarea
               ref={storyTextareaRef}
-              placeholder="Help write the new chapter of my story ..."
+              placeholder="Write the new chapter of my story ..."
               rows={1}
               className="font-normal bg-transparent border-none outline-none w-full font-['Lato',sans-serif] resize-none overflow-hidden placeholder:text-[var(--story-placeholder)]"
               style={{
