@@ -7,7 +7,7 @@ interface HomePageProps {
 
 const storyText = `My story
 
-I'm a UX designer based in Seattle, WA. My path into design wasn't exactly traditional — I've worked as a turret machine operator, a janitor, and a navy sailor — but I eventually found my way to what I'd always been passionate about.
+I'm a Product designer based in Seattle, WA. My path into design wasn't exactly traditional — I've worked as a turret machine operator, a janitor, and a navy sailor — but I eventually found my way to what I'd always been passionate about.
 
 Beyond product design, I love learning and experimenting with new technologies. I'm especially interested in areas like ML and AR, vibe coding prototypes, using AI to improve workflows, and building UI kits for design systems.
 
