@@ -19,6 +19,7 @@ function figmaAssetPlugin() {
 }
 
 export default defineConfig({
+  base: '/aleks.design/',
   plugins: [
     figmaAssetPlugin(),
     // The React and Tailwind plugins are both required for Make, even if
