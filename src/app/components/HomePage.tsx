@@ -759,7 +759,7 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
 
         {/* Bottom Menu */}
         <div
-          className="absolute left-1/2 -translate-x-1/2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-y-0"
+          className="absolute left-1/2 -translate-x-1/2 flex flex-row items-center justify-between"
           style={{ width: 'min(640px, calc(100% - 40px))', bottom: 'clamp(20px, 5vh, 60px)' }}
         >
           <div className="flex font-['Lato',sans-serif] font-medium items-center whitespace-nowrap" style={{ gap: 24, fontSize: 'clamp(14px, 4.5vw, 16px)', color: theme.textMuted, transition: 'color 0.5s ease' }}>
@@ -780,7 +780,7 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
             <p className="cursor-pointer transition-colors" style={{ minHeight: 44, display: 'flex', alignItems: 'center' }} onClick={() => window.open('https://www.linkedin.com/in/zhurankou/', '_blank')} onMouseEnter={(e) => e.currentTarget.style.color = theme.text} onMouseLeave={(e) => e.currentTarget.style.color = theme.textMuted}>LinkedIn</p>
             <p className="cursor-pointer transition-colors" style={{ minHeight: 44, display: 'flex', alignItems: 'center' }} onClick={() => window.open(isDark ? '/resume-dark.pdf' : '/resume-light.pdf', '_blank')} onMouseEnter={(e) => e.currentTarget.style.color = theme.text} onMouseLeave={(e) => e.currentTarget.style.color = theme.textMuted}>Resume</p>
           </div>
-          <div className="flex items-center gap-[4px] whitespace-nowrap">
+          <div className="flex items-center gap-[4px] whitespace-nowrap flex-shrink-0">
             <p className="font-['Lato',sans-serif] font-medium text-right" style={{ fontSize: 'clamp(14px, 4.5vw, 16px)', color: theme.textMuted, transition: 'color 0.5s ease' }}>Bye</p>
             <span
               className="relative cursor-pointer select-none hover:animate-[heartBeat_2s_ease-in-out_1]"
