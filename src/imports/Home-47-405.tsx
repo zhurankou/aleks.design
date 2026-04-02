@@ -415,7 +415,7 @@ function Text1() {
         Let’s chat!
       </p>
       <p className="font-['Geologica:Bold',sans-serif] font-bold min-w-full relative shrink-0 text-[36px] text-[rgba(255,255,255,0.5)] w-[min-content]" style={{ fontVariationSettings: "'CRSV' 0, 'SHRP' 0" }}>
-        alex.zhurankou@icloud.com
+        hi@aleks.design
       </p>
       <p className="font-['Geologica:Bold',sans-serif] font-bold relative shrink-0 text-[36px] text-[rgba(255,255,255,0.5)] whitespace-nowrap" style={{ fontVariationSettings: "'CRSV' 0, 'SHRP' 0" }}>
         linkedin.com/in/zhurankou

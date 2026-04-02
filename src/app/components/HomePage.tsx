@@ -269,7 +269,7 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
   };
 
   const handleSayHiClick = () => {
-    const email = 'alex.zhurankou@icloud.com';
+    const email = 'hi@aleks.design';
     if (storyInput.trim()) {
       window.location.href = `mailto:${email}?body=${encodeURIComponent(storyInput)}`;
     } else {
