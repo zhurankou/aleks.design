@@ -17,6 +17,17 @@ I'm always learning, whether that's experimenting with new tech, playing with AI
 
 const landingText = "I'm Aleks — a designer who loves making complex things feel simple. I care about craft, the details, and products with taste.";
 
+function SelectionHandles() {
+  return (
+    <>
+      <div style={{ position: 'absolute', width: 10, height: 10, top: -5, left: -5, backgroundColor: '#FDFCFF', border: '2px solid #2F9AF8', borderRadius: 1, zIndex: 10 }} />
+      <div style={{ position: 'absolute', width: 10, height: 10, top: -5, right: -5, backgroundColor: '#FDFCFF', border: '2px solid #2F9AF8', borderRadius: 1, zIndex: 10 }} />
+      <div style={{ position: 'absolute', width: 10, height: 10, bottom: -5, left: -5, backgroundColor: '#FDFCFF', border: '2px solid #2F9AF8', borderRadius: 1, zIndex: 10 }} />
+      <div style={{ position: 'absolute', width: 10, height: 10, bottom: -5, right: -5, backgroundColor: '#FDFCFF', border: '2px solid #2F9AF8', borderRadius: 1, zIndex: 10 }} />
+    </>
+  );
+}
+
 export function HomePage({ onAboutMeClick }: HomePageProps) {
   // Dark mode state
   const [isDark, setIsDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -216,6 +227,7 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
   const handleProjectAreaClick = (e: React.MouseEvent) => {
     // Don't create sticky if we just finished dragging
     if (wasDragging.current) return;
+    setSelectedCard(null);
     // Don't create sticky when clicking nav links, text inputs, or contentEditable
     const target = e.target as HTMLElement;
     if (target.closest('[data-nav], textarea, [contenteditable]')) return;
@@ -307,6 +319,7 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
     'project-4': { x: 0, y: 0 },
   });
   const [draggingCard, setDraggingCard] = useState<string | null>(null);
+  const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const dragStart = useRef<{ x: number; y: number; origX: number; origY: number } | null>(null);
   const [cardZIndices, setCardZIndices] = useState<{ [key: string]: number }>({
     'project-1': 1,
@@ -358,7 +371,14 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
         },
       }));
     };
-    const onMouseUp = () => {
+    const onMouseUp = (e: MouseEvent) => {
+      if (dragStart.current) {
+        const dx = e.clientX - dragStart.current.x;
+        const dy = e.clientY - dragStart.current.y;
+        if (Math.abs(dx) < 4 && Math.abs(dy) < 4) {
+          setSelectedCard(prev => prev === draggingCard ? null : draggingCard);
+        }
+      }
       setDraggingCard(null);
       dragStart.current = null;
     };
@@ -545,91 +565,98 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, clamp(160px, 16.67vw, 240px))', gap: 'clamp(16px, 1.67vw, 24px)' }}>
           {/* Project 1 - Microsoft */}
           <div
-            className="relative aspect-square overflow-hidden"
+            className="relative aspect-square"
             style={{
-              backgroundColor: '#a8daff',
-              boxShadow: isDark ? '0px 4px 4px 0px rgba(0,0,0,0.4)' : '0px 4px 4px 0px rgba(0,0,0,0.15)',
               transform: `translate(${cardPositions['project-1'].x}px, ${cardPositions['project-1'].y}px)`,
               cursor: draggingCard === 'project-1' ? `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='24' font-size='24'>👌</text></svg>") 16 16, grabbing` : `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='24' font-size='24'>🤚</text></svg>") 16 16, grab`,
               zIndex: cardZIndices['project-1'],
               userSelect: 'none',
+              outline: selectedCard === 'project-1' ? '2px solid #2F9AF8' : 'none',
             }}
             onMouseDown={(e) => handleCardMouseDown('project-1', e)}
           >
-            <div className="absolute font-['Lato',sans-serif]" style={{ left: '10%', top: '10%', width: '80%', fontSize: 'clamp(12px, 1.25vw, 18px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.cardText, transition: 'color 0.5s ease' }}>
-              <p className="font-bold mb-0">Microsoft 365</p>
-              <p className="font-normal">Simplifying File Sharing and Collaboration in Microsoft 365.</p>
+            <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: '#a8daff', boxShadow: isDark ? '0px 4px 4px 0px rgba(0,0,0,0.4)' : '0px 4px 4px 0px rgba(0,0,0,0.15)' }}>
+              <div className="absolute font-['Lato',sans-serif]" style={{ left: '10%', top: '10%', width: '80%', fontSize: 'clamp(12px, 1.25vw, 18px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.cardText, transition: 'color 0.5s ease' }}>
+                <p className="font-bold mb-0">Microsoft 365</p>
+                <p className="font-normal">Simplifying File Sharing and Collaboration in Microsoft 365.</p>
+              </div>
+              <p className="absolute font-['Lato',sans-serif] font-semibold" style={{ left: '10%', bottom: '10%', fontSize: 'clamp(10px, 0.97vw, 14px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.cardText, transition: 'color 0.5s ease' }}>
+                Jun 2022
+              </p>
             </div>
-            <p className="absolute font-['Lato',sans-serif] font-semibold" style={{ left: '10%', bottom: '10%', fontSize: 'clamp(10px, 0.97vw, 14px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.cardText, transition: 'color 0.5s ease' }}>
-              Jun 2022
-            </p>
+            {selectedCard === 'project-1' && <SelectionHandles />}
           </div>
 
           {/* Project 2 - eero */}
           <div
-            className="relative aspect-square overflow-hidden"
+            className="relative aspect-square"
             style={{
-              backgroundColor: '#b3efbd',
-              boxShadow: isDark ? '0px 4px 4px 0px rgba(0,0,0,0.4)' : '0px 4px 4px 0px rgba(0,0,0,0.15)',
               transform: `translate(${cardPositions['project-2'].x}px, ${cardPositions['project-2'].y}px)`,
               cursor: draggingCard === 'project-2' ? `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='24' font-size='24'>👌</text></svg>") 16 16, grabbing` : `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='24' font-size='24'>🤚</text></svg>") 16 16, grab`,
               zIndex: cardZIndices['project-2'],
               userSelect: 'none',
+              outline: selectedCard === 'project-2' ? '2px solid #2F9AF8' : 'none',
             }}
             onMouseDown={(e) => handleCardMouseDown('project-2', e)}
           >
-            <div className="absolute font-['Lato',sans-serif]" style={{ left: '10%', top: '10%', width: '80%', fontSize: 'clamp(12px, 1.25vw, 18px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.cardText, transition: 'color 0.5s ease' }}>
-              <p className="font-bold mb-0">eero</p>
-              <p className="font-normal">Defining Iconography Standards for eero Insights.</p>
+            <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: '#b3efbd', boxShadow: isDark ? '0px 4px 4px 0px rgba(0,0,0,0.4)' : '0px 4px 4px 0px rgba(0,0,0,0.15)' }}>
+              <div className="absolute font-['Lato',sans-serif]" style={{ left: '10%', top: '10%', width: '80%', fontSize: 'clamp(12px, 1.25vw, 18px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.cardText, transition: 'color 0.5s ease' }}>
+                <p className="font-bold mb-0">eero</p>
+                <p className="font-normal">Defining Iconography Standards for eero Insights.</p>
+              </div>
+              <p className="absolute font-['Lato',sans-serif] font-semibold" style={{ left: '10%', bottom: '10%', fontSize: 'clamp(10px, 0.97vw, 14px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.cardText, transition: 'color 0.5s ease' }}>
+                Aug 2023
+              </p>
             </div>
-            <p className="absolute font-['Lato',sans-serif] font-semibold" style={{ left: '10%', bottom: '10%', fontSize: 'clamp(10px, 0.97vw, 14px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.cardText, transition: 'color 0.5s ease' }}>
-              Aug 2023
-            </p>
+            {selectedCard === 'project-2' && <SelectionHandles />}
           </div>
 
           {/* Project 3 - Olympus */}
           <div
-            className="relative aspect-square overflow-hidden"
+            className="relative aspect-square"
             style={{
-              backgroundColor: '#ffe299',
-              boxShadow: isDark ? '0px 4px 4px 0px rgba(0,0,0,0.4)' : '0px 4px 4px 0px rgba(0,0,0,0.15)',
               transform: `translate(${cardPositions['project-3'].x}px, ${cardPositions['project-3'].y}px)`,
               cursor: draggingCard === 'project-3' ? `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='24' font-size='24'>👌</text></svg>") 16 16, grabbing` : `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='24' font-size='24'>🤚</text></svg>") 16 16, grab`,
               zIndex: cardZIndices['project-3'],
               userSelect: 'none',
+              outline: selectedCard === 'project-3' ? '2px solid #2F9AF8' : 'none',
             }}
             onMouseDown={(e) => handleCardMouseDown('project-3', e)}
           >
-            <div className="absolute font-['Lato',sans-serif]" style={{ left: '10%', top: '10%', width: '80%', fontSize: 'clamp(12px, 1.25vw, 18px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.cardText, transition: 'color 0.5s ease' }}>
-              <p className="font-bold mb-0">Olympus</p>
-              <p className="font-normal">Helping Endoscopy Teams to Track Quality Metrics.</p>
+            <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: '#ffe299', boxShadow: isDark ? '0px 4px 4px 0px rgba(0,0,0,0.4)' : '0px 4px 4px 0px rgba(0,0,0,0.15)' }}>
+              <div className="absolute font-['Lato',sans-serif]" style={{ left: '10%', top: '10%', width: '80%', fontSize: 'clamp(12px, 1.25vw, 18px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.cardText, transition: 'color 0.5s ease' }}>
+                <p className="font-bold mb-0">Olympus</p>
+                <p className="font-normal">Helping Endoscopy Teams to Track Quality Metrics.</p>
+              </div>
+              <p className="absolute font-['Lato',sans-serif] font-semibold" style={{ left: '10%', bottom: '10%', fontSize: 'clamp(10px, 0.97vw, 14px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.cardText, transition: 'color 0.5s ease' }}>
+                Oct 2025
+              </p>
             </div>
-            <p className="absolute font-['Lato',sans-serif] font-semibold" style={{ left: '10%', bottom: '10%', fontSize: 'clamp(10px, 0.97vw, 14px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.cardText, transition: 'color 0.5s ease' }}>
-              Oct 2025
-            </p>
+            {selectedCard === 'project-3' && <SelectionHandles />}
           </div>
 
           {/* Project 4 - Open to work */}
           <div
-            className="relative aspect-square overflow-hidden"
+            className="relative aspect-square"
             style={{
-              backgroundColor: theme.greyCard,
-              boxShadow: isDark ? '0px 4px 4px 0px rgba(0,0,0,0.4)' : '0px 4px 4px 0px rgba(0,0,0,0.15)',
               transform: `translate(${cardPositions['project-4'].x}px, ${cardPositions['project-4'].y}px)`,
-              transition: 'background-color 0.5s ease',
               cursor: draggingCard === 'project-4' ? `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='24' font-size='24'>👌</text></svg>") 16 16, grabbing` : `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='24' font-size='24'>🤚</text></svg>") 16 16, grab`,
               zIndex: cardZIndices['project-4'],
               userSelect: 'none',
+              outline: selectedCard === 'project-4' ? '2px solid #2F9AF8' : 'none',
             }}
             onMouseDown={(e) => handleCardMouseDown('project-4', e)}
           >
-            <div className="absolute font-['Lato',sans-serif]" style={{ left: '10%', top: '10%', width: '80%', fontSize: 'clamp(12px, 1.25vw, 18px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.greyCardText, transition: 'color 0.5s ease' }}>
-              <p className="font-bold mb-0">Your Company</p>
-              <p className="font-normal">Open to work, let's build something nice together!</p>
+            <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: theme.greyCard, boxShadow: isDark ? '0px 4px 4px 0px rgba(0,0,0,0.4)' : '0px 4px 4px 0px rgba(0,0,0,0.15)', transition: 'background-color 0.5s ease' }}>
+              <div className="absolute font-['Lato',sans-serif]" style={{ left: '10%', top: '10%', width: '80%', fontSize: 'clamp(12px, 1.25vw, 18px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.greyCardText, transition: 'color 0.5s ease' }}>
+                <p className="font-bold mb-0">Your Company</p>
+                <p className="font-normal">Open to work, let's build something nice together!</p>
+              </div>
+              <p className="absolute font-['Lato',sans-serif] font-medium" style={{ left: '10%', bottom: '10%', fontSize: 'clamp(10px, 0.97vw, 14px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.greyCardText, transition: 'color 0.5s ease' }}>
+                Soon
+              </p>
             </div>
-            <p className="absolute font-['Lato',sans-serif] font-medium" style={{ left: '10%', bottom: '10%', fontSize: 'clamp(10px, 0.97vw, 14px)', lineHeight: 'clamp(20px, 2.08vw, 30px)', color: theme.greyCardText, transition: 'color 0.5s ease' }}>
-              Soon
-            </p>
+            {selectedCard === 'project-4' && <SelectionHandles />}
           </div>
         </div>
 
