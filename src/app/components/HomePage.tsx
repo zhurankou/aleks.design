@@ -9,6 +9,8 @@ const storyText = `My story
 
 I'm a designer based in Seattle, WA. My path into design wasn't the usual one — I've worked as a turret machine operator, a janitor, and a Navy sailor — but each step led me closer to what I've always loved: creating thoughtful, human-centered products.
 
+When I'm not designing, you can usually find me hiking, snowboarding, off-roading, or camping. I like staying active and spending time outdoors whenever I can.
+
 After leaving the Navy, I studied design at the University of Washington, then joined the OneDrive team at Microsoft, where I helped make sharing and collaboration simpler and more intuitive.
 
 At eero, I worked on making home networking feel more approachable and helped shape the company's first design system. Most recently at Olympus, I designed data visualization tools that help endoscopists improve procedure quality.
