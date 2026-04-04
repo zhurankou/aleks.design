@@ -326,9 +326,6 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
   });
   const [draggingCard, setDraggingCard] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
-  const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  const projectSectionRef = useRef<HTMLDivElement>(null);
-  const [lineCoords, setLineCoords] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
   const dragStart = useRef<{ x: number; y: number; origX: number; origY: number } | null>(null);
   const [cardZIndices, setCardZIndices] = useState<{ [key: string]: number }>({
     'project-1': 1,
@@ -338,22 +335,6 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
   });
   const zCounter = useRef(1);
 
-  useEffect(() => {
-    if (!selectedCard || selectedCard === 'project-4') {
-      setLineCoords(null);
-      return;
-    }
-    const card = cardRefs.current[selectedCard];
-    const container = projectSectionRef.current;
-    if (!card || !container) return;
-    const cardRect = card.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
-    const x1 = cardRect.right - containerRect.left;
-    const y1 = cardRect.top - containerRect.top + cardRect.height / 2;
-    const x2 = containerRect.width;
-    const y2 = containerRect.height / 2;
-    setLineCoords({ x1, y1, x2, y2 });
-  }, [selectedCard, cardPositions]);
 
   useEffect(() => {
     if (draggingCard) prevDraggingCard.current = draggingCard;
@@ -575,7 +556,7 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
       </div>
 
       {/* Projects */}
-      <div id="onedrive-project" ref={projectSectionRef} className="relative h-screen w-full snap-start snap-always" style={{ cursor: `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='24' font-size='24'>🟨</text></svg>") 16 16, auto` }} onClick={handleProjectAreaClick}>
+      <div id="onedrive-project" className="relative h-screen w-full snap-start snap-always" style={{ cursor: `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='24' font-size='24'>🟨</text></svg>") 16 16, auto` }} onClick={handleProjectAreaClick}>
         {/* Home link at top */}
         <p
           data-nav
@@ -599,7 +580,6 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
               userSelect: 'none',
               outline: selectedCard === 'project-1' ? '2px solid #2F9AF8' : 'none',
             }}
-            ref={(el) => { cardRefs.current['project-1'] = el; }}
             onMouseDown={(e) => handleCardMouseDown('project-1', e)}
           >
             <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: '#a8daff', boxShadow: isDark ? '0px 4px 4px 0px rgba(0,0,0,0.4)' : '0px 4px 4px 0px rgba(0,0,0,0.15)' }}>
@@ -624,7 +604,6 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
               userSelect: 'none',
               outline: selectedCard === 'project-2' ? '2px solid #2F9AF8' : 'none',
             }}
-            ref={(el) => { cardRefs.current['project-2'] = el; }}
             onMouseDown={(e) => handleCardMouseDown('project-2', e)}
           >
             <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: '#b3efbd', boxShadow: isDark ? '0px 4px 4px 0px rgba(0,0,0,0.4)' : '0px 4px 4px 0px rgba(0,0,0,0.15)' }}>
@@ -649,7 +628,6 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
               userSelect: 'none',
               outline: selectedCard === 'project-3' ? '2px solid #2F9AF8' : 'none',
             }}
-            ref={(el) => { cardRefs.current['project-3'] = el; }}
             onMouseDown={(e) => handleCardMouseDown('project-3', e)}
           >
             <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: '#ffe299', boxShadow: isDark ? '0px 4px 4px 0px rgba(0,0,0,0.4)' : '0px 4px 4px 0px rgba(0,0,0,0.15)' }}>
@@ -689,56 +667,6 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
           </div>
         </div>
 
-        {/* Node line on card selection */}
-        {lineCoords && (
-          <>
-            <svg
-              className="absolute inset-0 pointer-events-none"
-              style={{ width: '100%', height: '100%', overflow: 'visible', zIndex: 50 }}
-            >
-              <defs>
-                <marker id="node-arrow" markerWidth="7" markerHeight="6" refX="7" refY="3" orient="auto">
-                  <polygon points="0 0, 7 3, 0 6" fill="#2F9AF8" />
-                </marker>
-              </defs>
-              <line
-                x1={lineCoords.x1}
-                y1={lineCoords.y1}
-                x2={lineCoords.x2}
-                y2={lineCoords.y2}
-                stroke="#2F9AF8"
-                strokeWidth="1"
-                markerEnd="url(#node-arrow)"
-              />
-            </svg>
-            <div
-              className="pointer-events-auto"
-              style={{
-                position: 'absolute',
-                left: lineCoords.x1 + (lineCoords.x2 - lineCoords.x1) * 0.3,
-                top: lineCoords.y1 + (lineCoords.y2 - lineCoords.y1) * 0.3 - 10,
-                zIndex: 51,
-              }}
-            >
-              <button
-                style={{
-                  backgroundColor: '#2F9AF8',
-                  color: '#FDFCFF',
-                  fontSize: 9,
-                  padding: '3px 6px',
-                  borderRadius: 2,
-                  border: 'none',
-                  boxShadow: '0px 4px 4px 0px rgba(0,0,0,0.15)',
-                  cursor: 'pointer',
-                  fontFamily: 'Lato, sans-serif',
-                  lineHeight: 'normal',
-                }}
-              >
-                View
-              </button>
-            </div>
-          </>
-        )}
 
         {/* User-created sticky notes */}
         {stickies.map(sticky => {
@@ -832,7 +760,7 @@ export function HomePage({ onAboutMeClick }: HomePageProps) {
             WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 40px, black calc(100% - 40px), transparent 100%)',
           }}
         >
-          <div style={{ paddingTop: 40, paddingBottom: 40 }}>
+          <div style={{ paddingTop: 40, paddingBottom: 40, paddingRight: 16 }}>
             {storyText.split('\n\n').map((paragraph, i) => (
               <p
                 key={i}
