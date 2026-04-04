@@ -7,15 +7,19 @@ interface HomePageProps {
 
 const storyText = `My story
 
-I'm a designer based in Seattle, WA. My path into design wasn't the usual one — I've worked as a turret machine operator, a janitor, and a Navy sailor — but each step led me closer to what I've always loved: creating thoughtful, human-centered products.
+I'm a product designer based in Seattle, WA. My path into design wasn't typical — I've worked as a turret machine operator, a janitor, and a Navy sailor — but each role taught me something about discipline, hard work, and staying grounded. Eventually, I found my way back to what I'd always loved: design.
 
-When I'm not designing, you can usually find me hiking, snowboarding, off-roading, or camping. I like staying active and spending time outdoors whenever I can.
+Outside of work, I enjoy hiking, snowboarding, off-roading, and camping. I'm also curious about new technology, especially machine learning, AR, AI tools, vibe coding prototypes, and building UI kits for design systems.
 
-After leaving the Navy, I studied design at the University of Washington, then joined the OneDrive team at Microsoft, where I helped make sharing and collaboration simpler and more intuitive.
+After leaving the Navy, I studied design at the University of Washington, where I learned the foundations of design thinking and got to apply them by improving the Graduate Student Office website and making it easier to use.
 
-At eero, I worked on making home networking feel more approachable and helped shape the company's first design system. Most recently at Olympus, I designed data visualization tools that help endoscopists improve procedure quality.
+At Microsoft, I joined the OneDrive team and led the sharing experience effort. There, I learned how to design for scale, simplify complexity, and balance user needs with business goals.
 
-I'm always learning, whether that's experimenting with new tech, playing with AI and AR ideas, or building tools to make design workflows smoother. I'm currently looking for my next opportunity — and excited for what's ahead.`;
+At eero, I worked on making home networking feel more approachable and helped build the early design system. That experience taught me a lot about consistency, repeatable patterns, and designing systems that can grow over time.
+
+Most recently at Olympus, I focused on data visualization, helping endoscopists improve procedure quality by making complex clinical data easier to understand and act on. There, I learned how important clarity, trust, and usability are in high-stakes environments.
+
+I'm currently exploring what's next and excited for new opportunities.`;
 
 const landingText = "I'm Aleks — a designer who loves making complex things feel simple. I care about craft, the details, and products with taste.";
 
