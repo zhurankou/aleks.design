@@ -292,7 +292,7 @@
 }
 
 @keyframes letterWave {
-  0%, 100% { color: inherit; }
+  0%, 100% { color: var(--foreground); }
   50% { color: #07AB57; }
 }
 
