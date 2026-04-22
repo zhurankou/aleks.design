@@ -1,4 +1,5 @@
 import React, { useState, useEffect, type AnchorHTMLAttributes } from 'react';
+import { createPortal } from 'react-dom';
 import imgProfile from "figma:asset/f700c10be8e928d2c825e536435c89724d9f3fa1.png";
 import FigmaIcon from '../../assets/tool-figma.svg?react';
 import ClaudeCodeIcon from '../../assets/tool-claudecode.svg?react';
@@ -78,6 +79,7 @@ export function LandingPage() {
   const [eeroHovered, setEeroHovered] = useState(false);
   const [microsoftHovered, setMicrosoftHovered] = useState(false);
   const [seattleHovered, setSeattleHovered] = useState(false);
+  const [hoveredTool, setHoveredTool] = useState<{ name: string; rect: DOMRect } | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -113,6 +115,22 @@ export function LandingPage() {
     justifyContent: 'space-between' as const,
   };
 
+  const toolHover = (name: string) => ({
+    onMouseEnter: (e: React.MouseEvent<HTMLDivElement>) =>
+      setHoveredTool({ name, rect: (e.currentTarget as HTMLElement).getBoundingClientRect() }),
+    onMouseLeave: () => setHoveredTool(null),
+  });
+
+  const tooltipPortal = hoveredTool ? createPortal(
+    <div style={{ position: 'fixed', top: hoveredTool.rect.top - 6, left: hoveredTool.rect.left + hoveredTool.rect.width / 2, transform: 'translateX(-50%) translateY(-100%)', pointerEvents: 'none', zIndex: 9999, filter: 'drop-shadow(0px 4px 4px rgba(0,0,0,0.15))' }}>
+      <div style={{ background: '#0F0F0F', borderRadius: 2, padding: '3px 6px', color: '#D9D9D9', fontSize: 9, lineHeight: '9px', fontFamily: 'Lato, sans-serif', fontWeight: 400, whiteSpace: 'nowrap', position: 'relative' }}>
+        {hoveredTool.name}
+        <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', width: 0, height: 0, borderLeft: '3.5px solid transparent', borderRight: '3.5px solid transparent', borderTop: '3px solid #0F0F0F' }} />
+      </div>
+    </div>,
+    document.body
+  ) : null;
+
   const toggleStyle = {
     fontWeight: 400,
     fontSize: 18,
@@ -128,6 +146,7 @@ export function LandingPage() {
   };
 
   return (
+    <>
     <div
       style={{
         backgroundColor: t.pageBg,
@@ -273,53 +292,53 @@ export function LandingPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
           <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>Toolset</span>
           <div style={{ overflow: 'hidden', width: '100%', WebkitMaskImage: 'linear-gradient(to right, transparent 0px, black 48px, black calc(100% - 48px), transparent 100%)', maskImage: 'linear-gradient(to right, transparent 0px, black 48px, black calc(100% - 48px), transparent 100%)' }}>
-            <div style={{ display: 'flex', gap: 24, alignItems: 'center', animation: 'marquee 20s linear infinite', width: 'max-content' }}>
+            <div style={{ display: 'flex', gap: 24, alignItems: 'center', animation: 'marquee 20s linear infinite', animationPlayState: hoveredTool ? 'paused' : 'running', width: 'max-content' }}>
               {[0, 1].map(pass => (
                 <React.Fragment key={pass}>
                   {/* Figma */}
-                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
+                  <div {...toolHover('Figma')} style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)', cursor: 'default' }}>
                     <FigmaIcon width={27} height={40} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                   {/* Claude Code */}
-                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
+                  <div {...toolHover('Claude Code')} style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)', cursor: 'default' }}>
                     <ClaudeCodeIcon width={45} height={28} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                   {/* ChatGPT */}
-                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
+                  <div {...toolHover('ChatGPT')} style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)', cursor: 'default' }}>
                     <ChatGPTIcon width={50} height={50} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                   {/* Jitter (full icon) */}
-                  <div style={{ width: 64, height: 64, flexShrink: 0 }}>
+                  <div {...toolHover('Jitter')} style={{ width: 64, height: 64, flexShrink: 0, cursor: 'default' }}>
                     <App1Icon width={64} height={64} />
                   </div>
                   {/* Cursor */}
-                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
+                  <div {...toolHover('Cursor')} style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)', cursor: 'default' }}>
                     <CursorIcon width={42} height={48} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
-                  {/* App 2 (full icon) */}
-                  <div style={{ width: 64, height: 64, flexShrink: 0 }}>
+                  {/* GitHub (full icon) */}
+                  <div {...toolHover('GitHub')} style={{ width: 64, height: 64, flexShrink: 0, cursor: 'default' }}>
                     <App2Icon width={64} height={64} />
                   </div>
-                  {/* App 3 (full icon) */}
-                  <div style={{ width: 64, height: 64, flexShrink: 0 }}>
+                  {/* Codex (full icon) */}
+                  <div {...toolHover('Codex')} style={{ width: 64, height: 64, flexShrink: 0, cursor: 'default' }}>
                     <App3Icon width={64} height={64} />
                   </div>
                   {/* NotebookLM */}
-                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
+                  <div {...toolHover('NotebookLM')} style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)', cursor: 'default' }}>
                     <NotebookLMIcon width={42} height={42} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                   {/* Gemini */}
-                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
+                  <div {...toolHover('Gemini')} style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)', cursor: 'default' }}>
                     <GeminiIcon width={44} height={44} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
-                  {/* Marble */}
-                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
+                  {/* Spline */}
+                  <div {...toolHover('Spline')} style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)', cursor: 'default' }}>
                     <img src={imgToolMarble} alt="" style={{ width: 46, height: 46, display: 'block' }} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
@@ -341,5 +360,7 @@ export function LandingPage() {
         </div>
       </div>
     </div>
+    {tooltipPortal}
+    </>
   );
 }
