@@ -9,6 +9,7 @@ import App2Icon from '../../assets/tool-app2.svg?react';
 import App3Icon from '../../assets/tool-app3.svg?react';
 import NotebookLMIcon from '../../assets/tool-notebooklm.svg?react';
 import GeminiIcon from '../../assets/tool-gemini-mask.svg?react';
+import imgToolMarble from '../../assets/tool-marble.png';
 
 const light = {
   pageBg: '#ffffff',
@@ -315,6 +316,11 @@ export function LandingPage() {
                   {/* Gemini */}
                   <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
                     <GeminiIcon width={44} height={44} />
+                    <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
+                  </div>
+                  {/* Marble */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
+                    <img src={imgToolMarble} alt="" style={{ width: 46, height: 46, display: 'block' }} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                 </React.Fragment>
