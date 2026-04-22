@@ -290,3 +290,11 @@
     }
   }
 }
+
+.landing-link:hover {
+  color: #3a3a3a !important;
+}
+
+.dark .landing-link:hover {
+  color: #e0e0e0 !important;
+}
