@@ -39,9 +39,11 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --dot-pulse-off: #d4d4d4;
 }
 
 .dark {
+  --dot-pulse-off: #3a3a3a;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.145 0 0);
@@ -235,6 +237,11 @@
     }
   }
   
+  @keyframes dotPulse {
+    0%, 100% { background-color: #07AB57; }
+    50% { background-color: var(--dot-pulse-off); }
+  }
+
   @keyframes heartBeat {
     0% { transform: scale(1); }
     20% { transform: scale(1.3); }
