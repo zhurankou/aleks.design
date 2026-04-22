@@ -1,16 +1,21 @@
 import React, { useState, useEffect, type AnchorHTMLAttributes } from 'react';
-import { createPortal } from 'react-dom';
 import imgProfile from "figma:asset/f700c10be8e928d2c825e536435c89724d9f3fa1.png";
-import FigmaIcon from '../../assets/tool-figma.svg?react';
-import ClaudeCodeIcon from '../../assets/tool-claudecode.svg?react';
-import ChatGPTIcon from '../../assets/tool-chatgpt.svg?react';
-import App1Icon from '../../assets/tool-app1.svg?react';
-import CursorIcon from '../../assets/tool-cursor.svg?react';
-import App2Icon from '../../assets/tool-app2.svg?react';
-import App3Icon from '../../assets/tool-app3.svg?react';
-import NotebookLMIcon from '../../assets/tool-notebooklm.svg?react';
+import FigmaIcon from '../../assets/tool-figma-light.svg?react';
+import ClaudeCodeIcon from '../../assets/tool-claudecode-light.svg?react';
 import GeminiIcon from '../../assets/tool-gemini-mask.svg?react';
-import imgToolMarble from '../../assets/tool-marble.png';
+import imgSpline from '../../assets/tool-spline-light.png';
+import ChatGPTIconLight from '../../assets/tool-chatgpt-light.svg?react';
+import JitterIconLight from '../../assets/tool-jitter-light.svg?react';
+import CursorIconLight from '../../assets/tool-cursor-light.svg?react';
+import GitHubIconLight from '../../assets/tool-github-light.svg?react';
+import App8IconLight from '../../assets/tool-app8-light.svg?react';
+import NotebookLMIconLight from '../../assets/tool-notebooklm-light.svg?react';
+import ChatGPTIconDark from '../../assets/tool-chatgpt-dark.svg?react';
+import JitterIconDark from '../../assets/tool-jitter-dark.svg?react';
+import CursorIconDark from '../../assets/tool-cursor-dark.svg?react';
+import GitHubIconDark from '../../assets/tool-github-dark.svg?react';
+import App8IconDark from '../../assets/tool-app8-dark.svg?react';
+import NotebookLMIconDark from '../../assets/tool-notebooklm-dark.svg?react';
 
 const light = {
   pageBg: '#ffffff',
@@ -79,7 +84,6 @@ export function LandingPage() {
   const [eeroHovered, setEeroHovered] = useState(false);
   const [microsoftHovered, setMicrosoftHovered] = useState(false);
   const [seattleHovered, setSeattleHovered] = useState(false);
-  const [hoveredTool, setHoveredTool] = useState<{ name: string; rect: DOMRect } | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -115,22 +119,6 @@ export function LandingPage() {
     justifyContent: 'space-between' as const,
   };
 
-  const toolHover = (name: string) => ({
-    onMouseEnter: (e: React.MouseEvent<HTMLDivElement>) =>
-      setHoveredTool({ name, rect: (e.currentTarget as HTMLElement).getBoundingClientRect() }),
-    onMouseLeave: () => setHoveredTool(null),
-  });
-
-  const tooltipPortal = hoveredTool ? createPortal(
-    <div style={{ position: 'fixed', top: hoveredTool.rect.top - 6, left: hoveredTool.rect.left + hoveredTool.rect.width / 2, transform: 'translateX(-50%) translateY(-100%)', pointerEvents: 'none', zIndex: 9999, filter: 'drop-shadow(0px 4px 4px rgba(0,0,0,0.15))' }}>
-      <div style={{ background: '#0F0F0F', borderRadius: 2, padding: '3px 6px', color: '#D9D9D9', fontSize: 9, lineHeight: '9px', fontFamily: 'Lato, sans-serif', fontWeight: 400, whiteSpace: 'nowrap', position: 'relative' }}>
-        {hoveredTool.name}
-        <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', width: 0, height: 0, borderLeft: '3.5px solid transparent', borderRight: '3.5px solid transparent', borderTop: '3px solid #0F0F0F' }} />
-      </div>
-    </div>,
-    document.body
-  ) : null;
-
   const toggleStyle = {
     fontWeight: 400,
     fontSize: 18,
@@ -146,7 +134,6 @@ export function LandingPage() {
   };
 
   return (
-    <>
     <div
       style={{
         backgroundColor: t.pageBg,
@@ -292,54 +279,55 @@ export function LandingPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
           <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>Toolset</span>
           <div style={{ overflow: 'hidden', width: '100%', WebkitMaskImage: 'linear-gradient(to right, transparent 0px, black 48px, black calc(100% - 48px), transparent 100%)', maskImage: 'linear-gradient(to right, transparent 0px, black 48px, black calc(100% - 48px), transparent 100%)' }}>
-            <div style={{ display: 'flex', gap: 24, alignItems: 'center', animation: 'marquee 20s linear infinite', animationPlayState: hoveredTool ? 'paused' : 'running', width: 'max-content' }}>
+            <div style={{ display: 'flex', gap: 24, alignItems: 'center', animation: 'marquee 20s linear infinite', width: 'max-content' }}>
               {[0, 1].map(pass => (
                 <React.Fragment key={pass}>
-                  {/* Figma */}
-                  <div {...toolHover('Figma')} style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)', cursor: 'default' }}>
+                  {/* 1. Figma */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDark ? 'rgba(234,234,234,0.1)' : 'transparent' }}>
                     <FigmaIcon width={27} height={40} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
-                  {/* Claude Code */}
-                  <div {...toolHover('Claude Code')} style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)', cursor: 'default' }}>
+                  {/* 2. Claude Code */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDark ? 'rgba(234,234,234,0.1)' : 'transparent' }}>
                     <ClaudeCodeIcon width={45} height={28} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
-                  {/* ChatGPT */}
-                  <div {...toolHover('ChatGPT')} style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)', cursor: 'default' }}>
-                    <ChatGPTIcon width={50} height={50} />
+                  {/* 3. ChatGPT */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDark ? 'rgba(234,234,234,0.1)' : 'transparent' }}>
+                    {isDark ? <ChatGPTIconDark width={50} height={50} /> : <ChatGPTIconLight width={50} height={50} />}
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
-                  {/* Jitter (full icon) */}
-                  <div {...toolHover('Jitter')} style={{ width: 64, height: 64, flexShrink: 0, cursor: 'default' }}>
-                    <App1Icon width={64} height={64} />
+                  {/* 4. Jitter – full bleed (bg+shadow baked into SVG) */}
+                  <div style={{ width: 64, height: 64, flexShrink: 0 }}>
+                    {isDark ? <JitterIconDark width={64} height={64} /> : <JitterIconLight width={64} height={64} />}
                   </div>
-                  {/* Cursor */}
-                  <div {...toolHover('Cursor')} style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)', cursor: 'default' }}>
-                    <CursorIcon width={42} height={48} />
+                  {/* 5. Cursor */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDark ? 'rgba(234,234,234,0.1)' : 'transparent' }}>
+                    {isDark ? <CursorIconDark width={40} height={46} /> : <CursorIconLight width={40} height={46} />}
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
-                  {/* GitHub (full icon) */}
-                  <div {...toolHover('GitHub')} style={{ width: 64, height: 64, flexShrink: 0, cursor: 'default' }}>
-                    <App2Icon width={64} height={64} />
-                  </div>
-                  {/* Codex (full icon) */}
-                  <div {...toolHover('Codex')} style={{ width: 64, height: 64, flexShrink: 0, cursor: 'default' }}>
-                    <App3Icon width={64} height={64} />
-                  </div>
-                  {/* NotebookLM */}
-                  <div {...toolHover('NotebookLM')} style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)', cursor: 'default' }}>
-                    <NotebookLMIcon width={42} height={42} />
+                  {/* 6. GitHub – transparent bg in both modes */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+                    {isDark ? <GitHubIconDark width={46} height={46} /> : <GitHubIconLight width={46} height={46} />}
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
-                  {/* Gemini */}
-                  <div {...toolHover('Gemini')} style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)', cursor: 'default' }}>
+                  {/* 7. Spline */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDark ? 'rgba(234,234,234,0.1)' : 'transparent' }}>
+                    <img src={imgSpline} alt="" style={{ width: 46, height: 46, display: 'block' }} />
+                    <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
+                  </div>
+                  {/* 8. App8 – full bleed (bg+shadow baked into SVG) */}
+                  <div style={{ width: 64, height: 64, flexShrink: 0 }}>
+                    {isDark ? <App8IconDark width={64} height={64} /> : <App8IconLight width={64} height={64} />}
+                  </div>
+                  {/* 9. NotebookLM */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDark ? 'rgba(234,234,234,0.1)' : 'transparent' }}>
+                    {isDark ? <NotebookLMIconDark width={42} height={42} /> : <NotebookLMIconLight width={42} height={42} />}
+                    <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
+                  </div>
+                  {/* 10. Gemini */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDark ? 'rgba(234,234,234,0.1)' : 'transparent' }}>
                     <GeminiIcon width={44} height={44} />
-                    <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
-                  </div>
-                  {/* Spline */}
-                  <div {...toolHover('Spline')} style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)', cursor: 'default' }}>
-                    <img src={imgToolMarble} alt="" style={{ width: 46, height: 46, display: 'block' }} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                 </React.Fragment>
@@ -360,7 +348,5 @@ export function LandingPage() {
         </div>
       </div>
     </div>
-    {tooltipPortal}
-    </>
   );
 }
