@@ -67,7 +67,7 @@ export function LandingPage() {
   const [olympusHovered, setOlympusHovered] = useState(false);
   const [eeroHovered, setEeroHovered] = useState(false);
   const [microsoftHovered, setMicrosoftHovered] = useState(false);
-  const [uwHovered, setUwHovered] = useState(false);
+  const [seattleHovered, setSeattleHovered] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -233,14 +233,29 @@ export function LandingPage() {
           </div>
         </div>
 
-        {/* UW */}
-        <div onMouseEnter={() => setUwHovered(true)} onMouseLeave={() => setUwHovered(false)} style={hoverCardStyle(uwHovered, t)}>
+        {/* City of Seattle */}
+        <div onMouseEnter={() => setSeattleHovered(true)} onMouseLeave={() => setSeattleHovered(false)} style={hoverCardStyle(seattleHovered, t)}>
           <div style={rowStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Bachelors in Design · UW</span>
-              <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2016-2019</span>
+              <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Design Intern · City of Seattle</span>
+              <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2018-2019</span>
             </div>
-            <div style={toggleStyle}>{uwHovered ? '–' : '+'}</div>
+            <div style={toggleStyle}>{seattleHovered ? '–' : '+'}</div>
+          </div>
+          <div style={descriptionReveal(seattleHovered)}>
+            <p style={descriptionStyle}>
+              I supported the design of public-sector digital services, contributing to the{' '}
+              <AnimatedLink href="https://www.seattle.gov" target="_blank" rel="noopener noreferrer" style={linkStyle}>Seattle.gov</AnimatedLink>
+              {' '}design system and simplifying complex workflows into accessible, user-friendly experiences.
+            </p>
+          </div>
+        </div>
+
+        {/* UW */}
+        <div style={rowStyle}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Bachelors in Design · UW</span>
+            <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2016-2019</span>
           </div>
         </div>
 
