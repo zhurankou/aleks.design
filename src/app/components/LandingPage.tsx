@@ -122,7 +122,8 @@ export function LandingPage() {
     >
       <div
         style={{
-          width: 532,
+          width: '100%',
+          maxWidth: 532,
           paddingLeft: 16,
           paddingRight: 16,
           boxSizing: 'border-box',
