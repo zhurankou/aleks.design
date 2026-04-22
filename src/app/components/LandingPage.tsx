@@ -80,6 +80,7 @@ function AnimatedLink({ children, style, ...props }: AnchorHTMLAttributes<HTMLAn
 
 export function LandingPage() {
   const [isDark, setIsDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const [now, setNow] = useState(() => new Date());
   const [olympusHovered, setOlympusHovered] = useState(false);
   const [eeroHovered, setEeroHovered] = useState(false);
   const [microsoftHovered, setMicrosoftHovered] = useState(false);
@@ -90,6 +91,11 @@ export function LandingPage() {
     const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -112,6 +118,10 @@ export function LandingPage() {
     textDecoration: 'none' as const,
     transition: 'color 0.15s ease',
   };
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const h = now.getHours(), m = now.getMinutes();
+  const formattedDateTime = `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()} ${String(h % 12 || 12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
 
   const rowStyle = {
     display: 'flex' as const,
@@ -341,10 +351,13 @@ export function LandingPage() {
           My path into design wasn't traditional. I worked as an investigator, a turret machine operator, a janitor, and served in the Navy before eventually choosing what I'd always been passionate about.
         </p>
 
-        {/* Links */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, fontSize: 18, lineHeight: '26px', fontWeight: 400 }}>
-          <AnimatedLink href="https://www.instagram.com/zooruncow/" target="_blank" rel="noopener noreferrer" style={{ color: t.textMuted }}>Life</AnimatedLink>
-          <AnimatedLink href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" style={{ color: t.textMuted }}>Work</AnimatedLink>
+        {/* Footer */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 18, lineHeight: '26px', fontWeight: 400, color: t.textMuted }}>
+          <div style={{ display: 'flex', gap: 16 }}>
+            <AnimatedLink href="https://www.instagram.com/zooruncow/" target="_blank" rel="noopener noreferrer" style={{ color: t.textMuted }}>Life</AnimatedLink>
+            <AnimatedLink href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" style={{ color: t.textMuted }}>Work</AnimatedLink>
+          </div>
+          <span style={{ transition: 'color 0.3s ease' }}>{formattedDateTime}</span>
         </div>
       </div>
     </div>
