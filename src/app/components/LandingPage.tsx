@@ -19,15 +19,6 @@ const dark = {
   dotBorder: '#141414',
 };
 
-const staticRow = {
-  display: 'flex' as const,
-  alignItems: 'flex-start' as const,
-  justifyContent: 'space-between' as const,
-  fontSize: 18,
-  lineHeight: '26px',
-  height: 56,
-};
-
 const hoverCardStyle = (hovered: boolean, t: typeof light) => ({
   marginTop: hovered ? -16 : 0,
   marginLeft: hovered ? -16 : 0,
@@ -64,7 +55,7 @@ function AnimatedLink({ children, style, ...props }: AnchorHTMLAttributes<HTMLAn
           key={i}
           style={hovered ? { animation: `letterWave 0.6s ${i * 0.06}s ease-in-out infinite` } : undefined}
         >
-          {char === ' ' ? ' ' : char}
+          {char === ' ' ? ' ' : char}
         </span>
       ))}
     </a>
@@ -73,6 +64,7 @@ function AnimatedLink({ children, style, ...props }: AnchorHTMLAttributes<HTMLAn
 
 export function LandingPage() {
   const [isDark, setIsDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
   const [olympusHovered, setOlympusHovered] = useState(false);
   const [eeroHovered, setEeroHovered] = useState(false);
   const [microsoftHovered, setMicrosoftHovered] = useState(false);
@@ -82,6 +74,12 @@ export function LandingPage() {
     const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -105,6 +103,43 @@ export function LandingPage() {
     transition: 'color 0.15s ease',
   };
 
+  // Desktop: pr 24 → 8 on hover (compensates for card's 16px padding so company stays pinned)
+  // Mobile: no pr
+  const rowStyle = (hovered: boolean) => ({
+    display: 'flex' as const,
+    alignItems: 'flex-start' as const,
+    justifyContent: 'space-between' as const,
+    fontSize: 18,
+    lineHeight: '26px',
+    paddingRight: isMobile ? 0 : (hovered ? 8 : 24),
+    transition: 'padding-right 0.25s ease',
+  });
+
+  // Desktop: title+date left, company right
+  // Mobile: company left, title+date right
+  const renderRowContent = (company: string, title: string, years: string) => {
+    if (isMobile) {
+      return (
+        <>
+          <span style={{ fontWeight: 500, color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>{company}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end', textAlign: 'right' }}>
+            <span style={{ fontWeight: 700, color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>{title}</span>
+            <span style={{ fontWeight: 500, color: t.textMuted, transition: 'color 0.3s ease' }}>{years}</span>
+          </div>
+        </>
+      );
+    }
+    return (
+      <>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontWeight: 700, color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>{title}</span>
+          <span style={{ fontWeight: 500, color: t.textMuted, transition: 'color 0.3s ease' }}>{years}</span>
+        </div>
+        <span style={{ fontWeight: 500, color: t.textPrimary, whiteSpace: 'nowrap', textAlign: 'right', transition: 'color 0.3s ease' }}>{company}</span>
+      </>
+    );
+  };
+
   return (
     <div
       style={{
@@ -123,7 +158,7 @@ export function LandingPage() {
       <div
         style={{
           width: '100%',
-          maxWidth: 532,
+          maxWidth: 500,
           paddingLeft: 16,
           paddingRight: 16,
           boxSizing: 'border-box',
@@ -169,30 +204,22 @@ export function LandingPage() {
 
         {/* Olympus */}
         <div onMouseEnter={() => setOlympusHovered(true)} onMouseLeave={() => setOlympusHovered(false)} style={hoverCardStyle(olympusHovered, t)}>
-          <div style={staticRow}>
-            <span style={{ fontWeight: 500, color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Olympus</span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end', textAlign: 'right' }}>
-              <span style={{ fontWeight: 700, color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Product Designer III</span>
-              <span style={{ fontWeight: 500, color: t.textMuted, transition: 'color 0.3s ease' }}>2024-2026</span>
-            </div>
+          <div style={rowStyle(olympusHovered)}>
+            {renderRowContent('Olympus', 'Product Designer III', '2024-2026')}
           </div>
           <div style={descriptionReveal(olympusHovered)}>
             <p style={descriptionStyle}>
               I designed{' '}
               <AnimatedLink href="https://medical.olympusamerica.com/olysense" target="_blank" rel="noopener noreferrer" style={linkStyle}>OlySense</AnimatedLink>
-              {' '}Insights, a clinical analytics tool for complex healthcare workflows, with a focus on making them clear, scalable, and trustworthy while supporting patient safety and quality of care.
+              {' '}Insights, a clinical analytics tool, making complex healthcare workflows feel clear, scalable, and trustworthy, with a strong focus on patient safety and quality of care.
             </p>
           </div>
         </div>
 
         {/* Amazon / eero */}
         <div onMouseEnter={() => setEeroHovered(true)} onMouseLeave={() => setEeroHovered(false)} style={hoverCardStyle(eeroHovered, t)}>
-          <div style={staticRow}>
-            <span style={{ fontWeight: 500, color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Amazon</span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end', textAlign: 'right' }}>
-              <span style={{ fontWeight: 700, color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Sr Product Designer</span>
-              <span style={{ fontWeight: 500, color: t.textMuted, transition: 'color 0.3s ease' }}>2022-2023</span>
-            </div>
+          <div style={rowStyle(eeroHovered)}>
+            {renderRowContent('Amazon', 'Sr Product Designer', '2022-2023')}
           </div>
           <div style={descriptionReveal(eeroHovered)}>
             <p style={descriptionStyle}>
@@ -205,12 +232,8 @@ export function LandingPage() {
 
         {/* Microsoft */}
         <div onMouseEnter={() => setMicrosoftHovered(true)} onMouseLeave={() => setMicrosoftHovered(false)} style={hoverCardStyle(microsoftHovered, t)}>
-          <div style={staticRow}>
-            <span style={{ fontWeight: 500, color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Microsoft</span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end', textAlign: 'right' }}>
-              <span style={{ fontWeight: 700, color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Designer</span>
-              <span style={{ fontWeight: 500, color: t.textMuted, transition: 'color 0.3s ease' }}>2019-2022</span>
-            </div>
+          <div style={rowStyle(microsoftHovered)}>
+            {renderRowContent('Microsoft', 'UX Designer', '2019-2022')}
           </div>
           <div style={descriptionReveal(microsoftHovered)}>
             <p style={descriptionStyle}>
@@ -222,12 +245,8 @@ export function LandingPage() {
         </div>
 
         {/* UW */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', fontSize: 18, lineHeight: '26px' }}>
-          <span style={{ fontWeight: 500, color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UW</span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end', textAlign: 'right' }}>
-            <span style={{ fontWeight: 700, color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Bachelors in Design</span>
-            <span style={{ fontWeight: 500, color: t.textMuted, transition: 'color 0.3s ease' }}>2016-2019</span>
-          </div>
+        <div style={rowStyle(false)}>
+          {renderRowContent('UW', 'Bachelors in Design', '2016-2019')}
         </div>
 
         {/* Background */}
