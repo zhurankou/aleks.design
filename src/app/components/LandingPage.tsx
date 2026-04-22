@@ -186,7 +186,7 @@ export function LandingPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', fontSize: 18, lineHeight: '26px' }}>
             <span style={{ fontWeight: 600, color: t.textPrimary, transition: 'color 0.3s ease' }}>Aleks</span>
-            <AnimatedLink href="mailto:hi@aleks.design" style={{ fontWeight: 500, color: t.textMuted }}>hi@aleks.design</AnimatedLink>
+            <AnimatedLink href="mailto:hi@aleks.design" style={{ fontWeight: 400, color: t.textMuted }}>hi@aleks.design</AnimatedLink>
           </div>
         </div>
 
@@ -200,7 +200,7 @@ export function LandingPage() {
           <div style={rowStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Product Designer III · Olympus</span>
-              <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2024-2026</span>
+              <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2024-2026</span>
             </div>
             <div style={toggleStyle}>{olympusHovered ? '–' : '+'}</div>
           </div>
@@ -218,7 +218,7 @@ export function LandingPage() {
           <div style={rowStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Sr Product Designer · Amazon</span>
-              <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2022-2023</span>
+              <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2022-2023</span>
             </div>
             <div style={toggleStyle}>{eeroHovered ? '–' : '+'}</div>
           </div>
@@ -236,7 +236,7 @@ export function LandingPage() {
           <div style={rowStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Designer · Microsoft</span>
-              <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2019-2022</span>
+              <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2019-2022</span>
             </div>
             <div style={toggleStyle}>{microsoftHovered ? '–' : '+'}</div>
           </div>
@@ -254,7 +254,7 @@ export function LandingPage() {
           <div style={rowStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Design Intern · City of Seattle</span>
-              <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2018-2019</span>
+              <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2018-2019</span>
             </div>
             <div style={toggleStyle}>{seattleHovered ? '–' : '+'}</div>
           </div>
@@ -271,13 +271,13 @@ export function LandingPage() {
         <div style={rowStyle}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Bachelors in Design · UW</span>
-            <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2016-2019</span>
+            <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2016-2019</span>
           </div>
         </div>
 
         {/* Toolset */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
-          <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>Toolset</span>
+          <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>Toolset</span>
           <div style={{ overflow: 'hidden', width: '100%', WebkitMaskImage: 'linear-gradient(to right, transparent 0px, black 48px, black calc(100% - 48px), transparent 100%)', maskImage: 'linear-gradient(to right, transparent 0px, black 48px, black calc(100% - 48px), transparent 100%)' }}>
             <div style={{ display: 'flex', gap: 24, alignItems: 'center', animation: 'marquee 20s linear infinite', width: 'max-content' }}>
               {[0, 1].map(pass => (
@@ -342,7 +342,7 @@ export function LandingPage() {
         </p>
 
         {/* Links */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, fontSize: 18, lineHeight: '26px', fontWeight: 500 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, fontSize: 18, lineHeight: '26px', fontWeight: 400 }}>
           <AnimatedLink href="https://www.instagram.com/zooruncow/" target="_blank" rel="noopener noreferrer" style={{ color: t.textMuted }}>Life</AnimatedLink>
           <AnimatedLink href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" style={{ color: t.textMuted }}>Work</AnimatedLink>
         </div>
