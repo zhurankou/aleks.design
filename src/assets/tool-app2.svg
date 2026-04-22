@@ -1,0 +1,22 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="app" filter="url(#filter0_i_0_30)">
+<rect width="64" height="64" rx="16" fill="var(--fill-0, #EAEAEA)" fill-opacity="0.1"/>
+<circle id="Ellipse 2" cx="32" cy="32" r="23" fill="var(--fill-0, #FCFCFC)"/>
+<g id="Octicons-mark-github 1">
+<path id="Vector" fill-rule="evenodd" clip-rule="evenodd" d="M32 9C19.2925 9 9 19.2925 9 32C9 42.1775 15.5837 50.7737 24.7262 53.8212C25.8762 54.0225 26.3075 53.3325 26.3075 52.7287C26.3075 52.1825 26.2788 50.3712 26.2788 48.445C20.5 49.5087 19.005 47.0362 18.545 45.7425C18.2862 45.0812 17.165 43.04 16.1875 42.4937C15.3825 42.0625 14.2325 40.9987 16.1588 40.97C17.97 40.9412 19.2638 42.6375 19.695 43.3275C21.765 46.8062 25.0713 45.8287 26.3938 45.225C26.595 43.73 27.1987 42.7237 27.86 42.1487C22.7425 41.5737 17.395 39.59 17.395 30.7925C17.395 28.2912 18.2863 26.2212 19.7525 24.6112C19.5225 24.0362 18.7175 21.6787 19.9825 18.5162C19.9825 18.5162 21.9088 17.9125 26.3075 20.8737C28.1475 20.3562 30.1025 20.0975 32.0575 20.0975C34.0125 20.0975 35.9675 20.3562 37.8075 20.8737C42.2063 17.8837 44.1325 18.5162 44.1325 18.5162C45.3975 21.6787 44.5925 24.0362 44.3625 24.6112C45.8288 26.2212 46.72 28.2625 46.72 30.7925C46.72 39.6187 41.3438 41.5737 36.2263 42.1487C37.06 42.8675 37.7788 44.2475 37.7788 46.4037C37.7788 49.48 37.75 51.9525 37.75 52.7287C37.75 53.3325 38.1813 54.0512 39.3313 53.8212C48.4163 50.7737 55 42.1487 55 32C55 19.2925 44.7075 9 32 9Z" fill="var(--fill-0, #1B1F23)"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_i_0_30" x="0" y="0" width="64" height="64" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feMorphology radius="51" operator="dilate" in="SourceAlpha" result="effect1_innerShadow_0_30"/>
+<feOffset dx="2" dy="-1"/>
+<feGaussianBlur stdDeviation="5.45"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.15 0"/>
+<feBlend mode="normal" in2="shape" result="effect1_innerShadow_0_30"/>
+</filter>
+</defs>
+</svg>

@@ -1,5 +1,14 @@
-import { useState, useEffect, type AnchorHTMLAttributes } from 'react';
+import React, { useState, useEffect, type AnchorHTMLAttributes } from 'react';
 import imgProfile from "figma:asset/f700c10be8e928d2c825e536435c89724d9f3fa1.png";
+import imgToolFigma from '../../assets/tool-figma.svg';
+import imgToolClaudecode from '../../assets/tool-claudecode.svg';
+import imgToolChatgpt from '../../assets/tool-chatgpt.svg';
+import imgToolApp1 from '../../assets/tool-app1.svg';
+import imgToolCursor from '../../assets/tool-cursor.svg';
+import imgToolApp2 from '../../assets/tool-app2.svg';
+import imgToolApp3 from '../../assets/tool-app3.svg';
+import imgToolNotebooklm from '../../assets/tool-notebooklm.svg';
+import imgToolGemini from '../../assets/tool-gemini-mask.svg';
 
 const light = {
   pageBg: '#ffffff',
@@ -256,6 +265,55 @@ export function LandingPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Bachelors in Design · UW</span>
             <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2016-2019</span>
+          </div>
+        </div>
+
+        {/* Toolset */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
+          <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>Toolset</span>
+          <div style={{ overflow: 'hidden', width: '100%' }}>
+            <div style={{ display: 'flex', gap: 24, alignItems: 'center', animation: 'marquee 20s linear infinite', width: 'max-content' }}>
+              {[0, 1].map(pass => (
+                <React.Fragment key={pass}>
+                  {/* Figma */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, overflow: 'hidden', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)' }}>
+                    <img src={imgToolFigma} alt="Figma" style={{ position: 'absolute', width: 26.672, height: 40, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'block' }} />
+                  </div>
+                  {/* Claude Code */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, overflow: 'hidden', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)' }}>
+                    <img src={imgToolClaudecode} alt="Claude Code" style={{ position: 'absolute', width: 44.8, height: 28, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'block' }} />
+                  </div>
+                  {/* ChatGPT */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, overflow: 'hidden', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)' }}>
+                    <img src={imgToolChatgpt} alt="ChatGPT" style={{ position: 'absolute', width: 50, height: 50, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'block' }} />
+                  </div>
+                  {/* Jitter (full icon) */}
+                  <div style={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
+                    <img src={imgToolApp1} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
+                  </div>
+                  {/* Cursor */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, overflow: 'hidden', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)' }}>
+                    <img src={imgToolCursor} alt="Cursor" style={{ position: 'absolute', width: 41.6, height: 47.6, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'block' }} />
+                  </div>
+                  {/* App 2 (full icon) */}
+                  <div style={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
+                    <img src={imgToolApp2} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
+                  </div>
+                  {/* App 3 (full icon) */}
+                  <div style={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
+                    <img src={imgToolApp3} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
+                  </div>
+                  {/* NotebookLM */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, overflow: 'hidden', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)' }}>
+                    <img src={imgToolNotebooklm} alt="NotebookLM" style={{ position: 'absolute', width: 42, height: 42, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'block' }} />
+                  </div>
+                  {/* Gemini */}
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, overflow: 'hidden', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)' }}>
+                    <img src={imgToolGemini} alt="Gemini" style={{ position: 'absolute', width: 44, height: 44, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'block' }} />
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
           </div>
         </div>
 
