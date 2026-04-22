@@ -276,40 +276,46 @@ export function LandingPage() {
               {[0, 1].map(pass => (
                 <React.Fragment key={pass}>
                   {/* Figma */}
-                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, overflow: 'hidden', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)' }}>
-                    <img src={imgToolFigma} alt="Figma" style={{ position: 'absolute', width: 26.672, height: 40, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'block' }} />
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
+                    <img src={imgToolFigma} alt="Figma" style={{ width: 27, height: 40, display: 'block' }} />
+                    <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                   {/* Claude Code */}
-                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, overflow: 'hidden', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)' }}>
-                    <img src={imgToolClaudecode} alt="Claude Code" style={{ position: 'absolute', width: 44.8, height: 28, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'block' }} />
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
+                    <img src={imgToolClaudecode} alt="Claude Code" style={{ width: 45, height: 28, display: 'block' }} />
+                    <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                   {/* ChatGPT */}
-                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, overflow: 'hidden', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)' }}>
-                    <img src={imgToolChatgpt} alt="ChatGPT" style={{ position: 'absolute', width: 50, height: 50, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'block' }} />
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
+                    <img src={imgToolChatgpt} alt="ChatGPT" style={{ width: 50, height: 50, display: 'block' }} />
+                    <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                   {/* Jitter (full icon) */}
-                  <div style={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
-                    <img src={imgToolApp1} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
+                  <div style={{ width: 64, height: 64, flexShrink: 0 }}>
+                    <img src={imgToolApp1} alt="" style={{ width: 64, height: 64, display: 'block' }} />
                   </div>
                   {/* Cursor */}
-                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, overflow: 'hidden', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)' }}>
-                    <img src={imgToolCursor} alt="Cursor" style={{ position: 'absolute', width: 41.6, height: 47.6, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'block' }} />
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
+                    <img src={imgToolCursor} alt="Cursor" style={{ width: 42, height: 48, display: 'block' }} />
+                    <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                   {/* App 2 (full icon) */}
-                  <div style={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
-                    <img src={imgToolApp2} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
+                  <div style={{ width: 64, height: 64, flexShrink: 0 }}>
+                    <img src={imgToolApp2} alt="" style={{ width: 64, height: 64, display: 'block' }} />
                   </div>
                   {/* App 3 (full icon) */}
-                  <div style={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
-                    <img src={imgToolApp3} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
+                  <div style={{ width: 64, height: 64, flexShrink: 0 }}>
+                    <img src={imgToolApp3} alt="" style={{ width: 64, height: 64, display: 'block' }} />
                   </div>
                   {/* NotebookLM */}
-                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, overflow: 'hidden', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)' }}>
-                    <img src={imgToolNotebooklm} alt="NotebookLM" style={{ position: 'absolute', width: 42, height: 42, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'block' }} />
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
+                    <img src={imgToolNotebooklm} alt="NotebookLM" style={{ width: 42, height: 42, display: 'block' }} />
+                    <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                   {/* Gemini */}
-                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, overflow: 'hidden', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)' }}>
-                    <img src={imgToolGemini} alt="Gemini" style={{ position: 'absolute', width: 44, height: 44, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'block' }} />
+                  <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
+                    <img src={imgToolGemini} alt="Gemini" style={{ width: 44, height: 44, display: 'block' }} />
+                    <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                 </React.Fragment>
               ))}
