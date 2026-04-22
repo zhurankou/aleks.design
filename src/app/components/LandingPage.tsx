@@ -2,7 +2,7 @@ import React, { useState, useEffect, type AnchorHTMLAttributes } from 'react';
 import imgProfile from "figma:asset/f700c10be8e928d2c825e536435c89724d9f3fa1.png";
 import FigmaIcon from '../../assets/tool-figma-light.svg?react';
 import ClaudeCodeIcon from '../../assets/tool-claudecode-light.svg?react';
-import GeminiIcon from '../../assets/tool-gemini-mask.svg?react';
+import GeminiIcon from '../../assets/tool-gemini-color.svg?react';
 import imgSpline from '../../assets/tool-spline-light.png';
 import ChatGPTIconLight from '../../assets/tool-chatgpt-light.svg?react';
 import JitterIconLight from '../../assets/tool-jitter-light.svg?react';
