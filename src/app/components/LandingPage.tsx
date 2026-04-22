@@ -64,22 +64,16 @@ function AnimatedLink({ children, style, ...props }: AnchorHTMLAttributes<HTMLAn
 
 export function LandingPage() {
   const [isDark, setIsDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
   const [olympusHovered, setOlympusHovered] = useState(false);
   const [eeroHovered, setEeroHovered] = useState(false);
   const [microsoftHovered, setMicrosoftHovered] = useState(false);
+  const [uwHovered, setUwHovered] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
-  }, []);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 640);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -103,41 +97,24 @@ export function LandingPage() {
     transition: 'color 0.15s ease',
   };
 
-  // Desktop: pr 24 → 8 on hover (compensates for card's 16px padding so company stays pinned)
-  // Mobile: no pr
-  const rowStyle = (hovered: boolean) => ({
+  const rowStyle = {
     display: 'flex' as const,
-    alignItems: 'flex-start' as const,
+    alignItems: 'center' as const,
     justifyContent: 'space-between' as const,
+  };
+
+  const toggleStyle = {
+    fontWeight: 400,
     fontSize: 18,
     lineHeight: '26px',
-    paddingRight: isMobile ? 0 : (hovered ? 8 : 24),
-    transition: 'padding-right 0.25s ease',
-  });
-
-  // Desktop: title+date left, company right
-  // Mobile: company left, title+date right
-  const renderRowContent = (company: string, title: string, years: string) => {
-    if (isMobile) {
-      return (
-        <>
-          <span style={{ fontWeight: 500, color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>{company}</span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end', textAlign: 'right' }}>
-            <span style={{ fontWeight: 700, color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>{title}</span>
-            <span style={{ fontWeight: 500, color: t.textMuted, transition: 'color 0.3s ease' }}>{years}</span>
-          </div>
-        </>
-      );
-    }
-    return (
-      <>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ fontWeight: 700, color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>{title}</span>
-          <span style={{ fontWeight: 500, color: t.textMuted, transition: 'color 0.3s ease' }}>{years}</span>
-        </div>
-        <span style={{ fontWeight: 500, color: t.textPrimary, whiteSpace: 'nowrap', textAlign: 'right', transition: 'color 0.3s ease' }}>{company}</span>
-      </>
-    );
+    color: t.textMuted,
+    width: 24,
+    height: 24,
+    display: 'flex' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    flexShrink: 0,
+    transition: 'color 0.3s ease',
   };
 
   return (
@@ -164,7 +141,7 @@ export function LandingPage() {
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
-          gap: 56,
+          gap: 40,
         }}
       >
         {/* Account */}
@@ -192,7 +169,7 @@ export function LandingPage() {
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', fontSize: 18, lineHeight: '26px' }}>
-            <span style={{ fontWeight: 700, color: t.textPrimary, transition: 'color 0.3s ease' }}>Aleks</span>
+            <span style={{ fontWeight: 600, color: t.textPrimary, transition: 'color 0.3s ease' }}>Aleks</span>
             <AnimatedLink href="mailto:hi@aleks.design" style={{ fontWeight: 500, color: t.textMuted }}>hi@aleks.design</AnimatedLink>
           </div>
         </div>
@@ -204,8 +181,12 @@ export function LandingPage() {
 
         {/* Olympus */}
         <div onMouseEnter={() => setOlympusHovered(true)} onMouseLeave={() => setOlympusHovered(false)} style={hoverCardStyle(olympusHovered, t)}>
-          <div style={rowStyle(olympusHovered)}>
-            {renderRowContent('Olympus', 'Product Designer III', '2024-2026')}
+          <div style={rowStyle}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Product Designer III · Olympus</span>
+              <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2024-2026</span>
+            </div>
+            <div style={toggleStyle}>{olympusHovered ? '–' : '+'}</div>
           </div>
           <div style={descriptionReveal(olympusHovered)}>
             <p style={descriptionStyle}>
@@ -218,8 +199,12 @@ export function LandingPage() {
 
         {/* Amazon / eero */}
         <div onMouseEnter={() => setEeroHovered(true)} onMouseLeave={() => setEeroHovered(false)} style={hoverCardStyle(eeroHovered, t)}>
-          <div style={rowStyle(eeroHovered)}>
-            {renderRowContent('Amazon', 'Sr Product Designer', '2022-2023')}
+          <div style={rowStyle}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Sr Product Designer · Amazon</span>
+              <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2022-2023</span>
+            </div>
+            <div style={toggleStyle}>{eeroHovered ? '–' : '+'}</div>
           </div>
           <div style={descriptionReveal(eeroHovered)}>
             <p style={descriptionStyle}>
@@ -232,8 +217,12 @@ export function LandingPage() {
 
         {/* Microsoft */}
         <div onMouseEnter={() => setMicrosoftHovered(true)} onMouseLeave={() => setMicrosoftHovered(false)} style={hoverCardStyle(microsoftHovered, t)}>
-          <div style={rowStyle(microsoftHovered)}>
-            {renderRowContent('Microsoft', 'UX Designer', '2019-2022')}
+          <div style={rowStyle}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Designer · Microsoft</span>
+              <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2019-2022</span>
+            </div>
+            <div style={toggleStyle}>{microsoftHovered ? '–' : '+'}</div>
           </div>
           <div style={descriptionReveal(microsoftHovered)}>
             <p style={descriptionStyle}>
@@ -245,8 +234,14 @@ export function LandingPage() {
         </div>
 
         {/* UW */}
-        <div style={rowStyle(false)}>
-          {renderRowContent('UW', 'Bachelors in Design', '2016-2019')}
+        <div onMouseEnter={() => setUwHovered(true)} onMouseLeave={() => setUwHovered(false)} style={hoverCardStyle(uwHovered, t)}>
+          <div style={rowStyle}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Bachelors in Design · UW</span>
+              <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2016-2019</span>
+            </div>
+            <div style={toggleStyle}>{uwHovered ? '–' : '+'}</div>
+          </div>
         </div>
 
         {/* Background */}
