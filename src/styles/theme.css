@@ -295,3 +295,8 @@
   0%, 100% { color: inherit; }
   50% { color: #07AB57; }
 }
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-792px); }
+}
