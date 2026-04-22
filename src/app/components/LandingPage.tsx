@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type AnchorHTMLAttributes } from 'react';
 import imgProfile from "figma:asset/f700c10be8e928d2c825e536435c89724d9f3fa1.png";
 
 const light = {
@@ -48,6 +48,28 @@ const descriptionReveal = (hovered: boolean) => ({
   opacity: hovered ? 1 : 0,
   transition: 'max-height 0.3s ease, opacity 0.25s ease',
 });
+
+function AnimatedLink({ children, style, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { children: string }) {
+  const [hovered, setHovered] = useState(false);
+  const chars = children.split('');
+  return (
+    <a
+      style={{ textDecoration: 'none', ...style }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      {...props}
+    >
+      {chars.map((char, i) => (
+        <span
+          key={i}
+          style={hovered ? { animation: `letterWave 0.6s ${i * 0.06}s ease-in-out infinite` } : undefined}
+        >
+          {char === ' ' ? ' ' : char}
+        </span>
+      ))}
+    </a>
+  );
+}
 
 export function LandingPage() {
   const [isDark, setIsDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -135,7 +157,7 @@ export function LandingPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', fontSize: 18, lineHeight: '26px' }}>
             <span style={{ fontWeight: 700, color: t.textPrimary, transition: 'color 0.3s ease' }}>Aleks</span>
-            <a href="mailto:hi@aleks.design" className="landing-link" style={{ fontWeight: 500, color: t.textMuted, textDecoration: 'none', transition: 'color 0.15s ease' }}>hi@aleks.design</a>
+            <AnimatedLink href="mailto:hi@aleks.design" style={{ fontWeight: 500, color: t.textMuted }}>hi@aleks.design</AnimatedLink>
           </div>
         </div>
 
@@ -156,9 +178,7 @@ export function LandingPage() {
           <div style={descriptionReveal(olympusHovered)}>
             <p style={descriptionStyle}>
               I designed{' '}
-              <a href="https://medical.olympusamerica.com/olysense" target="_blank" rel="noopener noreferrer" className="landing-link" style={linkStyle}>
-                OlySense
-              </a>
+              <AnimatedLink href="https://medical.olympusamerica.com/olysense" target="_blank" rel="noopener noreferrer" style={linkStyle}>OlySense</AnimatedLink>
               {' '}Insights, a clinical analytics tool for complex healthcare workflows, with a focus on making them clear, scalable, and trustworthy while supporting patient safety and quality of care.
             </p>
           </div>
@@ -176,9 +196,7 @@ export function LandingPage() {
           <div style={descriptionReveal(eeroHovered)}>
             <p style={descriptionStyle}>
               I worked on{' '}
-              <a href="https://eero.com" target="_blank" rel="noopener noreferrer" className="landing-link" style={linkStyle}>
-                eero
-              </a>
+              <AnimatedLink href="https://eero.com" target="_blank" rel="noopener noreferrer" style={linkStyle}>eero</AnimatedLink>
               {' '}design system across web and mobile, creating more consistent, scalable experiences, improving visual clarity through iconography.
             </p>
           </div>
@@ -196,9 +214,7 @@ export function LandingPage() {
           <div style={descriptionReveal(microsoftHovered)}>
             <p style={descriptionStyle}>
               I led design for cloud collaboration across web, desktop, and mobile, making{' '}
-              <a href="https://support.microsoft.com/en-us/office/share-files-and-folders-in-microsoft-onedrive-9fcc2f7d-de0c-4cec-93b0-a82024800c07" target="_blank" rel="noopener noreferrer" className="landing-link" style={linkStyle}>
-                OneDrive
-              </a>
+              <AnimatedLink href="https://support.microsoft.com/en-us/office/share-files-and-folders-in-microsoft-onedrive-9fcc2f7d-de0c-4cec-93b0-a82024800c07" target="_blank" rel="noopener noreferrer" style={linkStyle}>OneDrive</AnimatedLink>
               {' '}permissions and file-sharing workflows simpler for millions of users.
             </p>
           </div>
@@ -220,24 +236,8 @@ export function LandingPage() {
 
         {/* Links */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, fontSize: 18, lineHeight: '26px', fontWeight: 500 }}>
-          <a
-            href="https://www.instagram.com/zooruncow/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="landing-link"
-            style={{ color: t.textMuted, textDecoration: 'none', transition: 'color 0.15s ease' }}
-          >
-            Life
-          </a>
-          <a
-            href="https://www.linkedin.com/in/zhurankou/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="landing-link"
-            style={{ color: t.textMuted, textDecoration: 'none', transition: 'color 0.15s ease' }}
-          >
-            Work
-          </a>
+          <AnimatedLink href="https://www.instagram.com/zooruncow/" target="_blank" rel="noopener noreferrer" style={{ color: t.textMuted }}>Life</AnimatedLink>
+          <AnimatedLink href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" style={{ color: t.textMuted }}>Work</AnimatedLink>
         </div>
       </div>
     </div>
