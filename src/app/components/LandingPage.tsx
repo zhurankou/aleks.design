@@ -80,7 +80,7 @@ function AnimatedLink({ children, style, ...props }: AnchorHTMLAttributes<HTMLAn
 
 export function LandingPage() {
   const [isDark, setIsDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const [now, setNow] = useState(() => new Date());
+  const [locationWeather, setLocationWeather] = useState<string | null>(null);
   const [olympusHovered, setOlympusHovered] = useState(false);
   const [eeroHovered, setEeroHovered] = useState(false);
   const [microsoftHovered, setMicrosoftHovered] = useState(false);
@@ -94,8 +94,18 @@ export function LandingPage() {
   }, []);
 
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
+    (async () => {
+      try {
+        const geo = await fetch('https://ipapi.co/json/').then(r => r.json());
+        const { city, region_code, country_code, latitude, longitude } = geo;
+        const weather = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m&temperature_unit=fahrenheit&forecast_days=1`
+        ).then(r => r.json());
+        const temp = Math.round(weather.current.temperature_2m);
+        const place = country_code === 'US' ? `${city}, ${region_code}` : `${city}, ${country_code}`;
+        setLocationWeather(`${place} · ${temp}°F`);
+      } catch {}
+    })();
   }, []);
 
   useEffect(() => {
@@ -118,10 +128,6 @@ export function LandingPage() {
     textDecoration: 'none' as const,
     transition: 'color 0.15s ease',
   };
-
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const h = now.getHours(), m = now.getMinutes();
-  const formattedDateTime = `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()} ${String(h % 12 || 12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
 
   const rowStyle = {
     display: 'flex' as const,
@@ -357,7 +363,7 @@ export function LandingPage() {
             <AnimatedLink href="https://www.instagram.com/zooruncow/" target="_blank" rel="noopener noreferrer" style={{ color: t.textMuted }}>Life</AnimatedLink>
             <AnimatedLink href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" style={{ color: t.textMuted }}>Work</AnimatedLink>
           </div>
-          <span style={{ transition: 'color 0.3s ease' }}>{formattedDateTime}</span>
+          {locationWeather && <span style={{ transition: 'color 0.3s ease' }}>{locationWeather}</span>}
         </div>
       </div>
     </div>
