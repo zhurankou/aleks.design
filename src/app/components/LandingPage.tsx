@@ -271,7 +271,7 @@ export function LandingPage() {
         {/* Toolset */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
           <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>Toolset</span>
-          <div style={{ overflow: 'hidden', width: '100%' }}>
+          <div style={{ overflow: 'hidden', width: '100%', WebkitMaskImage: 'linear-gradient(to right, transparent 0px, black 48px, black calc(100% - 48px), transparent 100%)', maskImage: 'linear-gradient(to right, transparent 0px, black 48px, black calc(100% - 48px), transparent 100%)' }}>
             <div style={{ display: 'flex', gap: 24, alignItems: 'center', animation: 'marquee 20s linear infinite', width: 'max-content' }}>
               {[0, 1].map(pass => (
                 <React.Fragment key={pass}>
