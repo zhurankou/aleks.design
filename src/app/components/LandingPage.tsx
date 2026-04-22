@@ -185,7 +185,7 @@ export function LandingPage() {
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', fontSize: 18, lineHeight: '26px' }}>
-            <span style={{ fontWeight: 500, color: t.textPrimary, transition: 'color 0.3s ease' }}>Aleks</span>
+            <span style={{ fontWeight: 600, color: t.textPrimary, transition: 'color 0.3s ease' }}>Aleks</span>
             <AnimatedLink href="mailto:hi@aleks.design" style={{ fontWeight: 400, color: t.textMuted }}>hi@aleks.design</AnimatedLink>
           </div>
         </div>
@@ -199,7 +199,7 @@ export function LandingPage() {
         <div onMouseEnter={() => setOlympusHovered(true)} onMouseLeave={() => setOlympusHovered(false)} style={hoverCardStyle(olympusHovered, t)}>
           <div style={rowStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Product Designer III · Olympus</span>
+              <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Product Designer III · Olympus</span>
               <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2024-2026</span>
             </div>
             <div style={toggleStyle}>{olympusHovered ? '–' : '+'}</div>
@@ -217,7 +217,7 @@ export function LandingPage() {
         <div onMouseEnter={() => setEeroHovered(true)} onMouseLeave={() => setEeroHovered(false)} style={hoverCardStyle(eeroHovered, t)}>
           <div style={rowStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Sr Product Designer · Amazon</span>
+              <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Sr Product Designer · Amazon</span>
               <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2022-2023</span>
             </div>
             <div style={toggleStyle}>{eeroHovered ? '–' : '+'}</div>
@@ -235,7 +235,7 @@ export function LandingPage() {
         <div onMouseEnter={() => setMicrosoftHovered(true)} onMouseLeave={() => setMicrosoftHovered(false)} style={hoverCardStyle(microsoftHovered, t)}>
           <div style={rowStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Designer · Microsoft</span>
+              <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Designer · Microsoft</span>
               <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2019-2022</span>
             </div>
             <div style={toggleStyle}>{microsoftHovered ? '–' : '+'}</div>
@@ -253,7 +253,7 @@ export function LandingPage() {
         <div onMouseEnter={() => setSeattleHovered(true)} onMouseLeave={() => setSeattleHovered(false)} style={hoverCardStyle(seattleHovered, t)}>
           <div style={rowStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Design Intern · City of Seattle</span>
+              <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Design Intern · City of Seattle</span>
               <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2018-2019</span>
             </div>
             <div style={toggleStyle}>{seattleHovered ? '–' : '+'}</div>
@@ -270,7 +270,7 @@ export function LandingPage() {
         {/* UW */}
         <div style={rowStyle}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span style={{ fontWeight: 500, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Bachelors in Design · UW</span>
+            <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Bachelors in Design · UW</span>
             <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2016-2019</span>
           </div>
         </div>
