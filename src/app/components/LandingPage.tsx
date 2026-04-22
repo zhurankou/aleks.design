@@ -1,14 +1,14 @@
 import React, { useState, useEffect, type AnchorHTMLAttributes } from 'react';
 import imgProfile from "figma:asset/f700c10be8e928d2c825e536435c89724d9f3fa1.png";
-import imgToolFigma from '../../assets/tool-figma.svg';
-import imgToolClaudecode from '../../assets/tool-claudecode.svg';
-import imgToolChatgpt from '../../assets/tool-chatgpt.svg';
-import imgToolApp1 from '../../assets/tool-app1.svg';
-import imgToolCursor from '../../assets/tool-cursor.svg';
-import imgToolApp2 from '../../assets/tool-app2.svg';
-import imgToolApp3 from '../../assets/tool-app3.svg';
-import imgToolNotebooklm from '../../assets/tool-notebooklm.svg';
-import imgToolGemini from '../../assets/tool-gemini-mask.svg';
+import FigmaIcon from '../../assets/tool-figma.svg?react';
+import ClaudeCodeIcon from '../../assets/tool-claudecode.svg?react';
+import ChatGPTIcon from '../../assets/tool-chatgpt.svg?react';
+import App1Icon from '../../assets/tool-app1.svg?react';
+import CursorIcon from '../../assets/tool-cursor.svg?react';
+import App2Icon from '../../assets/tool-app2.svg?react';
+import App3Icon from '../../assets/tool-app3.svg?react';
+import NotebookLMIcon from '../../assets/tool-notebooklm.svg?react';
+import GeminiIcon from '../../assets/tool-gemini-mask.svg?react';
 
 const light = {
   pageBg: '#ffffff',
@@ -277,44 +277,44 @@ export function LandingPage() {
                 <React.Fragment key={pass}>
                   {/* Figma */}
                   <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
-                    <img src={imgToolFigma} alt="Figma" style={{ width: 27, height: 40, display: 'block' }} />
+                    <FigmaIcon width={27} height={40} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                   {/* Claude Code */}
                   <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
-                    <img src={imgToolClaudecode} alt="Claude Code" style={{ width: 45, height: 28, display: 'block' }} />
+                    <ClaudeCodeIcon width={45} height={28} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                   {/* ChatGPT */}
                   <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
-                    <img src={imgToolChatgpt} alt="ChatGPT" style={{ width: 50, height: 50, display: 'block' }} />
+                    <ChatGPTIcon width={50} height={50} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                   {/* Jitter (full icon) */}
                   <div style={{ width: 64, height: 64, flexShrink: 0 }}>
-                    <img src={imgToolApp1} alt="" style={{ width: 64, height: 64, display: 'block' }} />
+                    <App1Icon width={64} height={64} />
                   </div>
                   {/* Cursor */}
                   <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
-                    <img src={imgToolCursor} alt="Cursor" style={{ width: 42, height: 48, display: 'block' }} />
+                    <CursorIcon width={42} height={48} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                   {/* App 2 (full icon) */}
                   <div style={{ width: 64, height: 64, flexShrink: 0 }}>
-                    <img src={imgToolApp2} alt="" style={{ width: 64, height: 64, display: 'block' }} />
+                    <App2Icon width={64} height={64} />
                   </div>
                   {/* App 3 (full icon) */}
                   <div style={{ width: 64, height: 64, flexShrink: 0 }}>
-                    <img src={imgToolApp3} alt="" style={{ width: 64, height: 64, display: 'block' }} />
+                    <App3Icon width={64} height={64} />
                   </div>
                   {/* NotebookLM */}
                   <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
-                    <img src={imgToolNotebooklm} alt="NotebookLM" style={{ width: 42, height: 42, display: 'block' }} />
+                    <NotebookLMIcon width={42} height={42} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                   {/* Gemini */}
                   <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(234,234,234,0.1)' }}>
-                    <img src={imgToolGemini} alt="Gemini" style={{ width: 44, height: 44, display: 'block' }} />
+                    <GeminiIcon width={44} height={44} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
                 </React.Fragment>
