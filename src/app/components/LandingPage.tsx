@@ -80,6 +80,7 @@ export function LandingPage() {
   const linkStyle = {
     color: t.textMuted,
     textDecoration: 'none' as const,
+    transition: 'color 0.15s ease',
   };
 
   return (
@@ -134,7 +135,7 @@ export function LandingPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', fontSize: 18, lineHeight: '26px' }}>
             <span style={{ fontWeight: 700, color: t.textPrimary, transition: 'color 0.3s ease' }}>Aleks</span>
-            <a href="mailto:hi@aleks.design" style={{ fontWeight: 500, color: t.textMuted, textDecoration: 'none', transition: 'color 0.3s ease' }}>hi@aleks.design</a>
+            <a href="mailto:hi@aleks.design" className="landing-link" style={{ fontWeight: 500, color: t.textMuted, textDecoration: 'none', transition: 'color 0.15s ease' }}>hi@aleks.design</a>
           </div>
         </div>
 
@@ -155,10 +156,10 @@ export function LandingPage() {
           <div style={descriptionReveal(olympusHovered)}>
             <p style={descriptionStyle}>
               I designed{' '}
-              <a href="https://medical.olympusamerica.com/olysense" target="_blank" rel="noopener noreferrer" style={linkStyle}>
-                Olysense Insights
+              <a href="https://medical.olympusamerica.com/olysense" target="_blank" rel="noopener noreferrer" className="landing-link" style={linkStyle}>
+                OlySense
               </a>
-              , a clinical analytics tool, making complex healthcare workflows feel clear, scalable, and trustworthy, with a strong focus on patient safety and quality of care.
+              {' '}Insights, a clinical analytics tool for complex healthcare workflows, with a focus on making them clear, scalable, and trustworthy while supporting patient safety and quality of care.
             </p>
           </div>
         </div>
@@ -175,7 +176,7 @@ export function LandingPage() {
           <div style={descriptionReveal(eeroHovered)}>
             <p style={descriptionStyle}>
               I worked on{' '}
-              <a href="https://eero.com" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+              <a href="https://eero.com" target="_blank" rel="noopener noreferrer" className="landing-link" style={linkStyle}>
                 eero
               </a>
               {' '}design system across web and mobile, creating more consistent, scalable experiences, improving visual clarity through iconography.
@@ -195,7 +196,7 @@ export function LandingPage() {
           <div style={descriptionReveal(microsoftHovered)}>
             <p style={descriptionStyle}>
               I led design for cloud collaboration across web, desktop, and mobile, making{' '}
-              <a href="https://support.microsoft.com/en-us/office/share-files-and-folders-in-microsoft-onedrive-9fcc2f7d-de0c-4cec-93b0-a82024800c07" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+              <a href="https://support.microsoft.com/en-us/office/share-files-and-folders-in-microsoft-onedrive-9fcc2f7d-de0c-4cec-93b0-a82024800c07" target="_blank" rel="noopener noreferrer" className="landing-link" style={linkStyle}>
                 OneDrive
               </a>
               {' '}permissions and file-sharing workflows simpler for millions of users.
@@ -223,7 +224,8 @@ export function LandingPage() {
             href="https://www.instagram.com/zooruncow/"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: t.textMuted, textDecoration: 'none', transition: 'color 0.3s ease' }}
+            className="landing-link"
+            style={{ color: t.textMuted, textDecoration: 'none', transition: 'color 0.15s ease' }}
           >
             Life
           </a>
@@ -231,7 +233,8 @@ export function LandingPage() {
             href="https://www.linkedin.com/in/zhurankou/"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: t.textMuted, textDecoration: 'none', transition: 'color 0.3s ease' }}
+            className="landing-link"
+            style={{ color: t.textMuted, textDecoration: 'none', transition: 'color 0.15s ease' }}
           >
             Work
           </a>
