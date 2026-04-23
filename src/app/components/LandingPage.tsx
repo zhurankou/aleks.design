@@ -16,14 +16,15 @@ import CursorIconDark from '../../assets/tool-cursor-dark.svg?react';
 import GitHubIconDark from '../../assets/tool-github-dark.svg?react';
 import App8IconDark from '../../assets/tool-app8-dark.svg?react';
 import NotebookLMIconDark from '../../assets/tool-notebooklm-dark.svg?react';
+import BananaIcon from '../../assets/tool-banana.svg?react';
 
 const light = {
-  pageBg: '#ffffff',
-  cardBg: '#fafafa',
-  textPrimary: '#3a3a3a',
+  pageBg: '#fcfcfc',
+  cardBg: '#f3f3f3',
+  textPrimary: '#0f0f0f',
   textMuted: '#959595',
   avatarOverlay: 'rgba(0,0,0,0.1)',
-  dotBorder: '#ffffff',
+  dotBorder: '#fcfcfc',
 };
 
 const dark = {
@@ -80,32 +81,17 @@ function AnimatedLink({ children, style, ...props }: AnchorHTMLAttributes<HTMLAn
 
 export function LandingPage() {
   const [isDark, setIsDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const [locationWeather, setLocationWeather] = useState<string | null>(null);
   const [olympusHovered, setOlympusHovered] = useState(false);
   const [eeroHovered, setEeroHovered] = useState(false);
   const [microsoftHovered, setMicrosoftHovered] = useState(false);
   const [seattleHovered, setSeattleHovered] = useState(false);
+  const [uwHovered, setUwHovered] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const geo = await fetch('https://ipapi.co/json/').then(r => r.json());
-        const { city, region_code, country_code, latitude, longitude } = geo;
-        const weather = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m&temperature_unit=fahrenheit&forecast_days=1`
-        ).then(r => r.json());
-        const temp = Math.round(weather.current.temperature_2m);
-        const place = country_code === 'US' ? `${city}, ${region_code}` : `${city}, ${country_code}`;
-        setLocationWeather(`${place} · ${temp}°F`);
-      } catch {}
-    })();
   }, []);
 
   useEffect(() => {
@@ -215,7 +201,7 @@ export function LandingPage() {
         <div onMouseEnter={() => setOlympusHovered(true)} onMouseLeave={() => setOlympusHovered(false)} style={hoverCardStyle(olympusHovered, t)}>
           <div style={rowStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Product Designer III · Olympus</span>
+              <span style={{ fontWeight: 700, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Product Designer · Olympus</span>
               <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2024-2026</span>
             </div>
             <div style={toggleStyle}>{olympusHovered ? '–' : '+'}</div>
@@ -233,7 +219,7 @@ export function LandingPage() {
         <div onMouseEnter={() => setEeroHovered(true)} onMouseLeave={() => setEeroHovered(false)} style={hoverCardStyle(eeroHovered, t)}>
           <div style={rowStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Sr Product Designer · Amazon</span>
+              <span style={{ fontWeight: 700, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Product Designer · Amazon</span>
               <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2022-2023</span>
             </div>
             <div style={toggleStyle}>{eeroHovered ? '–' : '+'}</div>
@@ -251,7 +237,7 @@ export function LandingPage() {
         <div onMouseEnter={() => setMicrosoftHovered(true)} onMouseLeave={() => setMicrosoftHovered(false)} style={hoverCardStyle(microsoftHovered, t)}>
           <div style={rowStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Designer · Microsoft</span>
+              <span style={{ fontWeight: 700, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Designer · Microsoft</span>
               <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2019-2022</span>
             </div>
             <div style={toggleStyle}>{microsoftHovered ? '–' : '+'}</div>
@@ -269,7 +255,7 @@ export function LandingPage() {
         <div onMouseEnter={() => setSeattleHovered(true)} onMouseLeave={() => setSeattleHovered(false)} style={hoverCardStyle(seattleHovered, t)}>
           <div style={rowStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Design Intern · City of Seattle</span>
+              <span style={{ fontWeight: 700, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Design Intern · City of Seattle</span>
               <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2018-2019</span>
             </div>
             <div style={toggleStyle}>{seattleHovered ? '–' : '+'}</div>
@@ -284,10 +270,13 @@ export function LandingPage() {
         </div>
 
         {/* UW */}
-        <div style={rowStyle}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span style={{ fontWeight: 600, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Bachelors in Design · UW</span>
-            <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2016-2019</span>
+        <div onMouseEnter={() => setUwHovered(true)} onMouseLeave={() => setUwHovered(false)} style={hoverCardStyle(uwHovered, t)}>
+          <div style={rowStyle}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontWeight: 700, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Bachelors in Design · UW</span>
+              <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2016-2019</span>
+            </div>
+            <div style={toggleStyle}>{uwHovered ? '–' : '+'}</div>
           </div>
         </div>
 
@@ -346,6 +335,10 @@ export function LandingPage() {
                     <GeminiIcon width={44} height={44} />
                     <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', boxShadow: 'inset 2px -1px 10.9px 0px rgba(0,0,0,0.15)', pointerEvents: 'none' }} />
                   </div>
+                  {/* 11. Banana */}
+                  <div style={{ width: 64, height: 64, flexShrink: 0 }}>
+                    <BananaIcon width={64} height={64} />
+                  </div>
                 </React.Fragment>
               ))}
             </div>
@@ -354,16 +347,15 @@ export function LandingPage() {
 
         {/* Background */}
         <p style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textPrimary, margin: 0, transition: 'color 0.3s ease' }}>
-          My path into design wasn't traditional. I worked as an investigator, a turret machine operator, a janitor, and served in the Navy before eventually choosing what I'd always been passionate about.
+          My path into design wasn't traditional. I worked as an investigator, a turret machine operator, a janitor, and served in the US Navy before eventually choosing what I'd always been passionate about.
         </p>
 
         {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 18, lineHeight: '26px', fontWeight: 400, color: t.textMuted }}>
+        <div style={{ display: 'flex', alignItems: 'center', fontSize: 18, lineHeight: '26px', fontWeight: 400, color: t.textMuted }}>
           <div style={{ display: 'flex', gap: 16 }}>
             <AnimatedLink href="https://www.instagram.com/zooruncow/" target="_blank" rel="noopener noreferrer" style={{ color: t.textMuted }}>Life</AnimatedLink>
             <AnimatedLink href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" style={{ color: t.textMuted }}>Work</AnimatedLink>
           </div>
-          {locationWeather && <span style={{ transition: 'color 0.3s ease' }}>{locationWeather}</span>}
         </div>
       </div>
     </div>

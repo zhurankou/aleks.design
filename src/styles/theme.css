@@ -298,5 +298,5 @@
 
 @keyframes marquee {
   0%   { transform: translateX(0); }
-  100% { transform: translateX(-880px); }
+  100% { transform: translateX(-968px); }
 }
