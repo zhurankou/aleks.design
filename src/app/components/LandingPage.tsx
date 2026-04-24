@@ -1,4 +1,5 @@
 import React, { useState, useEffect, type AnchorHTMLAttributes } from 'react';
+import { MeshBackground } from './MeshBackground';
 import imgProfile from "figma:asset/f700c10be8e928d2c825e536435c89724d9f3fa1.png";
 import FigmaIcon from '../../assets/tool-figma-light.svg?react';
 import ClaudeCodeIcon from '../../assets/tool-claudecode-light.svg?react';
@@ -154,7 +155,6 @@ export function LandingPage() {
   return (
     <div
       style={{
-        backgroundColor: t.pageBg,
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
@@ -163,9 +163,11 @@ export function LandingPage() {
         paddingTop: 40,
         paddingBottom: 40,
         fontFamily: "'Lato', sans-serif",
-        transition: 'background-color 0.3s ease',
+        position: 'relative',
       }}
     >
+      <MeshBackground isDark={isDark} />
+
       <div
         style={{
           width: '100%',
@@ -174,6 +176,8 @@ export function LandingPage() {
           flexDirection: 'column',
           alignItems: 'center',
           gap: 40,
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         {/* Account */}
