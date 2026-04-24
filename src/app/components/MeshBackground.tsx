@@ -15,12 +15,12 @@ export interface MeshBackgroundProps {
 }
 
 const PALETTE: [number, number, number][] = [
-  [200, 120, 255], // violet
-  [255, 140, 190], // rose
-  [255, 230, 100], // amber
-  [120, 180, 255], // sky
-  [120, 230, 190], // mint
-  [220, 160, 255], // lavender
+  [200, 240,  80], // yellow-green
+  [120, 220, 160], // mint-green
+  [100, 170, 255], // sky-blue
+  [180, 130, 255], // lavender
+  [255, 220,  60], // warm yellow
+  [140, 200, 255], // light blue
 ];
 
 interface Blob {
@@ -56,13 +56,13 @@ function createBlobs(n: number): Blob[] {
 
 export function MeshBackground({
   intensity        = 1,
-  blur             = 80,
+  blur             = 52,
   mouseInfluence   = 0.30,
   fadeOutTime      = 2800,
   animSpeed        = 0.32,
-  colorOpacity     = 0.40,
-  meshDensity      = 20,
-  meshOpacity      = 0.05,
+  colorOpacity     = 0.70,
+  meshDensity      = 22,
+  meshOpacity      = 0.08,
   bubbleAmount     = 0.08,
   bubbleRandomness = 1,
   isDark           = false,
@@ -160,7 +160,7 @@ export function MeshBackground({
         bx.scale(1, yScale);
         const grad = bx.createRadialGradient(0, 0, 0, 0, 0, brad);
         grad.addColorStop(0,    `rgba(${r},${g},${bl},${alpha})`);
-        grad.addColorStop(0.48, `rgba(${r},${g},${bl},${(alpha * 0.44).toFixed(4)})`);
+        grad.addColorStop(0.55, `rgba(${r},${g},${bl},${(alpha * 0.60).toFixed(4)})`);
         grad.addColorStop(1,    `rgba(${r},${g},${bl},0)`);
         bx.fillStyle = grad;
         bx.beginPath();
