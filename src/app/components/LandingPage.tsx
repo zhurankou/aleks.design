@@ -1,5 +1,4 @@
 import React, { useState, useEffect, type AnchorHTMLAttributes } from 'react';
-import { MeshBackground } from './MeshBackground';
 
 import imgProfile from "figma:asset/f700c10be8e928d2c825e536435c89724d9f3fa1.png";
 
@@ -105,8 +104,6 @@ export function LandingPage() {
         transition: 'background-color 0.3s ease',
       }}
     >
-      <MeshBackground isDark={isDark} />
-
       <div
         style={{
           width: '100%',

@@ -6,11 +6,11 @@ export interface MeshBackgroundProps {
 
 // Blobs positioned along the diagonal band from bottom-left → top-right
 const BLOBS: { x: number; y: number; r: number; color: [number, number, number] }[] = [
-  { x: 0.05, y: 0.92, r: 0.54, color: [100, 208, 145] }, // teal,         bottom-left
-  { x: 0.22, y: 0.74, r: 0.52, color: [178, 228,  80] }, // yellow-green
-  { x: 0.40, y: 0.56, r: 0.50, color: [222, 240,  88] }, // warm yellow,  center
-  { x: 0.60, y: 0.38, r: 0.50, color: [128, 192, 255] }, // sky-blue
-  { x: 0.85, y: 0.16, r: 0.46, color: [172, 152, 255] }, // lavender,     top-right
+  { x: 0.05, y: 0.92, r: 0.30, color: [100, 208, 145] }, // teal,         bottom-left
+  { x: 0.22, y: 0.74, r: 0.28, color: [178, 228,  80] }, // yellow-green
+  { x: 0.40, y: 0.56, r: 0.28, color: [222, 240,  88] }, // warm yellow,  center
+  { x: 0.60, y: 0.38, r: 0.28, color: [128, 192, 255] }, // sky-blue
+  { x: 0.85, y: 0.16, r: 0.26, color: [172, 152, 255] }, // lavender,     top-right
 ];
 
 // Diagonal from bottom-left to top-right, matching Figma's -57° rotation
@@ -134,8 +134,8 @@ export function MeshBackground({ isDark = false }: MeshBackgroundProps) {
 
           // Multi-frequency wave perpendicular to the diagonal
           const wave =
-            lineSpacing * 2.4 * Math.sin(u / diagLen * Math.PI * 3.5 + s.t * 0.90 + li * 0.20)
-          + lineSpacing * 0.8 * Math.sin(u / diagLen * Math.PI * 8.2 + s.t * 0.44 + li * 0.38);
+            lineSpacing * 1.5 * Math.sin(u / diagLen * Math.PI * 3.5 + s.t * 0.90 + li * 0.20)
+          + lineSpacing * 0.5 * Math.sin(u / diagLen * Math.PI * 8.2 + s.t * 0.44 + li * 0.38);
 
           const v  = offset + wave;
           const px = cx + u * cosA - v * sinA;
