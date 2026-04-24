@@ -1,266 +1,173 @@
 import React, { useRef, useEffect } from 'react';
 
 export interface MeshBackgroundProps {
-  intensity?: number;
-  blur?: number;
-  mouseInfluence?: number;
-  fadeOutTime?: number;
-  animSpeed?: number;
-  colorOpacity?: number;
-  meshDensity?: number;
-  meshOpacity?: number;
-  bubbleAmount?: number;
-  bubbleRandomness?: number;
   isDark?: boolean;
 }
 
-const PALETTE: [number, number, number][] = [
-  [200, 240,  80], // yellow-green
-  [120, 220, 160], // mint-green
-  [100, 170, 255], // sky-blue
-  [180, 130, 255], // lavender
-  [255, 220,  60], // warm yellow
-  [140, 200, 255], // light blue
+// Blobs positioned along the diagonal band from bottom-left → top-right
+const BLOBS: { x: number; y: number; r: number; color: [number, number, number] }[] = [
+  { x: 0.05, y: 0.92, r: 0.54, color: [100, 208, 145] }, // teal,         bottom-left
+  { x: 0.22, y: 0.74, r: 0.52, color: [178, 228,  80] }, // yellow-green
+  { x: 0.40, y: 0.56, r: 0.50, color: [222, 240,  88] }, // warm yellow,  center
+  { x: 0.60, y: 0.38, r: 0.50, color: [128, 192, 255] }, // sky-blue
+  { x: 0.85, y: 0.16, r: 0.46, color: [172, 152, 255] }, // lavender,     top-right
 ];
 
-interface Blob {
-  hx: number; hy: number;
-  x: number;  y: number;
-  vx: number; vy: number;
-  r: number;
-  color: [number, number, number];
-  phase: number;
-  speed: number;
-  ry: number;
-  py: number;
+// Diagonal from bottom-left to top-right, matching Figma's -57° rotation
+const DIAG_ANGLE = -55 * Math.PI / 180;
+const cosA = Math.cos(DIAG_ANGLE); //  ≈  0.574
+const sinA = Math.sin(DIAG_ANGLE); //  ≈ -0.819
+
+// Sample a gradient color + opacity weight from the blob field at a screen point
+function sampleBlobs(
+  screenX: number,
+  screenY: number,
+  W: number,
+  H: number,
+): { r: number; g: number; b: number; weight: number } {
+  let tr = 0, tg = 0, tb = 0, tw = 0;
+  for (const blob of BLOBS) {
+    const dx = screenX / W - blob.x;
+    const dy = screenY / H - blob.y;
+    const d  = Math.sqrt(dx * dx + dy * dy);
+    const w  = Math.max(0, 1 - d / (blob.r * 1.4)) ** 2;
+    tr += blob.color[0] * w;
+    tg += blob.color[1] * w;
+    tb += blob.color[2] * w;
+    tw += w;
+  }
+  if (tw < 0.001) return { r: 180, g: 210, b: 255, weight: 0 };
+  return { r: tr / tw, g: tg / tw, b: tb / tw, weight: Math.min(1, tw) };
 }
 
-function createBlobs(n: number): Blob[] {
-  return Array.from({ length: n }, (_, i) => {
-    const angle = (i / n) * Math.PI * 2 + Math.random();
-    const dist  = 0.10 + Math.random() * 0.48;
-    return {
-      hx:    Math.max(0.05, Math.min(0.95, 0.5 + Math.cos(angle) * dist)),
-      hy:    Math.max(0.05, Math.min(0.95, 0.5 + Math.sin(angle) * dist)),
-      x: 0, y: 0,
-      vx: 0, vy: 0,
-      r:     0.32 + Math.random() * 0.28,
-      color: PALETTE[i % PALETTE.length],
-      phase: (i / n) * Math.PI * 2 + Math.random(),
-      speed: 0.40 + Math.random() * 0.55,
-      ry:    0.55 + Math.random() * 0.55,
-      py:    Math.random() * Math.PI * 2,
-    };
-  });
-}
-
-export function MeshBackground({
-  intensity        = 1,
-  blur             = 52,
-  mouseInfluence   = 0.30,
-  fadeOutTime      = 2800,
-  animSpeed        = 0.32,
-  colorOpacity     = 0.70,
-  meshDensity      = 22,
-  meshOpacity      = 0.08,
-  bubbleAmount     = 0.08,
-  bubbleRandomness = 1,
-  isDark           = false,
-}: MeshBackgroundProps) {
-  const blobCvs = useRef<HTMLCanvasElement>(null);
-  const meshCvs = useRef<HTMLCanvasElement>(null);
-
-  const st = useRef({
-    blobs:       createBlobs(6),
-    mouse:       { x: 0.5, y: 0.5, lastT: -1e9 },
-    t:           0,
-    prevT:       0,
-    raf:         0,
-    initialized: false,
-  });
+export function MeshBackground({ isDark = false }: MeshBackgroundProps) {
+  const cvs = useRef<HTMLCanvasElement>(null);
+  const st  = useRef({ t: 0, prevT: 0, raf: 0, mx: 0.5, my: 0.5, lastT: -1e9 });
 
   useEffect(() => {
-    const bc = blobCvs.current;
-    const mc = meshCvs.current;
-    if (!bc || !mc) return;
-
-    const bx = bc.getContext('2d')!;
-    const mx = mc.getContext('2d')!;
-    const s  = st.current;
-
+    const canvas = cvs.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    const s   = st.current;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const PAD  = blur * 2;
-    const HALF = PAD / 2;
-
     const resize = () => {
-      bc.width  = window.innerWidth  + PAD;
-      bc.height = window.innerHeight + PAD;
-      mc.width  = window.innerWidth;
-      mc.height = window.innerHeight;
-      s.initialized = false;
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
     };
     resize();
     window.addEventListener('resize', resize);
 
     const onMouse = (e: MouseEvent) => {
-      s.mouse.x     = e.clientX / window.innerWidth;
-      s.mouse.y     = e.clientY / window.innerHeight;
-      s.mouse.lastT = performance.now();
+      s.mx    = e.clientX / window.innerWidth;
+      s.my    = e.clientY / window.innerHeight;
+      s.lastT = performance.now();
     };
     window.addEventListener('mousemove', onMouse, { passive: true });
+
+    const NUM_LINES = 80;
+    const STEPS     = 280;
 
     const frame = (now: number) => {
       const dt = Math.min((now - s.prevT) / 1000, 0.05);
       s.prevT  = now;
-      if (!reduced) s.t += dt * animSpeed;
+      if (!reduced) s.t += dt * 0.28;
 
-      const W = window.innerWidth;
-      const H = window.innerHeight;
-      const D = Math.min(W, H);
+      const W  = canvas.width;
+      const H  = canvas.height;
+      const D  = Math.min(W, H);
+      const cx = W * 0.5;
+      const cy = H * 0.5;
+      const diagLen     = Math.sqrt(W * W + H * H);
+      const lineSpacing = diagLen / NUM_LINES;
 
-      if (!s.initialized) {
-        s.blobs.forEach(b => { b.x = b.hx * W; b.y = b.hy * H; });
-        s.initialized = true;
+      ctx.clearRect(0, 0, W, H);
+
+      // Mouse: shift the whole gradient gently toward cursor
+      const age  = now - s.lastT;
+      const mStr = Math.max(0, 1 - age / 3000) * 0.18;
+      const mOffX = (s.mx * W - cx) * mStr;
+      const mOffY = (s.my * H - cy) * mStr;
+
+      // ── Gradient blobs ─────────────────────────────────────────────────────
+      for (let i = 0; i < BLOBS.length; i++) {
+        const b = BLOBS[i];
+        const driftX = Math.sin(s.t * 0.42 + i * 1.1) * D * 0.028;
+        const driftY = Math.cos(s.t * 0.36 + i * 0.9) * D * 0.028;
+        const bx   = b.x * W + mOffX + driftX;
+        const by   = b.y * H + mOffY + driftY;
+        const brad = b.r * D;
+        const [r, g, bl] = b.color;
+        const alpha = isDark ? 0.60 : 0.54;
+
+        const grad = ctx.createRadialGradient(bx, by, 0, bx, by, brad);
+        grad.addColorStop(0,    `rgba(${r},${g},${bl},${alpha})`);
+        grad.addColorStop(0.55, `rgba(${r},${g},${bl},${(alpha * 0.58).toFixed(3)})`);
+        grad.addColorStop(1,    `rgba(${r},${g},${bl},0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(bx, by, brad, 0, Math.PI * 2);
+        ctx.fill();
       }
 
-      // Mouse attraction: gradient drifts toward cursor position
-      const age  = now - s.mouse.lastT;
-      const mStr = Math.max(0, 1 - age / fadeOutTime);
-      const mx2  = s.mouse.x * W;
-      const my2  = s.mouse.y * H;
+      // ── Flow lines ─────────────────────────────────────────────────────────
+      if (reduced) { s.raf = requestAnimationFrame(frame); return; }
 
-      // Global offset: shift all blobs toward where the cursor is relative to screen center
-      const mOffX = (mx2 - W * 0.5) * mouseInfluence * mStr;
-      const mOffY = (my2 - H * 0.5) * mouseInfluence * mStr;
+      for (let li = 0; li < NUM_LINES; li++) {
+        const offset = (li - NUM_LINES * 0.5) * lineSpacing;
 
-      bx.clearRect(0, 0, W + PAD, H + PAD);
+        // Line midpoint in screen space (at u = 0 along the diagonal)
+        // rotation: px = cx + u*cosA - v*sinA, py = cy + u*sinA + v*cosA
+        const midX = cx - offset * sinA; // sinA < 0, so this goes right for positive offset
+        const midY = cy + offset * cosA;
 
-      s.blobs.forEach(b => {
-        const amp  = bubbleAmount * D * bubbleRandomness;
-        const ambX = b.hx * W + Math.sin(s.t * b.speed        + b.phase)       * amp;
-        const ambY = b.hy * H + Math.cos(s.t * b.speed * b.ry + b.phase + b.py) * amp;
+        const { r: lr, g: lg, b: lb, weight } = sampleBlobs(midX, midY, W, H);
+        if (weight < 0.02) continue; // skip lines with no gradient coverage
 
-        const targetX = ambX + mOffX;
-        const targetY = ambY + mOffY;
-        b.vx  = (b.vx + (targetX - b.x) * 0.045) * 0.87;
-        b.vy  = (b.vy + (targetY - b.y) * 0.045) * 0.87;
-        b.x  += b.vx;
-        b.y  += b.vy;
+        const la = 0.24 * Math.min(1, weight * 2.5) * (isDark ? 1.3 : 1.0);
+        ctx.strokeStyle = `rgba(${Math.round(lr)},${Math.round(lg)},${Math.round(lb)},${la.toFixed(3)})`;
+        ctx.lineWidth   = 0.7;
+        ctx.beginPath();
 
-        const yScale = 0.76 + Math.sin(s.t * 0.18 + b.phase) * 0.11;
-        const bxc    = b.x + HALF;
-        const byc    = b.y + HALF;
-        const brad   = b.r * D;
-        const alpha  = colorOpacity * intensity * (isDark ? 1.5 : 1.0);
-        const [r, g, bl] = b.color;
+        for (let si = 0; si <= STEPS; si++) {
+          const u = (si / STEPS) * diagLen - diagLen * 0.5;
 
-        bx.save();
-        bx.translate(bxc, byc);
-        bx.scale(1, yScale);
-        const grad = bx.createRadialGradient(0, 0, 0, 0, 0, brad);
-        grad.addColorStop(0,    `rgba(${r},${g},${bl},${alpha})`);
-        grad.addColorStop(0.55, `rgba(${r},${g},${bl},${(alpha * 0.60).toFixed(4)})`);
-        grad.addColorStop(1,    `rgba(${r},${g},${bl},0)`);
-        bx.fillStyle = grad;
-        bx.beginPath();
-        bx.arc(0, 0, brad, 0, Math.PI * 2);
-        bx.fill();
-        bx.restore();
-      });
+          // Multi-frequency wave perpendicular to the diagonal
+          const wave =
+            lineSpacing * 2.4 * Math.sin(u / diagLen * Math.PI * 3.5 + s.t * 0.90 + li * 0.20)
+          + lineSpacing * 0.8 * Math.sin(u / diagLen * Math.PI * 8.2 + s.t * 0.44 + li * 0.38);
 
-      const ma = meshOpacity * intensity;
-      if (!reduced && ma > 0.001) {
-        mx.clearRect(0, 0, W, H);
-        mx.strokeStyle = isDark
-          ? `rgba(185,175,225,${ma})`
-          : `rgba(108,96,148,${ma})`;
-        mx.lineWidth = 0.55;
+          const v  = offset + wave;
+          const px = cx + u * cosA - v * sinA;
+          const py = cy + u * sinA + v * cosA;
 
-        const cols   = meshDensity;
-        const rows   = Math.round(meshDensity * H / W);
-        const cw     = W / cols;
-        const ch     = H / rows;
-        const hSteps = cols * 3;
-        const vSteps = rows * 3;
-
-        for (let row = 0; row <= rows; row++) {
-          const y0 = row * ch;
-          mx.beginPath();
-          for (let si = 0; si <= hSteps; si++) {
-            const t2 = si / hSteps;
-            const xp = t2 * W;
-            const dy =
-              Math.sin(t2 * Math.PI * 3.8  + s.t * 0.52  + row * 0.46) * ch * 0.30
-            + Math.sin(t2 * Math.PI * 9.2  + s.t * 0.28  + row * 0.92) * ch * 0.10
-            + Math.sin(t2 * Math.PI * 1.4  + s.t * 0.14  + row * 0.18) * ch * 0.20;
-            si === 0 ? mx.moveTo(xp, y0 + dy) : mx.lineTo(xp, y0 + dy);
-          }
-          mx.stroke();
+          if (si === 0) ctx.moveTo(px, py);
+          else          ctx.lineTo(px, py);
         }
-
-        for (let col = 0; col <= cols; col++) {
-          const x0 = col * cw;
-          mx.beginPath();
-          for (let si = 0; si <= vSteps; si++) {
-            const t2 = si / vSteps;
-            const yp = t2 * H;
-            const dx =
-              Math.sin(t2 * Math.PI * 3.8  + s.t * 0.44  + col * 0.42) * cw * 0.30
-            + Math.sin(t2 * Math.PI * 8.6  + s.t * 0.24  + col * 0.76) * cw * 0.10
-            + Math.sin(t2 * Math.PI * 1.2  + s.t * 0.11  + col * 0.16) * cw * 0.20;
-            si === 0 ? mx.moveTo(x0 + dx, yp) : mx.lineTo(x0 + dx, yp);
-          }
-          mx.stroke();
-        }
+        ctx.stroke();
       }
 
       s.raf = requestAnimationFrame(frame);
     };
 
     s.raf = requestAnimationFrame(frame);
-
     return () => {
       cancelAnimationFrame(s.raf);
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMouse);
     };
-  }, [
-    intensity, blur, mouseInfluence, fadeOutTime, animSpeed,
-    colorOpacity, meshDensity, meshOpacity, bubbleAmount, bubbleRandomness, isDark,
-  ]);
-
-  const PAD = blur * 2;
+  }, [isDark]);
 
   return (
-    <div
+    <canvas
+      ref={cvs}
       aria-hidden="true"
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 0,
         pointerEvents: 'none',
-        overflow: 'hidden',
       }}
-    >
-      <canvas
-        ref={blobCvs}
-        style={{
-          position: 'absolute',
-          left: -PAD / 2,
-          top:  -PAD / 2,
-          filter: `blur(${blur}px)`,
-        }}
-      />
-      <canvas
-        ref={meshCvs}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          filter: 'blur(0.5px)',
-          mixBlendMode: 'multiply',
-        }}
-      />
-    </div>
+    />
   );
 }
