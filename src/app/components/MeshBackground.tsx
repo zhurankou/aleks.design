@@ -76,14 +76,14 @@ function createBlobs(n: number): Blob[] {
 
 export function MeshBackground({
   intensity        = 1,
-  blur             = 72,
-  mouseInfluence   = 0.11,
+  blur             = 44,
+  mouseInfluence   = 0.14,
   fadeOutTime      = 2800,
   animSpeed        = 0.32,
-  colorOpacity     = 0.058,
+  colorOpacity     = 0.18,
   meshDensity      = 20,
-  meshOpacity      = 0.022,
-  bubbleAmount     = 0.042,
+  meshOpacity      = 0.06,
+  bubbleAmount     = 0.055,
   bubbleRandomness = 1,
   isDark           = false,
 }: MeshBackgroundProps) {
