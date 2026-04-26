@@ -1,8 +1,6 @@
 import React, { useState, useEffect, type AnchorHTMLAttributes } from 'react';
 
 import imgProfile from "figma:asset/f700c10be8e928d2c825e536435c89724d9f3fa1.png";
-
-// Toolset imports — hidden but kept for when the section returns
 import FigmaIcon from '../../assets/tool-figma-light.svg?react';
 import ClaudeCodeIcon from '../../assets/tool-claudecode-light.svg?react';
 import GeminiIcon from '../../assets/tool-gemini-color.svg?react';
@@ -21,7 +19,7 @@ import App8IconDark from '../../assets/tool-app8-dark.svg?react';
 import NotebookLMIconDark from '../../assets/tool-notebooklm-dark.svg?react';
 import BananaIcon from '../../assets/tool-banana.svg?react';
 
-// Suppress unused import warnings for hidden sections
+// Suppress unused import warnings for hidden toolset section
 void FigmaIcon, ClaudeCodeIcon, GeminiIcon, imgSpline;
 void ChatGPTIconLight, JitterIconLight, CursorIconLight, GitHubIconLight, App8IconLight, NotebookLMIconLight;
 void ChatGPTIconDark, JitterIconDark, CursorIconDark, GitHubIconDark, App8IconDark, NotebookLMIconDark;
@@ -44,6 +42,27 @@ const dark = {
   avatarOverlay: 'rgba(255,255,255,0.08)',
   dotBorder: '#141414',
 };
+
+const hoverCardStyle = (hovered: boolean, t: typeof light) => ({
+  marginTop: hovered ? -16 : 0,
+  marginLeft: hovered ? -16 : 0,
+  marginRight: hovered ? -16 : 0,
+  paddingTop: hovered ? 16 : 0,
+  paddingLeft: hovered ? 16 : 0,
+  paddingRight: hovered ? 16 : 0,
+  paddingBottom: hovered ? 16 : 0,
+  borderRadius: 12,
+  backgroundColor: hovered ? t.cardBg : 'transparent',
+  transition: 'margin 0.25s ease, padding 0.25s ease, background-color 0.25s ease',
+  cursor: 'default' as const,
+});
+
+const descriptionReveal = (hovered: boolean) => ({
+  overflow: 'hidden' as const,
+  maxHeight: hovered ? 200 : 0,
+  opacity: hovered ? 1 : 0,
+  transition: 'max-height 0.3s ease, opacity 0.25s ease',
+});
 
 function AnimatedLink({ children, style, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { children: string }) {
   const [hovered, setHovered] = useState(false);
@@ -69,6 +88,11 @@ function AnimatedLink({ children, style, ...props }: AnchorHTMLAttributes<HTMLAn
 
 export function LandingPage() {
   const [isDark, setIsDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const [olympusHovered, setOlympusHovered] = useState(false);
+  const [eeroHovered, setEeroHovered] = useState(false);
+  const [microsoftHovered, setMicrosoftHovered] = useState(false);
+  const [seattleHovered, setSeattleHovered] = useState(false);
+  const [uwHovered, setUwHovered] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -83,198 +107,214 @@ export function LandingPage() {
 
   const t = isDark ? dark : light;
 
-  const glassCard: React.CSSProperties = {
-    borderRadius: 24,
-    background: 'rgba(255,255,255,0.10)',
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
-    border: '1px solid rgba(255,255,255,0.28)',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+  const descriptionStyle = {
+    fontWeight: 400,
+    fontSize: 18,
+    lineHeight: '26px',
+    color: t.textPrimary,
+    margin: 0,
+    paddingTop: 8,
+  };
+
+  const linkStyle = {
+    color: t.textMuted,
+    textDecoration: 'none' as const,
+    transition: 'color 0.15s ease',
+  };
+
+  const rowStyle = {
+    display: 'flex' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+  };
+
+  const toggleStyle = {
+    fontWeight: 400,
+    fontSize: 18,
+    lineHeight: '26px',
+    color: t.textMuted,
+    width: 24,
+    height: 24,
+    display: 'flex' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
     flexShrink: 0,
+    transition: 'color 0.3s ease',
+  };
+
+  const narrow: React.CSSProperties = {
+    width: '100%',
+    maxWidth: 500,
+    paddingLeft: 16,
+    paddingRight: 16,
+    boxSizing: 'border-box',
   };
 
   return (
     <div
       style={{
         minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingTop: 40,
+        paddingBottom: 40,
         fontFamily: "'Lato', sans-serif",
-        position: 'relative',
-        overflow: 'hidden',
         backgroundColor: t.pageBg,
         transition: 'background-color 0.3s ease',
+        position: 'relative',
       }}
     >
       <div
         style={{
           width: '100%',
-          maxWidth: 800,
-          margin: '0 auto',
-          paddingTop: 40,
-          paddingBottom: 40,
-          paddingLeft: 20,
-          paddingRight: 20,
-          boxSizing: 'border-box' as const,
+          maxWidth: 960,
           display: 'flex',
-          flexDirection: 'column' as const,
-          gap: 24,
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 40,
           position: 'relative',
           zIndex: 1,
         }}
       >
-        {/* Header row: bio on left, empty on right */}
-        <div style={{ display: 'flex', height: 320 }}>
-          <div
-            style={{
-              flex: '1 0 0',
-              minWidth: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 40,
-              justifyContent: 'center',
-              paddingLeft: 14,
-              paddingRight: 14,
-            }}
-          >
-            {/* Account */}
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <div style={{ position: 'relative', width: 56, height: 56, flexShrink: 0 }}>
-                <img
-                  src={imgProfile}
-                  alt="Aleks"
-                  style={{ width: 56, height: 56, borderRadius: '50%', display: 'block', objectFit: 'cover' }}
-                />
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    borderRadius: '50%',
-                    backgroundColor: t.avatarOverlay,
-                    transition: 'background-color 0.3s ease',
-                  }}
-                />
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    right: 0,
-                    width: 14,
-                    height: 14,
-                    backgroundColor: '#07AB57',
-                    borderRadius: '50%',
-                    border: `2px solid ${t.dotBorder}`,
-                    animation: 'dotPulse 2s ease-in-out infinite',
-                    transition: 'border-color 0.3s ease',
-                  }}
-                />
-              </div>
+        {/* Account */}
+        <div style={narrow}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div style={{ position: 'relative', width: 56, height: 56, flexShrink: 0 }}>
+              <img
+                src={imgProfile}
+                alt="Aleks"
+                style={{ width: 56, height: 56, borderRadius: '50%', display: 'block', objectFit: 'cover' }}
+              />
+              <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', backgroundColor: t.avatarOverlay, transition: 'background-color 0.3s ease' }} />
               <div
                 style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 4,
-                  fontSize: 20,
-                  lineHeight: '22px',
-                  letterSpacing: '0.2px',
-                  fontWeight: 500,
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                  width: 14,
+                  height: 14,
+                  backgroundColor: '#07AB57',
+                  borderRadius: '50%',
+                  border: `2px solid ${t.dotBorder}`,
+                  animation: 'dotPulse 2s ease-in-out infinite',
+                  transition: 'border-color 0.3s ease',
                 }}
-              >
-                <span style={{ color: t.textPrimary, transition: 'color 0.3s ease' }}>Aleks</span>
-                <AnimatedLink
-                  href="mailto:hi@aleks.design"
-                  style={{ color: t.textMuted, fontWeight: 500 }}
-                >
-                  hi@aleks.design
-                </AnimatedLink>
-              </div>
+              />
             </div>
+            <div style={{ display: 'flex', flexDirection: 'column', fontSize: 18, lineHeight: '26px' }}>
+              <span style={{ fontWeight: 700, color: t.textPrimary, transition: 'color 0.3s ease' }}>Aleks</span>
+              <AnimatedLink href="mailto:hi@aleks.design" style={{ fontWeight: 400, color: t.textMuted }}>hi@aleks.design</AnimatedLink>
+            </div>
+          </div>
+        </div>
 
-            {/* Bio */}
-            <p
-              style={{
-                fontWeight: 400,
-                fontSize: 18,
-                lineHeight: '26px',
-                color: t.textPrimary,
-                margin: 0,
-                transition: 'color 0.3s ease',
-              }}
-            >
-              I'm a product designer based in Seattle, WA, but living in code. I love making complex things feel simple and care deeply about craft, the details, and products with taste.
-            </p>
+        {/* Bio */}
+        <div style={narrow}>
+          <p style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textPrimary, margin: 0, transition: 'color 0.3s ease' }}>
+            I'm a product designer based in Seattle, WA, but living in code. I love making complex things feel simple and care deeply about craft, the details, and products with taste.
+          </p>
+        </div>
+
+        {/* Experience */}
+        <div style={{ ...narrow, display: 'flex', flexDirection: 'column', gap: 40 }}>
+          {/* Olympus */}
+          <div onMouseEnter={() => setOlympusHovered(true)} onMouseLeave={() => setOlympusHovered(false)} style={hoverCardStyle(olympusHovered, t)}>
+            <div style={rowStyle}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontWeight: 700, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Product Designer · Olympus</span>
+                <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2024-2026</span>
+              </div>
+              <div style={toggleStyle}>{olympusHovered ? '–' : '+'}</div>
+            </div>
+            <div style={descriptionReveal(olympusHovered)}>
+              <p style={descriptionStyle}>
+                I designed{' '}
+                <AnimatedLink href="https://medical.olympusamerica.com/olysense" target="_blank" rel="noopener noreferrer" style={linkStyle}>OlySense</AnimatedLink>
+                {' '}Insights, a clinical analytics tool, making complex healthcare workflows feel clear, scalable, and trustworthy, with a strong focus on patient safety and quality of care.
+              </p>
+            </div>
           </div>
 
-          {/* Right half: empty — gradient shows through */}
-          <div style={{ flex: '1 0 0', minWidth: 0 }} />
-        </div>
-
-        {/* Projects row 1: large + small */}
-        <div style={{ display: 'flex', gap: 24, height: 400 }}>
-          <div style={{ ...glassCard, flex: '1 0 0' }} />
-          <div style={{ ...glassCard, width: 240 }} />
-        </div>
-
-        {/* Projects row 2: small + large */}
-        <div style={{ display: 'flex', gap: 24, height: 400 }}>
-          <div style={{ ...glassCard, width: 240 }} />
-          <div style={{ ...glassCard, flex: '1 0 0' }} />
-        </div>
-
-        {/* Footer row: empty on left, story + links on right */}
-        <div style={{ display: 'flex', height: 320 }}>
-          {/* Left half: empty */}
-          <div style={{ flex: '1 0 0', minWidth: 0 }} />
-
-          <div
-            style={{
-              flex: '1 0 0',
-              minWidth: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 40,
-              justifyContent: 'center',
-              paddingLeft: 14,
-              paddingRight: 14,
-            }}
-          >
-            <p
-              style={{
-                fontWeight: 400,
-                fontSize: 18,
-                lineHeight: '26px',
-                color: t.textPrimary,
-                margin: 0,
-                transition: 'color 0.3s ease',
-              }}
-            >
-              My path into design wasn't traditional. I worked as an investigator, a turret machine operator, a janitor, and served in the US Navy before choosing what I'd always been passionate about.
-            </p>
-            <div
-              style={{
-                display: 'flex',
-                gap: 16,
-                fontSize: 18,
-                lineHeight: '22px',
-                fontWeight: 400,
-                letterSpacing: '0.18px',
-              }}
-            >
-              <AnimatedLink
-                href="https://www.instagram.com/zooruncow/"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: t.textMuted }}
-              >
-                Life
-              </AnimatedLink>
-              <AnimatedLink
-                href="https://www.linkedin.com/in/zhurankou/"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: t.textMuted }}
-              >
-                Work
-              </AnimatedLink>
+          {/* Amazon / eero */}
+          <div onMouseEnter={() => setEeroHovered(true)} onMouseLeave={() => setEeroHovered(false)} style={hoverCardStyle(eeroHovered, t)}>
+            <div style={rowStyle}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontWeight: 700, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Product Designer · Amazon</span>
+                <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2022-2023</span>
+              </div>
+              <div style={toggleStyle}>{eeroHovered ? '–' : '+'}</div>
             </div>
+            <div style={descriptionReveal(eeroHovered)}>
+              <p style={descriptionStyle}>
+                I worked on{' '}
+                <AnimatedLink href="https://eero.com" target="_blank" rel="noopener noreferrer" style={linkStyle}>eero</AnimatedLink>
+                {' '}design system across web and mobile, creating more consistent, scalable experiences, improving visual clarity through iconography.
+              </p>
+            </div>
+          </div>
+
+          {/* Microsoft */}
+          <div onMouseEnter={() => setMicrosoftHovered(true)} onMouseLeave={() => setMicrosoftHovered(false)} style={hoverCardStyle(microsoftHovered, t)}>
+            <div style={rowStyle}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontWeight: 700, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Designer · Microsoft</span>
+                <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2019-2022</span>
+              </div>
+              <div style={toggleStyle}>{microsoftHovered ? '–' : '+'}</div>
+            </div>
+            <div style={descriptionReveal(microsoftHovered)}>
+              <p style={descriptionStyle}>
+                I led design for cloud collaboration across web, desktop, and mobile, making{' '}
+                <AnimatedLink href="https://support.microsoft.com/en-us/office/share-files-and-folders-in-microsoft-onedrive-9fcc2f7d-de0c-4cec-93b0-a82024800c07" target="_blank" rel="noopener noreferrer" style={linkStyle}>OneDrive</AnimatedLink>
+                {' '}permissions and file-sharing workflows simpler for millions of users.
+              </p>
+            </div>
+          </div>
+
+          {/* City of Seattle */}
+          <div onMouseEnter={() => setSeattleHovered(true)} onMouseLeave={() => setSeattleHovered(false)} style={hoverCardStyle(seattleHovered, t)}>
+            <div style={rowStyle}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontWeight: 700, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>UX Design Intern · City of Seattle</span>
+                <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2018-2019</span>
+              </div>
+              <div style={toggleStyle}>{seattleHovered ? '–' : '+'}</div>
+            </div>
+            <div style={descriptionReveal(seattleHovered)}>
+              <p style={descriptionStyle}>
+                I supported the design of public-sector digital services, contributing to the{' '}
+                <AnimatedLink href="https://www.seattle.gov" target="_blank" rel="noopener noreferrer" style={linkStyle}>Seattle.gov</AnimatedLink>
+                {' '}design system and simplifying complex workflows into accessible, user-friendly experiences.
+              </p>
+            </div>
+          </div>
+
+          {/* UW */}
+          <div onMouseEnter={() => setUwHovered(true)} onMouseLeave={() => setUwHovered(false)} style={hoverCardStyle(uwHovered, t)}>
+            <div style={rowStyle}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontWeight: 700, fontSize: 18, lineHeight: '26px', color: t.textPrimary, whiteSpace: 'nowrap', transition: 'color 0.3s ease' }}>Bachelors in Design · UW</span>
+                <span style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textMuted, transition: 'color 0.3s ease' }}>2016-2019</span>
+              </div>
+              <div style={toggleStyle}>{uwHovered ? '–' : '+'}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Background story */}
+        <div style={narrow}>
+          <p style={{ fontWeight: 400, fontSize: 18, lineHeight: '26px', color: t.textPrimary, margin: 0, transition: 'color 0.3s ease' }}>
+            My path into design wasn't traditional. I worked as an investigator, a turret machine operator, a janitor, and served in the US Navy before choosing what I'd always been passionate about.
+          </p>
+        </div>
+
+        {/* Footer links */}
+        <div style={narrow}>
+          <div style={{ display: 'flex', gap: 16, fontSize: 18, lineHeight: '26px', fontWeight: 400 }}>
+            <AnimatedLink href="https://www.instagram.com/zooruncow/" target="_blank" rel="noopener noreferrer" style={{ color: t.textMuted }}>Life</AnimatedLink>
+            <AnimatedLink href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" style={{ color: t.textMuted }}>Work</AnimatedLink>
           </div>
         </div>
       </div>
