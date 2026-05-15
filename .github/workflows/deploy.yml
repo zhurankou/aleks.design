@@ -29,6 +29,10 @@ jobs:
       # declare React 18 in their peerDependencies but actually work with React 19.
       - run: npm install --legacy-peer-deps
       - run: npm run build
+      # SPA fallback: GitHub Pages serves 404.html when no static file matches
+      # the URL. Copy index.html → 404.html so unknown paths (e.g. /new) load
+      # the app shell and let React Router handle client-side routing.
+      - run: cp dist/index.html dist/404.html
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
