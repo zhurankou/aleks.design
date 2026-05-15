@@ -25,7 +25,9 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm install
+      # --legacy-peer-deps because several deps (Radix, MUI, motion, etc.) still
+      # declare React 18 in their peerDependencies but actually work with React 19.
+      - run: npm install --legacy-peer-deps
       - run: npm run build
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
