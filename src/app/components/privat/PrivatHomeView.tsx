@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { MeshBackground } from './MeshBackground';
 import { CameraLens } from './CameraLens';
-import CursorHand from '../../../assets/cursor-hand.svg?react';
 
 function PrivatLogo() {
   return (
@@ -23,22 +22,33 @@ function PrivatLogo() {
   );
 }
 
+type CursorPhase = 'enter' | 'start' | 'copy' | 'click' | 'startBtn' | 'startBtnClick' | 'fadeBlack' | 'video' | 'videoPip' | 'fadeOut';
+
 interface PrivatHomeViewProps {
   active?: boolean;
   circleRef?: React.RefObject<HTMLDivElement | null>;
+  // Bubble the current cursorPhase up so an external animated cursor can react.
+  onPhaseChange?: (phase: CursorPhase) => void;
+  // Callback refs for the two click targets — the external cursor reads their
+  // getBoundingClientRect to position itself.
+  copyRef?: (el: HTMLDivElement | null) => void;
+  startBtnRef?: (el: HTMLDivElement | null) => void;
 }
 
-export function PrivatHomeView({ active = true, circleRef: externalCircleRef }: PrivatHomeViewProps) {
+export function PrivatHomeView({ active = true, circleRef: externalCircleRef, onPhaseChange, copyRef, startBtnRef }: PrivatHomeViewProps) {
   const internalCircleRef = useRef<HTMLDivElement>(null);
   const circleRef = externalCircleRef ?? internalCircleRef;
   const video1Ref = useRef<HTMLVideoElement>(null);
   const video2Ref = useRef<HTMLVideoElement>(null);
   const endTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const loopScheduledRef = useRef(false);
-  const [cursorPhase, setCursorPhase] = useState<'enter' | 'start' | 'copy' | 'click' | 'startBtn' | 'startBtnClick' | 'fadeBlack' | 'video' | 'videoPip' | 'fadeOut'>('enter');
+  const [cursorPhase, setCursorPhase] = useState<CursorPhase>('enter');
   const [loopKey, setLoopKey] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
-  const [introRevealed, setIntroRevealed] = useState(false);
+
+  // Bubble phase changes to a parent-supplied listener so an external cursor
+  // can react to the existing state machine without owning it.
+  useEffect(() => { onPhaseChange?.(cursorPhase); }, [cursorPhase, onPhaseChange]);
 
   // Fade begins a moment before video1 finishes (in PIP). When video1 nears its end,
   // trigger fadeOut AND schedule the loop bump — we can't wait for onEnded because the
@@ -70,12 +80,9 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef }: 
   useEffect(() => {
     if (active) {
       setHasStarted(true);
-      // Small delay so the fade-in transition has a frame to animate from opacity 1.
-      const t = window.setTimeout(() => setIntroRevealed(true), 30);
-      return () => window.clearTimeout(t);
+      return;
     }
     setHasStarted(false);
-    setIntroRevealed(false);
     setCursorPhase('enter');
     endTimersRef.current.forEach(clearTimeout);
     endTimersRef.current = [];
@@ -114,7 +121,8 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef }: 
     const startBtnMoveDur = 450;                         // faster move to Start session
     const copyArrivalPause = 80;                         // click right after the cursor arrives at copy
     const arrivalPause = 80;                             // click right after the cursor arrives at Start session
-    const tCopy = 300;                                   // cursor stays off-frame, then slides directly to copy
+    // First loop slides cursor in quickly; subsequent loops linger in the PWA view 3s before the cursor returns.
+    const tCopy = loopKey === 0 ? 300 : 3000;
     const tClick = tCopy + copyMoveDur + copyArrivalPause;
     const tStartBtn = tClick + 800;
     const tStartBtnClick = tStartBtn + startBtnMoveDur + arrivalPause;
@@ -246,10 +254,10 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef }: 
       }}>
         {/* Copy */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 10, width: '100%' }}>
-          <p style={{ fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 20, color: '#D9D9D9', margin: 0, lineHeight: '28px' }}>
+          <p style={{ fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 24, color: '#D9D9D9', margin: 0, lineHeight: '28px' }}>
             Instant 1:1 Sessions
           </p>
-          <p style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 12, color: '#A3A3A3', margin: 0, lineHeight: '19px' }}>
+          <p style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 14, color: '#A3A3A3', margin: 0, lineHeight: '19px' }}>
             Start an encrypted video session in seconds. Share the link with your guest.
           </p>
         </div>
@@ -257,10 +265,10 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef }: 
         {/* Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
           {/* Start session */}
-          <div style={{
+          <div ref={startBtnRef} style={{
             width: '100%',
             height: 36,
-            backgroundColor: cursorPhase === 'startBtn' ? 'rgba(200,200,200,0.82)' : 'rgba(255,255,255,0.82)',
+            backgroundColor: cursorPhase === 'startBtnClick' ? 'rgba(200,200,200,0.82)' : 'rgba(255,255,255,0.82)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -268,28 +276,28 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef }: 
             transition: 'background-color 220ms ease-out',
             animation: cursorPhase === 'startBtnClick' ? 'p-btn-press 220ms cubic-bezier(0.2, 0.8, 0.4, 1)' : undefined,
           }}>
-            <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 12, color: '#000000' }}>Start session</span>
+            <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 14, color: '#000000' }}>Start session</span>
           </div>
           {/* Copy link bar */}
-          <div style={{ width: '100%', height: 36, backgroundColor: 'rgba(23,23,23,0.9)', display: 'flex', alignItems: 'center', boxSizing: 'border-box', gap: 2 }}>
+          <div ref={copyRef} style={{ width: '100%', height: 36, backgroundColor: 'rgba(23,23,23,0.9)', display: 'flex', alignItems: 'center', boxSizing: 'border-box', gap: 2 }}>
             <div style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'center', paddingLeft: 14, paddingRight: 14, gap: 2, minWidth: 0, overflow: 'hidden' }}>
-              <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 400, fontSize: 12, color: '#f5f5f5', flexShrink: 0 }}>Guest link</span>
+              <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 400, fontSize: 14, color: '#f5f5f5', flexShrink: 0 }}>Guest link</span>
               <div style={{ position: 'relative', flex: 1, height: 14, minWidth: 0, overflow: 'hidden' }}>
                 <span style={{
                   position: 'absolute', left: 0, right: 0, top: 0,
-                  fontFamily: "'Manrope', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: '14px',
+                  fontFamily: "'Manrope', sans-serif", fontWeight: 400, fontSize: 14, lineHeight: '14px',
                   color: '#737373', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   transform: (cursorPhase === 'click' || cursorPhase === 'startBtn' || cursorPhase === 'startBtnClick') ? 'translateY(-14px)' : 'translateY(0)',
                   opacity: (cursorPhase === 'click' || cursorPhase === 'startBtn' || cursorPhase === 'startBtnClick') ? 0 : 1,
-                  transition: 'transform 350ms cubic-bezier(0.2, 0.6, 0.3, 1) 220ms, opacity 250ms ease-out 220ms',
+                  transition: 'transform 350ms cubic-bezier(0.2, 0.6, 0.3, 1) 80ms, opacity 250ms ease-out 80ms',
                 }}>prvt.cam/s/aLeKs</span>
                 <span style={{
                   position: 'absolute', left: 0, right: 0, top: 0,
-                  fontFamily: "'Manrope', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: '14px',
+                  fontFamily: "'Manrope', sans-serif", fontWeight: 400, fontSize: 14, lineHeight: '14px',
                   color: '#FCFCFC', whiteSpace: 'nowrap',
                   transform: (cursorPhase === 'click' || cursorPhase === 'startBtn' || cursorPhase === 'startBtnClick') ? 'translateY(0)' : 'translateY(14px)',
                   opacity: (cursorPhase === 'click' || cursorPhase === 'startBtn' || cursorPhase === 'startBtnClick') ? 1 : 0,
-                  transition: 'transform 350ms cubic-bezier(0.2, 0.6, 0.3, 1) 220ms, opacity 250ms ease-out 220ms',
+                  transition: 'transform 350ms cubic-bezier(0.2, 0.6, 0.3, 1) 80ms, opacity 250ms ease-out 80ms',
                 }}>copied</span>
               </div>
             </div>
@@ -305,7 +313,7 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef }: 
                     fill="none"
                     strokeDasharray="22"
                     strokeDashoffset="22"
-                    style={{ animation: 'p-check-draw 220ms cubic-bezier(0.4, 0, 0.2, 1) 280ms forwards' }}
+                    style={{ animation: 'p-check-draw 220ms cubic-bezier(0.4, 0, 0.2, 1) 100ms forwards' }}
                   />
                 </svg>
               ) : (
@@ -319,18 +327,6 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef }: 
         </div>
       </div>
 
-      {/* Intro fade — masks the PWA view in black on initial entry, then fades to reveal content. */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: '#000000',
-          zIndex: 30,
-          opacity: introRevealed ? 0 : 1,
-          transition: introRevealed ? 'opacity 450ms ease-out' : 'none',
-          pointerEvents: 'none',
-        }}
-      />
 
       {/* Terminal fade-out overlay — fades in to black after video2 finishes one playthrough */}
       <div
@@ -453,27 +449,6 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef }: 
 
       {/* Hand cursor — starts above the 'Instant 1:1' line, slides to copy icon, then clicks */}
       <style>{`@keyframes p-cursor-click { 0% { transform: scale(1); } 45% { transform: scale(0.92); } 65% { transform: scale(0.92); } 100% { transform: scale(1); } } @keyframes p-check-draw { to { stroke-dashoffset: 0; } } @keyframes p-btn-press { 0% { transform: scale(1); background-color: rgba(255,255,255,0.82); } 45% { transform: scale(0.97); background-color: rgba(230,230,230,0.82); } 65% { transform: scale(0.97); background-color: rgba(230,230,230,0.82); } 100% { transform: scale(1); background-color: rgba(255,255,255,0.82); } }`}</style>
-      <CursorHand
-        key={`cursor-${loopKey}`}
-        style={{
-          position: 'absolute',
-          width: 88,
-          height: 88,
-          pointerEvents: 'none',
-          zIndex: 20,
-          left: cursorPhase === 'enter' ? 300 : cursorPhase === 'start' ? 112 : (cursorPhase === 'startBtn' || cursorPhase === 'startBtnClick') ? 112 : 228,
-          top: cursorPhase === 'enter' ? 660 : cursorPhase === 'start' ? 600 : (cursorPhase === 'startBtn' || cursorPhase === 'startBtnClick') ? 552 : 590,
-          // Hide the cursor as soon as the Start session click finishes — no carryover into the video.
-          opacity: (cursorPhase === 'fadeBlack' || cursorPhase === 'video' || cursorPhase === 'videoPip' || cursorPhase === 'fadeOut') ? 0 : 1,
-          transformOrigin: '50% 20%',
-          willChange: 'transform',
-          animation: cursorPhase === 'click' ? 'p-cursor-click 140ms cubic-bezier(0.2, 0.8, 0.4, 1)' : cursorPhase === 'startBtnClick' ? 'p-cursor-click 140ms cubic-bezier(0.2, 0.8, 0.4, 1)' : undefined,
-          transition: (() => {
-            const d = cursorPhase === 'copy' ? 550 : cursorPhase === 'startBtn' ? 450 : 1200;
-            return `left ${d}ms cubic-bezier(0.4, 0, 0.6, 1), top ${d}ms cubic-bezier(0.4, 0, 0.6, 1), width ${d}ms cubic-bezier(0.4, 0, 0.6, 1), height ${d}ms cubic-bezier(0.4, 0, 0.6, 1), opacity 150ms ease-out`;
-          })(),
-        }}
-      />
     </div>
   );
 }
