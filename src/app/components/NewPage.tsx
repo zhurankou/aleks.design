@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import imgProfile from "figma:asset/f700c10be8e928d2c825e536435c89724d9f3fa1.png";
 import { PrivatHomeView } from './privat/PrivatHomeView';
+import { AnimatedCursor, type CursorPhase } from './privat/AnimatedCursor';
 import { BaseIconsCanvas } from './BaseIconsCanvas';
 import FigmaLogo from '../../assets/tool-figma.svg?react';
 
@@ -99,12 +100,28 @@ const homeLoadAnim = `
     0%, 100% { transform: translateX(0); }
     50%       { transform: translateX(3px); }
   }
+  /* SELECTED WORK letter wave — pulses each letter from the silver frame-stroke
+     colour to a darker slate grey and back, with a per-letter stagger to make
+     the colour shift sweep across the word. */
+  @keyframes selected-wave {
+    0%, 100% { color: #A8AFB6; }
+    50%       { color: #5A626B; }
+  }
 `;
 
 const NAME = 'Aleks Zhurankou';
 // avatar1: plays while the name types in. avatar2: plays while the name deletes.
 const AVATAR_VIDEOS = ['/avatar1.mp4', '/avatar2.mp4'];
 const PAUSE_MS = 1000; // beat held after each full type / delete pass
+
+// Background typography layer on home — words ticker upward. Sourced from
+// Figma node 15606:828; font is Stack Sans Notch Bold, transparent fill +
+// thin stroke.
+const BG_WORDS = ['THINK', 'DISCOVER', 'DEFINE', 'SKETCH', 'SIMPLIFY', 'DESIGN', 'ITERATE', 'POLISH', 'BUILD', 'LAUNCH', 'TEST', 'ITERATE', 'ITERATE', 'ITERATE', 'GOSLEEP', 'GETUP'];
+const BG_GAP = 16; // px gap between words
+const BG_PAD = 8; // px top + bottom inset so words don't touch viewport edges
+const BG_CYCLE_MS = 2500; // one cycle = slide + hold
+const BG_TILT = 20; // deg — V-shape: top slot at -BG_TILT°, bottom slot at +BG_TILT°
 const TEXT_SPAN_MS = 900; // the name types / deletes over this window at the start of each video, then holds
 
 // 16 base-view icons in grid order (top-left → bottom-right, row by row):
@@ -147,6 +164,15 @@ const ICONS_16: string[] = [
   `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2ZM12 20C12.2151 20 12.9482 19.7737 13.7467 18.1766C14.0532 17.5635 14.3212 16.8293 14.5298 16H9.4702C9.6788 16.8293 9.94677 17.5635 10.2533 18.1766C11.0518 19.7737 11.7849 20 12 20ZM9.11146 14C9.03919 13.3641 9 12.6949 9 12C9 11.3051 9.03919 10.6359 9.11146 10H14.8885C14.9608 10.6359 15 11.3051 15 12C15 12.6949 14.9608 13.3641 14.8885 14H9.11146ZM16.584 16C16.3182 17.2166 15.9348 18.307 15.4627 19.2138C16.9162 18.5149 18.1259 17.3895 18.9297 16H16.584ZM19.748 14H16.9C16.9656 13.3538 17 12.6849 17 12C17 11.3151 16.9656 10.6462 16.9 10H19.748C19.9125 10.6392 20 11.3094 20 12C20 12.6906 19.9125 13.3608 19.748 14ZM7.10002 14H4.25203C4.08751 13.3608 4 12.6906 4 12C4 11.3094 4.08751 10.6392 4.25203 10H7.10002C7.03443 10.6462 7 11.3151 7 12C7 12.6849 7.03443 13.3538 7.10002 14ZM5.07026 16H7.41605C7.68183 17.2166 8.06515 18.307 8.53731 19.2138C7.0838 18.5149 5.87406 17.3895 5.07026 16ZM9.4702 8H14.5298C14.3212 7.17074 14.0532 6.43647 13.7467 5.82336C12.9482 4.22632 12.2151 4 12 4C11.7849 4 11.0518 4.22632 10.2533 5.82336C9.94677 6.43647 9.6788 7.17074 9.4702 8ZM16.584 8H18.9297C18.1259 6.61047 16.9162 5.48514 15.4627 4.78617C15.9348 5.69296 16.3182 6.78337 16.584 8ZM8.53731 4.78617C8.06515 5.69296 7.68183 6.78337 7.41604 8H5.07026C5.87406 6.61047 7.08379 5.48514 8.53731 4.78617Z" fill="black"/></svg>`,
 ];
 
+// Transpose the 4x4 grid: original top row becomes the new first column, row 2
+// becomes column 2, etc. Reading row-by-row, the new sequence indexes into
+// ICONS_16 as [0,4,8,12, 1,5,9,13, 2,6,10,14, 3,7,11,15].
+const ICONS_16_BY_COL: string[] = (() => {
+  const out: string[] = new Array(16);
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) out[c * 4 + r] = ICONS_16[r * 4 + c];
+  return out;
+})();
+
 // Base view palette — derived from the active icon colour. Layers stay in the
 // same darkness ratio as the original neutral grid (bg 8%, mid-dot 15%,
 // drift-dot 30%), shifted toward the icon hue.
@@ -180,6 +206,8 @@ function paletteFromColor(color: string): BasePalette {
 // Icons stay fixed; only the colour cycles. Sequence walks the colour wheel
 // through saturated rainbow hues so each HSL-lerp step is a short forward arc
 // (red → orange → yellow → green → cyan → indigo → pink → back to red).
+// Interval between target colour swaps on the base view. Lower = faster cycle.
+const COLOR_CYCLE_MS = 3500;
 const COLOR_THEMES: string[] = [
   '#FF3B30', // red
   '#FF9500', // orange
@@ -189,6 +217,123 @@ const COLOR_THEMES: string[] = [
   '#4B49FF', // indigo
   '#FF2D92', // pink
 ];
+
+// Render BG_WORDS twice so a single long CSS animation can loop seamlessly:
+// at 100% the stack is shifted by exactly N×(slot+gap), and the second copy
+// occupies the same slots that the first copy did at 0%. No React state
+// updates during the animation, which avoids the per-iteration jerk.
+const BG_KEYFRAME = (() => {
+  const N = BG_WORDS.length;
+  const slide = 0.4; // fraction of each segment spent sliding; rest is hold
+  let css = '@keyframes home-bg-slide {\n';
+  for (let i = 0; i <= N; i++) {
+    const start = (i / N) * 100;
+    css += `  ${start.toFixed(4)}% { transform: translateY(calc(-${i} * (var(--slot) + var(--gap)))); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); }\n`;
+    if (i < N) {
+      const slideEnd = ((i + slide) / N) * 100;
+      css += `  ${slideEnd.toFixed(4)}% { transform: translateY(calc(-${i + 1} * (var(--slot) + var(--gap)))); animation-timing-function: steps(1, end); }\n`;
+    }
+  }
+  css += '}';
+  return css;
+})();
+
+function HomeBgWords({ active, progress }: { active: boolean; progress: number }) {
+  const items = [...BG_WORDS, ...BG_WORDS];
+  const totalMs = BG_WORDS.length * BG_CYCLE_MS;
+
+  // Two independent clipped tickers — one per slot. The slot wrapper carries the
+  // tilt; the inner stack slides up vertically through the words. Because the
+  // rotation lives on the wrapper (not the word), the word never rotates while
+  // sliding — it just enters at the slot's bottom edge, holds at centre, exits
+  // at the top edge, all at the slot's constant angle.
+  const slotStack = (offsetCycles: number) => (
+    <div
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: BG_GAP,
+        animation: `home-bg-slide ${totalMs}ms linear infinite`,
+        animationDelay: `${-offsetCycles * BG_CYCLE_MS}ms`,
+        animationPlayState: active ? 'running' : 'paused',
+        willChange: 'transform',
+      }}
+    >
+      {items.map((w, i) => (
+        <div
+          key={i}
+          style={{
+            height: 'var(--slot)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <img
+            src={`/words/${w.toLowerCase()}.svg`}
+            alt=""
+            aria-hidden
+            style={{ height: '100%', width: 'auto', display: 'block' }}
+          />
+        </div>
+      ))}
+    </div>
+  );
+
+  // Scroll-exit: top slot slides up off-screen, bottom slides down. Translate
+  // applied after the rotateX so the tilt is preserved as the slot ejects.
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: BG_PAD,
+        bottom: BG_PAD,
+        left: 0,
+        right: 0,
+        pointerEvents: 'none',
+        perspective: '1200px',
+        ['--slot' as never]: `calc((100vh - ${2 * BG_PAD + 1 * BG_GAP}px) / 2)`,
+        ['--gap' as never]: `${BG_GAP}px`,
+      }}
+    >
+      <style>{BG_KEYFRAME}</style>
+      {/* Top slot — top edge tipped toward viewer */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 'var(--slot)',
+          overflow: 'hidden',
+          transform: `translateY(${-progress * 100}vh) rotateX(-${BG_TILT}deg)`,
+          willChange: 'transform',
+        }}
+      >
+        {slotStack(0)}
+      </div>
+      {/* Bottom slot — bottom edge tipped toward viewer (V bent inwards) */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 'var(--slot)',
+          overflow: 'hidden',
+          transform: `translateY(${progress * 100}vh) rotateX(${BG_TILT}deg)`,
+          willChange: 'transform',
+        }}
+      >
+        {slotStack(1)}
+      </div>
+    </div>
+  );
+}
 
 function HomeContent({ active }: { active: boolean }) {
   // Loop: pausedFull -> deleting (avatar2) -> pausedEmpty -> typing (avatar1) -> ...
@@ -272,8 +417,6 @@ function HomeContent({ active }: { active: boolean }) {
         flexShrink: 0,
         borderRadius: '50%',
         overflow: 'hidden',
-        opacity: avatarReady ? 1 : 0,
-        transition: 'opacity 450ms ease-out',
       }}>
         {[0, 1].map((i) => (
           <video
@@ -283,7 +426,7 @@ function HomeContent({ active }: { active: boolean }) {
             muted
             playsInline
             preload="auto"
-            onLoadedData={i === 0 ? () => setAvatarReady(true) : undefined}
+            onLoadedMetadata={i === 0 ? () => setAvatarReady(true) : undefined}
             onEnded={() => handleVideoEnded(i)}
             style={{
               position: 'absolute',
@@ -302,25 +445,24 @@ function HomeContent({ active }: { active: boolean }) {
         ))}
         <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.15)' }} />
       </div>
-      <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontSize: 72, fontWeight: 400, lineHeight: 'normal', letterSpacing: '-1.92px', color: '#000000', textAlign: 'center', whiteSpace: 'nowrap', margin: 0 }}>
+      <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontSize: 80, fontWeight: 400, lineHeight: 'normal', letterSpacing: '-1.92px', color: '#000000', textAlign: 'center', whiteSpace: 'nowrap', margin: 0 }}>
         {displayed}
         <span style={{ display: 'inline-block', width: 3, height: '0.72em', backgroundColor: '#000000', marginLeft: 4, verticalAlign: 'middle', animation: 'cursor-blink 0.75s ease-in-out infinite' }} />
       </p>
-      <p style={{ fontFamily: "'Stack Sans Text', sans-serif", fontSize: 20, fontWeight: 300, lineHeight: '34px', color: '#000000', textAlign: 'center', width: 440, margin: 0 }}>
+      <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 20, fontWeight: 500, lineHeight: '34px', color: '#000000', textAlign: 'center', width: 440, margin: 0 }}>
         I'm a product designer based in Seattle, WA, but living in code. I care deeply about craft, the details, and products with taste.
       </p>
     </div>
   );
 }
 
-const FRAME_H = 664;
-const FRAME_W = 320;
+const FRAME_H = 792;
+const FRAME_W = 360;
 const PEEK = 40;
 const LIGHT_BLUE = '#BAE6FD'; // stage 2 frame fill + stroke
 // Screen-x offset (from viewport centre) of the base title + description. Sits
-// 40px outside the 640×640 icon grid (matching the gap Olysense / Privat use
-// between their labels and the frame): half the grid width (320) + 40 = 360.
-const BASE_LABEL_OFFSET = 640 / 2 + 40;
+// 16px outside the 640×640 icon grid: half the grid width (320) + 16 = 336.
+const BASE_LABEL_OFFSET = 640 / 2 + 16;
 
 // Olysense fill: a soft, slowly drifting gradient — white base with a light-blue
 // and a very-light-reddish radial blob, each easing around on its own slow loop.
@@ -329,19 +471,19 @@ const olyGlowAnim = `
   @keyframes oly-glow-b { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-14%,11%)} }
   @keyframes oly-glow-c { 0%,100%{transform:translate(0,0)} 50%{transform:translate(12%,-15%)} }
   @keyframes oly-col-a {
-    0%,100% { background: radial-gradient(circle at 30% 28%, rgba(170,205,244,0.72) 0%, rgba(170,205,244,0) 60%); }
-    30%     { background: radial-gradient(circle at 30% 28%, rgba(182,200,240,0.72) 0%, rgba(182,200,240,0) 60%); }
-    65%     { background: radial-gradient(circle at 30% 28%, rgba(162,208,246,0.72) 0%, rgba(162,208,246,0) 60%); }
+    0%,100% { background: radial-gradient(circle at 30% 28%, rgba(150,190,240,0.85) 0%, rgba(150,190,240,0.35) 38%, rgba(150,190,240,0) 70%); }
+    30%     { background: radial-gradient(circle at 30% 28%, rgba(165,185,236,0.85) 0%, rgba(165,185,236,0.35) 38%, rgba(165,185,236,0) 70%); }
+    65%     { background: radial-gradient(circle at 30% 28%, rgba(140,195,245,0.85) 0%, rgba(140,195,245,0.35) 38%, rgba(140,195,245,0) 70%); }
   }
   @keyframes oly-col-b {
-    0%,100% { background: radial-gradient(circle at 72% 34%, rgba(248,205,200,0.66) 0%, rgba(248,205,200,0) 62%); }
-    38%     { background: radial-gradient(circle at 72% 34%, rgba(244,202,212,0.66) 0%, rgba(244,202,212,0) 62%); }
-    70%     { background: radial-gradient(circle at 72% 34%, rgba(250,210,198,0.66) 0%, rgba(250,210,198,0) 62%); }
+    0%,100% { background: radial-gradient(circle at 72% 34%, rgba(245,180,170,0.82) 0%, rgba(245,180,170,0.32) 40%, rgba(245,180,170,0) 72%); }
+    38%     { background: radial-gradient(circle at 72% 34%, rgba(240,175,195,0.82) 0%, rgba(240,175,195,0.32) 40%, rgba(240,175,195,0) 72%); }
+    70%     { background: radial-gradient(circle at 72% 34%, rgba(250,190,170,0.82) 0%, rgba(250,190,170,0.32) 40%, rgba(250,190,170,0) 72%); }
   }
   @keyframes oly-col-c {
-    0%,100% { background: radial-gradient(circle at 50% 84%, rgba(206,190,236,0.72) 0%, rgba(206,190,236,0) 60%); }
-    33%     { background: radial-gradient(circle at 50% 84%, rgba(218,192,230,0.72) 0%, rgba(218,192,230,0) 60%); }
-    68%     { background: radial-gradient(circle at 50% 84%, rgba(198,196,240,0.72) 0%, rgba(198,196,240,0) 60%); }
+    0%,100% { background: radial-gradient(circle at 50% 84%, rgba(195,170,235,0.85) 0%, rgba(195,170,235,0.35) 38%, rgba(195,170,235,0) 70%); }
+    33%     { background: radial-gradient(circle at 50% 84%, rgba(210,175,228,0.85) 0%, rgba(210,175,228,0.35) 38%, rgba(210,175,228,0) 70%); }
+    68%     { background: radial-gradient(circle at 50% 84%, rgba(180,175,240,0.85) 0%, rgba(180,175,240,0.35) 38%, rgba(180,175,240,0) 70%); }
   }
 `;
 
@@ -374,9 +516,9 @@ const SquareGlow = memo(function SquareGlow() {
   return (
     <div style={{ position: 'absolute', inset: 0, background: '#FFFFFF', overflow: 'hidden' }}>
       <style>{olyGlowAnim}</style>
-      <div style={{ position: 'absolute', inset: '-30%', background: 'radial-gradient(circle at 30% 28%, rgba(170,205,244,0.72) 0%, rgba(170,205,244,0) 60%)', animation: 'oly-glow-a 15s ease-in-out infinite, oly-col-a 19s ease-in-out infinite' }} />
-      <div style={{ position: 'absolute', inset: '-30%', background: 'radial-gradient(circle at 72% 34%, rgba(248,205,200,0.66) 0%, rgba(248,205,200,0) 62%)', animation: 'oly-glow-b 18s ease-in-out infinite, oly-col-b 13s ease-in-out infinite' }} />
-      <div style={{ position: 'absolute', inset: '-30%', background: 'radial-gradient(circle at 50% 84%, rgba(206,190,236,0.72) 0%, rgba(206,190,236,0) 60%)', animation: 'oly-glow-c 16s ease-in-out infinite, oly-col-c 23s ease-in-out infinite' }} />
+      <div style={{ position: 'absolute', inset: '-30%', background: 'radial-gradient(circle at 30% 28%, rgba(150,190,240,0.85) 0%, rgba(150,190,240,0.35) 38%, rgba(150,190,240,0) 70%)', animation: 'oly-glow-a 7s ease-in-out infinite, oly-col-a 9s ease-in-out infinite' }} />
+      <div style={{ position: 'absolute', inset: '-30%', background: 'radial-gradient(circle at 72% 34%, rgba(245,180,170,0.82) 0%, rgba(245,180,170,0.32) 40%, rgba(245,180,170,0) 72%)', animation: 'oly-glow-b 9s ease-in-out infinite, oly-col-b 6s ease-in-out infinite' }} />
+      <div style={{ position: 'absolute', inset: '-30%', background: 'radial-gradient(circle at 50% 84%, rgba(195,170,235,0.85) 0%, rgba(195,170,235,0.35) 38%, rgba(195,170,235,0) 70%)', animation: 'oly-glow-c 8s ease-in-out infinite, oly-col-c 11s ease-in-out infinite' }} />
     </div>
   );
 });
@@ -386,6 +528,15 @@ export function NewPage() {
   const sharedCircleRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
   const [vh, setVh] = useState(() => window.innerHeight);
+  const [vw, setVw] = useState(() => window.innerWidth);
+  // Cursor wiring — phase is bubbled up from PrivatHomeView; copyEl/startBtnEl
+  // are live DOM nodes the animated cursor targets via getBoundingClientRect.
+  // frameElRef points at the outer PWA-frame container so a ResizeObserver can
+  // reposition the cursor on every frame size change.
+  const [cursorPhase, setCursorPhase] = useState<CursorPhase>('enter');
+  const [copyEl, setCopyEl] = useState<HTMLElement | null>(null);
+  const [startBtnEl, setStartBtnEl] = useState<HTMLElement | null>(null);
+  const frameElRef = useRef<HTMLDivElement | null>(null);
   const [visitHovered, setVisitHovered] = useState(false);
   const [olyVisitHovered, setOlyVisitHovered] = useState(false);
   const [baseVisitHovered, setBaseVisitHovered] = useState(false);
@@ -397,7 +548,7 @@ export function NewPage() {
   const [displayedColor, setDisplayedColor] = useState(COLOR_THEMES[0]);
 
   useEffect(() => {
-    const onResize = () => setVh(window.innerHeight);
+    const onResize = () => { setVh(window.innerHeight); setVw(window.innerWidth); };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
@@ -440,10 +591,9 @@ export function NewPage() {
   // so one full back-and-forth cycle = (2π / 1.5) / 0.75 ≈ 5585 ms in real time.
   useEffect(() => {
     if (!baseVisible || COLOR_THEMES.length < 2) return;
-    const SWING_PERIOD_MS = (2 * Math.PI / 1.5) / 0.75 * 1000; // ≈ 5585
     const id = window.setInterval(() => {
       setThemeIndex(prev => (prev + 1) % COLOR_THEMES.length);
-    }, SWING_PERIOD_MS);
+    }, COLOR_CYCLE_MS);
     return () => window.clearInterval(id);
   }, [baseVisible]);
 
@@ -456,7 +606,7 @@ export function NewPage() {
     const start = displayedColor;
     if (start === target) return;
     const startTime = performance.now();
-    const SWING_PERIOD_MS = (2 * Math.PI / 1.5) / 0.75 * 1000;
+    const SWING_PERIOD_MS = COLOR_CYCLE_MS;
     let raf = 0;
     const tick = (now: number) => {
       const t = Math.min(1, (now - startTime) / SWING_PERIOD_MS);
@@ -469,15 +619,19 @@ export function NewPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [themeIndex]);
 
-  // Stage 2 morphs the PWA rectangle into a 664² square; stage 3 widens it to a 1496px-wide
-  // rectangle that keeps the Olysense square's on-screen height (FRAME_H × 1.15).
-  const frameWidth = lerp(lerp(FRAME_W, FRAME_H, pFrameMorph), 1496, pStage3);
-  const frameHeight = lerp(FRAME_H, FRAME_H * 1.15, pStage3);
+  // Frame and its contents are rendered 1:1 — no scaling anywhere. Source
+  // pixels = display pixels.
+  const frameScale = 1;
+  // Stage 2 morphs the PWA rectangle into a square (FRAME_H × FRAME_H). Stage 3
+  // widens it to display width = vw - 240 (i.e. 120px inset left + right).
+  const baseWidthSource = vw - 240;
+  const frameWidth = lerp(lerp(FRAME_W, FRAME_H, pFrameMorph), baseWidthSource, pStage3);
+  const frameHeight = FRAME_H;
   // Stage 2 fades the border out; stage 3 keeps it at 0 (base view has no stroke).
   const frameBorderWidth = lerp(5, 0, pFrameMorph);
+  // Home start position is shifted 38px lower (less peek visible) than the raw
+  // PEEK; the lerp still ends at centred on Privat.
   const frameTop = lerp(vh - PEEK, (vh - frameHeight) / 2, pStage1);
-  // Stage 1 scales the frame to 1.15; stage 3 eases it back to 1 so the 1200px square renders 1:1.
-  const frameScale = lerp(lerp(1, 1.15, pStage1), 1, pStage3);
   // Panels fade in like the home-load intro (opacity 0→1, scale 0.9→1, 700ms)
   // when the showcase is reached, and fade back out when scrolling away or into stage 2.
   const panelsVisible = pStage1 >= 0.9 && pPanelFade === 0;
@@ -492,12 +646,13 @@ export function NewPage() {
     : pBgWhite > 0
     ? lerpColor('#000000', '#ffffff', pBgWhite)
     : lerpColor('#ffffff', '#000000', pStage1);
-  // Border: stage 1 ends at silver #A8AFB6 so the overlay shine pops; stage 2 → light blue; stage 3 → dark grey.
+  // Border: silver #A8AFB6 from home onwards (matches the Privat phone bezel,
+  // no stage-1 colour shift); stage 2 → light blue; stage 3 → dark grey.
   const borderColor = pStage3 > 0
     ? lerpColor(LIGHT_BLUE, '#333333', pStage3)
     : pFrameMorph > 0
     ? lerpColor('#A8AFB6', LIGHT_BLUE, pFrameMorph)
-    : lerpColor('#000000', '#A8AFB6', pStage1);
+    : '#A8AFB6';
   const contentOpacity = 1 - pStage1;
   // OlySense label appears once the square is essentially formed.
   const olySenseVisible = pFrameMorph >= 0.9;
@@ -540,19 +695,46 @@ export function NewPage() {
         {/* Sticky visual layer */}
         <div style={{ position: 'sticky', top: 0, width: '100%', height: '100vh', overflow: 'hidden', backgroundColor: bg }}>
           <style>{homeLoadAnim}</style>
+          {/* Background typography layer — outlined ticker. On scroll-away,
+              top words slide up, bottom slide down, middle fades. */}
+          {pStage1 < 1 && <HomeBgWords active={homeActive} progress={pStage1} />}
+          {/* White radial-fade halo behind avatar/name/intro to lift them off the ticker.
+              Fades 2× faster than the content so the ticker is revealed sooner during scroll. */}
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: Math.max(0, 1 - pStage1 * 2), pointerEvents: 'none' }}>
+            <div style={{
+              width: 880,
+              height: 880,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 35%, rgba(255,255,255,0) 72%)',
+            }} />
+          </div>
           {/* Home content */}
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: contentOpacity, pointerEvents: contentOpacity < 0.01 ? 'none' : 'auto' }}>
             <HomeContent active={homeActive} />
           </div>
           {/* Selected work label */}
-          <div style={{ position: 'absolute', bottom: PEEK + 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', opacity: contentOpacity, pointerEvents: 'none' }}>
-            {/* Tag: 18px. Sits outside the scale(1.15) frame, so source size == final size. */}
-            <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 600, fontSize: 18, lineHeight: '34px', color: '#000000', textAlign: 'center', whiteSpace: 'nowrap', margin: 0, animation: 'home-load 0.45s 0.08s ease-out both' }}>
-              SELECTED WORK
+          <div style={{ position: 'absolute', bottom: PEEK + 28, left: 0, right: 0, display: 'flex', justifyContent: 'center', opacity: contentOpacity, pointerEvents: 'none' }}>
+            {/* Tag: 18px. Sits outside the scale(1.15) frame, so source size == final size.
+                Each character is its own span so we can stagger a colour-pulse
+                across the word (silver-stroke ↔ darker slate, looping). */}
+            <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 600, fontSize: 18, lineHeight: '34px', color: '#A8AFB6', textAlign: 'center', whiteSpace: 'nowrap', margin: 0, animation: 'home-load 0.45s 0.08s ease-out both' }}>
+              {Array.from('SELECTED WORK').map((ch, i) => (
+                <span
+                  key={i}
+                  style={{
+                    display: 'inline-block',
+                    whiteSpace: 'pre', // preserve the space character
+                    animation: 'selected-wave 2s ease-in-out infinite',
+                    animationDelay: `${i * 0.12}s`,
+                  }}
+                >
+                  {ch}
+                </span>
+              ))}
             </p>
           </div>
           {/* PWA frame + label */}
-          <div style={{
+          <div ref={frameElRef} style={{
             position: 'absolute',
             top: frameTop,
             left: '50%',
@@ -576,7 +758,7 @@ export function NewPage() {
               <p style={{
                 fontFamily: "'Stack Sans Notch', sans-serif",
                 fontWeight: 300,
-                fontSize: 34.78, // project name: 40px final ÷ 1.15 frame scale
+                fontSize: 48, // project name
                 lineHeight: 'normal',
                 color: '#fcfcfc',
                 textAlign: 'center',
@@ -600,7 +782,7 @@ export function NewPage() {
               <p style={{
                 fontFamily: "'Stack Sans Notch', sans-serif",
                 fontWeight: 300,
-                fontSize: 34.78, // project name: 40px final ÷ 1.15 frame scale
+                fontSize: 48, // project name
                 lineHeight: 'normal',
                 color: '#000000',
                 textAlign: 'center',
@@ -626,10 +808,10 @@ export function NewPage() {
               transition: 'opacity 450ms ease-out, transform 450ms ease-out',
             }}>
               {/* Tag: 18px final ÷ 1.15 frame scale. */}
-              <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 400, fontSize: 15.65, lineHeight: 'normal', color: '#FCFCFC', whiteSpace: 'nowrap', margin: 0 }}>
+              <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 400, fontSize: 18, lineHeight: 'normal', color: '#FCFCFC', whiteSpace: 'nowrap', margin: 0 }}>
                 WIP PROJECT
               </p>
-              <p style={{ fontFamily: "'Stack Sans Text', sans-serif", fontWeight: 300, fontSize: 17.39, lineHeight: '29.57px', color: '#959595', margin: 0 }}>
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 20, lineHeight: '34px', color: '#959595', margin: 0 }}>
                 Designing and building <span style={{ color: '#FCFCFC' }}>Privat</span>, an application for instant 1:1 video sessions.
               </p>
               <a
@@ -639,9 +821,9 @@ export function NewPage() {
                 onMouseEnter={() => setVisitHovered(true)}
                 onMouseLeave={() => setVisitHovered(false)}
                 style={{
-                  border: '1.74px solid #FCFCFC', // renders 2px at the 1.15 frame scale
-                  borderRadius: 27.83, // 32 ÷ 1.15 frame scale
-                  padding: '10.43px 17.39px', // 12px 20px ÷ 1.15 frame scale
+                  border: '2px solid #FCFCFC', // renders 2px at the 1.15 frame scale
+                  borderRadius: 32, // 32 ÷ 1.15 frame scale
+                  padding: '12px 20px', // 12px 20px ÷ 1.15 frame scale
                   display: 'flex',
                   alignItems: 'center',
                   boxSizing: 'border-box',
@@ -653,7 +835,7 @@ export function NewPage() {
                   backgroundSize: visitHovered ? '100% 100%' : '0% 100%',
                   transition: 'background-size 0.4s ease-out',
                 }}>
-                <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 300, fontSize: 13.91, letterSpacing: '0.14px', textAlign: 'center', whiteSpace: 'nowrap', margin: 0, flexShrink: 0, paddingLeft: 3.48 }}>
+                <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 300, fontSize: 16, letterSpacing: '0.14px', textAlign: 'center', whiteSpace: 'nowrap', margin: 0, flexShrink: 0, paddingLeft: 4 }}>
                   {'Visit goprivat.com'.split('').map((char, i) => {
                     const total = 'Visit goprivat.com'.length;
                     const delay = visitHovered ? i * 22 : (total - 1 - i) * 22;
@@ -662,8 +844,8 @@ export function NewPage() {
                         key={i}
                         style={{
                           color: visitHovered ? '#000000' : '#FFFFFF',
-                          fontSize: 13.91, // CTA: 16px final ÷ 1.15 frame scale
-                          lineHeight: '29.57px', // 34px ÷ 1.15 frame scale
+                          fontSize: 16, // CTA: 16px final ÷ 1.15 frame scale
+                          lineHeight: '34px', // 34px ÷ 1.15 frame scale
                           transition: `color 80ms linear ${delay}ms`,
                         }}
                       >
@@ -672,7 +854,7 @@ export function NewPage() {
                     );
                   })}
                 </p>
-                <div style={{ position: 'relative', flexShrink: 0, width: 20.87, height: 20.87, animation: visitHovered ? 'arrow-nudge-diag 0.7s ease-in-out infinite' : 'none' }}>
+                <div style={{ position: 'relative', flexShrink: 0, width: 24, height: 24, animation: visitHovered ? 'arrow-nudge-diag 0.7s ease-in-out infinite' : 'none' }}>
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }}>
                     <path fillRule="evenodd" clipRule="evenodd" d="M6.75736 7.75737C6.75736 7.20508 7.20507 6.75737 7.75736 6.75737L16.2426 6.75737C16.7949 6.75737 17.2426 7.20508 17.2426 7.75737V16.2427C17.2426 16.7949 16.7949 17.2427 16.2426 17.2427C15.6904 17.2427 15.2426 16.7949 15.2426 16.2427V10.1716L8.46447 16.9498C8.07394 17.3403 7.44078 17.3403 7.05025 16.9498C6.65973 16.5592 6.65973 15.9261 7.05025 15.5355L13.8284 8.75737L7.75736 8.75737C7.20507 8.75737 6.75736 8.30965 6.75736 7.75737Z" style={{ fill: visitHovered ? '#000000' : '#FFFFFF' }} />
                   </svg>
@@ -695,11 +877,11 @@ export function NewPage() {
               transition: 'opacity 450ms ease-out, transform 450ms ease-out',
             }}>
               {/* Tag: 18px final ÷ 1.15 frame scale. */}
-              <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 600, fontSize: 15.65, lineHeight: 'normal', color: '#000000', whiteSpace: 'nowrap', margin: 0 }}>
+              <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 600, fontSize: 18, lineHeight: 'normal', color: '#000000', whiteSpace: 'nowrap', margin: 0 }}>
                 CASE STUDY
               </p>
-              <p style={{ fontFamily: "'Stack Sans Text', sans-serif", fontWeight: 300, fontSize: 17.39, lineHeight: '29.57px', color: '#000000', margin: 0 }}>
-                Led 0→1 research and design for <span style={{ color: '#000000', fontWeight: 700 }}>OlySense Insights</span>, an endoscopy KPI dashboard.
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 20, lineHeight: '34px', color: '#000000', margin: 0 }}>
+                Led 0→1 research and design for <span style={{ color: '#000000', fontWeight: 700 }}>OlySense</span>, an endoscopy KPI dashboard.
               </p>
               <a
                 href="https://olysense.com"
@@ -708,9 +890,9 @@ export function NewPage() {
                 onMouseEnter={() => setOlyVisitHovered(true)}
                 onMouseLeave={() => setOlyVisitHovered(false)}
                 style={{
-                  border: '1.74px solid #000000', // renders 2px at the 1.15 frame scale
-                  borderRadius: 27.83, // 32 ÷ 1.15 frame scale
-                  padding: '10.43px 17.39px', // 12px 20px ÷ 1.15 frame scale
+                  border: '2px solid #000000', // renders 2px at the 1.15 frame scale
+                  borderRadius: 32, // 32 ÷ 1.15 frame scale
+                  padding: '12px 20px', // 12px 20px ÷ 1.15 frame scale
                   display: 'flex',
                   alignItems: 'center',
                   boxSizing: 'border-box',
@@ -722,14 +904,14 @@ export function NewPage() {
                   backgroundSize: olyVisitHovered ? '100% 100%' : '0% 100%',
                   transition: 'background-size 0.4s ease-out',
                 }}>
-                <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 300, fontSize: 13.91, letterSpacing: '0.14px', textAlign: 'center', whiteSpace: 'nowrap', margin: 0, flexShrink: 0, paddingLeft: 3.48 }}>
+                <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 300, fontSize: 16, letterSpacing: '0.14px', textAlign: 'center', whiteSpace: 'nowrap', margin: 0, flexShrink: 0, paddingLeft: 4 }}>
                   {'Read case study'.split('').map((char, i) => (
                     <span
                       key={i}
                       style={{
                         color: olyVisitHovered ? '#FFFFFF' : '#000000',
-                        fontSize: 13.91, // CTA: 16px final ÷ 1.15 frame scale
-                        lineHeight: '29.57px', // 34px ÷ 1.15 frame scale
+                        fontSize: 16, // CTA: 16px final ÷ 1.15 frame scale
+                        lineHeight: '34px', // 34px ÷ 1.15 frame scale
                         transition: `color 0.35s ease-out ${i * 22}ms`,
                       }}
                     >
@@ -737,7 +919,7 @@ export function NewPage() {
                     </span>
                   ))}
                 </p>
-                <div style={{ position: 'relative', flexShrink: 0, width: 20.87, height: 20.87, animation: olyVisitHovered ? 'arrow-nudge-right 0.7s ease-in-out infinite' : 'none' }}>
+                <div style={{ position: 'relative', flexShrink: 0, width: 24, height: 24, animation: olyVisitHovered ? 'arrow-nudge-right 0.7s ease-in-out infinite' : 'none' }}>
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }}>
                     <path fillRule="evenodd" clipRule="evenodd" d="M12 4.58579L19.4142 12L12 19.4142L10.5858 18L15.5858 13H5V11H15.5858L10.5858 6L12 4.58579Z" style={{ fill: olyVisitHovered ? '#FFFFFF' : '#000000' }} />
                   </svg>
@@ -755,7 +937,13 @@ export function NewPage() {
               position: 'relative',
             }}>
               <div style={{ width: '100%', height: '100%', opacity: frameContentOpacity }}>
-                <PrivatHomeView active={pwaActive} circleRef={sharedCircleRef} />
+                <PrivatHomeView
+                  active={pwaActive}
+                  circleRef={sharedCircleRef}
+                  onPhaseChange={setCursorPhase}
+                  copyRef={setCopyEl}
+                  startBtnRef={setStartBtnEl}
+                />
               </div>
               {/* Silver shine — a diagonal highlight sweeps the frame, fades in only while the silver border is visible. */}
               {pFrameMorph > 0 && pStage3 < 1 && (
@@ -781,6 +969,58 @@ export function NewPage() {
                 pointerEvents: 'none',
               }}>
                 {pFrameMorph > 0.01 && pStage3 < 1 && <SquareGlow />}
+                {/* Liquid-glass chrome (iOS 26 inspired): 32px inset / 32px radius.
+                    Layers:
+                    - Backdrop blur + saturation: frosts what's behind, lifts colour
+                    - Layered linear gradients: top crown highlight, soft diagonal
+                      sheen, bottom rim bounce
+                    - Subtle white veil for body
+                    - Inset shadows: bright 1px crown, faint dark bottom, soft inner
+                      luminescence, gentle refractive corner glow
+                    Three macOS dots are punched out via CSS mask so the blobs read
+                    through unobstructed. */}
+                {pFrameMorph > 0.01 && pStage3 < 1 && (() => {
+                  const holeMask = [32, 54, 76]
+                    .map(cx => `radial-gradient(circle at ${cx}px 32px, transparent 8px, black 9px)`)
+                    .join(', ');
+                  return (
+                    <div style={{
+                      position: 'absolute',
+                      inset: 32,
+                      pointerEvents: 'none',
+                      borderRadius: 32,
+                      backdropFilter: 'blur(8px) saturate(1.25)',
+                      WebkitBackdropFilter: 'blur(8px) saturate(1.25)',
+                      background: [
+                        // Top crown highlight — bright at the very top edge
+                        'linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.06) 10%, rgba(255,255,255,0.01) 22%, transparent 36%)',
+                        // Diagonal specular sheen — the liquid shimmer
+                        'linear-gradient(122deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.02) 14%, transparent 36%, transparent 64%, rgba(255,255,255,0.06) 82%, rgba(255,255,255,0.14) 98%)',
+                        // Bottom rim bounce — subtle warm lift
+                        'linear-gradient(180deg, transparent 72%, rgba(255,255,255,0.03) 85%, rgba(255,255,255,0.12) 100%)',
+                        // Faint translucent body
+                        'rgba(255,255,255,0.07)',
+                      ].join(', '),
+                      boxShadow: [
+                        // Bright crown rim — defines the upper bezel
+                        'inset 0 1px 0 rgba(255,255,255,0.78)',
+                        // Faint dark base — depth at the bottom
+                        'inset 0 -0.5px 0 rgba(0,0,0,0.05)',
+                        // Hairline highlight ring — wraps the entire bezel
+                        'inset 0 0 0 0.5px rgba(255,255,255,0.12)',
+                        // Soft inner luminescence — the volumetric body of the glass
+                        'inset 0 6px 24px rgba(255,255,255,0.16)',
+                        // Original Figma refraction glow, dialled down
+                        'inset 6px -3px 28px rgba(255,255,255,0.22)',
+                      ].join(', '),
+                      overflow: 'hidden',
+                      maskImage: holeMask,
+                      maskComposite: 'intersect',
+                      WebkitMaskImage: holeMask,
+                      WebkitMaskComposite: 'source-in',
+                    }} />
+                  );
+                })()}
               </div>
               {/* Stage 3 — base fill: dotted grid coloured from the active theme palette.
                   Three masked drifting wave layers reveal a lighter dot tint. */}
@@ -844,10 +1084,34 @@ export function NewPage() {
                     height: 640,
                     pointerEvents: 'auto',
                   }}>
-                    <BaseIconsCanvas icons={ICONS_16} color={palette.icon} />
+                    <BaseIconsCanvas icons={ICONS_16_BY_COL} color={palette.icon} />
                   </div>
                 </div>
             </div>
+            {/* Stroke shine — a bright highlight sweeps along the silver bezel
+                ring on home + stage 1. The CSS mask-composite trick clips the
+                moving gradient to just the border ring (between border-box
+                and content-box). Fades out before stage 2 so the existing
+                surface shine takes over once the morph starts. */}
+            {(1 - Math.min(1, pFrameMorph * 4)) > 0.001 && (
+              <>
+                <style>{frameShineAnim}</style>
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: 40,
+                  padding: frameBorderWidth,
+                  background: 'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.35) 44%, rgba(255,255,255,1) 50%, rgba(255,255,255,0.35) 56%, transparent 70%)',
+                  backgroundSize: '280% 100%',
+                  animation: 'frame-shine 5s ease-in-out infinite',
+                  WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+                  WebkitMaskComposite: 'xor',
+                  maskComposite: 'exclude',
+                  opacity: 1 - Math.min(1, pFrameMorph * 4),
+                  pointerEvents: 'none',
+                }} />
+              </>
+            )}
           </div>
           {/* base title — fades in at the Olysense title's old screen spot, now inside the 1200px square */}
           <div style={{
@@ -860,7 +1124,7 @@ export function NewPage() {
             transition: 'opacity 450ms ease-out, transform 450ms ease-out',
             pointerEvents: 'none',
           }}>
-            <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 300, fontSize: 40, lineHeight: 'normal', color: '#A8A8A8', textAlign: 'center', margin: 0, whiteSpace: 'nowrap' }}>
+            <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 300, fontSize: 48, lineHeight: 'normal', color: '#A8A8A8', textAlign: 'center', margin: 0, whiteSpace: 'nowrap' }}>
               <span style={{ color: '#FFFFFF' }}>base</span>.24
             </p>
           </div>
@@ -883,7 +1147,7 @@ export function NewPage() {
             <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 600, fontSize: 18, lineHeight: 'normal', color: '#FFFFFF', whiteSpace: 'nowrap', margin: 0 }}>
               RESOURCE
             </p>
-            <p style={{ fontFamily: "'Stack Sans Text', sans-serif", fontWeight: 300, fontSize: 20, lineHeight: '34px', color: '#A8A8A8', margin: 0 }}>
+            <p style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 20, lineHeight: '34px', color: '#A8A8A8', margin: 0 }}>
               Created <span style={{ color: '#FFFFFF' }}>base.24</span>, an open source icon set for Figma Design Community
             </p>
             <a
@@ -943,6 +1207,18 @@ export function NewPage() {
             </a>
           </div>
         </div>
+        {/* Animated cursor — lives outside the frame container so it isn't
+            clipped by overflow:hidden and doesn't inherit frameScale. Position
+            is tracked in screen space via the targets' getBoundingClientRect,
+            so resizing the frame keeps the cursor pinned. */}
+        {pwaActive && (
+          <AnimatedCursor
+            phase={cursorPhase}
+            copyEl={copyEl}
+            startBtnEl={startBtnEl}
+            frameEl={frameElRef.current}
+          />
+        )}
       </div>
     </div>
   );
