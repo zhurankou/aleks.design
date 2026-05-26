@@ -200,24 +200,24 @@ function paletteFromColor(color: string): BasePalette {
     icon: color,
     pageBg: darkenHex(color, 0.17), // darker than gridBg — for the page behind the rectangle
     gridBg: darkenHex(color, 0.22),
-    dotMid: darkenHex(color, 0.30),
-    dotLight: darkenHex(color, 0.55),
+    dotMid: darkenHex(color, 0.27),
+    dotLight: darkenHex(color, 0.40),
   };
 }
 
 // Icons stay fixed; only the colour cycles. Sequence walks the colour wheel
 // through saturated rainbow hues so each HSL-lerp step is a short forward arc
-// (red → orange → yellow → green → cyan → indigo → pink → back to red).
+// (red → orange → green → cyan → indigo → pink → back to red; yellow skipped —
+// its darkened grid/dot tint reads as olive).
 // Interval between target colour swaps on the base view. Lower = faster cycle.
-const COLOR_CYCLE_MS = 3500;
+const COLOR_CYCLE_MS = 6500;
 const COLOR_THEMES: string[] = [
-  '#FF3B30', // red
-  '#FF9500', // orange
-  '#FFCC00', // yellow
-  '#34C759', // green
-  '#00D9FF', // cyan
-  '#5856D6', // indigo
-  '#FF2D92', // pink
+  '#FF0040', // red
+  '#FF6A00', // orange
+  '#00FF85', // green
+  '#00F5FF', // cyan
+  '#8A2BFF', // indigo
+  '#FF0099', // pink
 ];
 
 // Render BG_WORDS twice so a single long CSS animation can loop seamlessly:
@@ -778,10 +778,17 @@ export function NewPage() {
     const startTime = performance.now();
     const SWING_PERIOD_MS = COLOR_CYCLE_MS;
     let raf = 0;
+    let lastPaint = 0;
     const tick = (now: number) => {
       const t = Math.min(1, (now - startTime) / SWING_PERIOD_MS);
-      const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-      setDisplayedColor(lerpHsl(start, target, eased));
+      // Throttle colour writes to ~16fps. The hue drifts slowly so it still looks
+      // smooth, but this cuts the whole-page re-render (and the WebGL scene reconcile
+      // riding on it) ~3.7×, freeing the main thread so the 60fps spin + reflections
+      // stay smooth. The spin itself runs in useFrame, unaffected by this rate.
+      if (now - lastPaint >= 60 || t >= 1) {
+        lastPaint = now;
+        setDisplayedColor(lerpHsl(start, target, t)); // linear, constant-speed hue glide
+      }
       if (t < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
