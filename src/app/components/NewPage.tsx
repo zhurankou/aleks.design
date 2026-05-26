@@ -368,12 +368,13 @@ function HomeBgWords({ active, progress }: { active: boolean; progress: number }
 // frame to the first, which reads as a jump. This stacks two copies of the clip
 // and crossfades them near the loop boundary, so the wrap dissolves smoothly.
 // The wrapper carries the flip / mask / scroll-opacity passed via `style`.
-function EndoLoopVideo({ src, fadeSeconds = 0.7, holdSeconds = 2.8, startDelaySeconds = 1, loop = true, style }: {
+function EndoLoopVideo({ src, fadeSeconds = 0.7, holdSeconds = 2.8, startDelaySeconds = 1, loop = true, playing = true, style }: {
   src: string;
   fadeSeconds?: number;
   holdSeconds?: number;
   startDelaySeconds?: number;
   loop?: boolean;
+  playing?: boolean;
   style: React.CSSProperties;
 }) {
   const aRef = useRef<HTMLVideoElement>(null);
@@ -383,6 +384,8 @@ function EndoLoopVideo({ src, fadeSeconds = 0.7, holdSeconds = 2.8, startDelaySe
     const a = aRef.current;
     const b = bRef.current;
     if (!a || !b) return;
+    // Only play once OlySense is reached; paused/idle during scroll-in.
+    if (!playing) { a.pause(); b.pause(); return; }
     let active = a;
     let idle = b;
     let raf = 0;
@@ -432,7 +435,7 @@ function EndoLoopVideo({ src, fadeSeconds = 0.7, holdSeconds = 2.8, startDelaySe
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [fadeSeconds, holdSeconds, startDelaySeconds, loop]);
+  }, [fadeSeconds, holdSeconds, startDelaySeconds, loop, playing]);
 
   const videoBase: React.CSSProperties = {
     position: 'absolute', inset: 0, width: '100%', height: '100%',
@@ -749,8 +752,33 @@ export function NewPage() {
   // clear out before the frame finishes expanding to a square.
   const pContentFade = smoothstep(Math.min(1, Math.max(0, (pStage2 - 0.30) / 0.30)));
 
+  // OlySense visibility is gated by STABLE zone booleans, not the raw scroll value — so a
+  // scroll-snap bounce near the snap point can't oscillate opacity (the "flashes"). The
+  // elements fade via CSS transitions instead.
+  //   olyActive — inside the OlySense zone: the square + content are shown (fades in on
+  //     entry, out on exit). Wide thresholds tolerate snap overshoot in both directions.
+  //   olyReady  — fully settled: kicks off the staged content + the animations.
+  const olyActive = pFrameMorph > 0.6 && pStage3 < 0.2;
+  const olyReady = pFrameMorph > 0.95 && pStage3 < 0.05;
+  // Staged entrance once settled: 1) name + description, 2) carousel + endo2, 3) the
+  // carousel + bg-arrow animations. Phase only advances (Math.max); it resets when the
+  // zone is left, so on exit the square + all content fade out together via their
+  // transitions (no lone endo2 lingering).
+  const [olyPhase, setOlyPhase] = useState(0);
+  useEffect(() => {
+    if (!olyReady) return;
+    const timers = [
+      window.setTimeout(() => setOlyPhase((p) => Math.max(p, 1)), 100),  // name + description
+      window.setTimeout(() => setOlyPhase((p) => Math.max(p, 2)), 250),  // carousel + endo2
+      window.setTimeout(() => setOlyPhase((p) => Math.max(p, 3)), 450),  // carousel + bg-arrow animations
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [olyReady]);
+  useEffect(() => {
+    if (!olyActive) setOlyPhase(0);
+  }, [olyActive]);
+
   // Stage 3 sub-phases — Olysense → base.
-  const pOlyFadeOut = Math.min(1, pStage3 / 0.25); // Olysense name + description clear out first
   const baseVisible = pStage3 >= 0.85;             // base title + description appear once the square is essentially grown
 
   // Active palette — derived from displayedColor (which lerps toward the target
@@ -973,10 +1001,10 @@ export function NewPage() {
               position: 'absolute',
               right: 'calc(100% + 40px)',
               top: '50%',
-              transform: `translateY(-50%) scale(${olySenseVisible ? 1 : 0.9})`,
+              transform: `translateY(-50%) scale(${olyPhase >= 1 ? 1 : 0.9})`,
               transformOrigin: 'center center',
-              opacity: olySenseVisible ? 1 - pOlyFadeOut : 0,
-              transition: 'opacity 450ms ease-out, transform 450ms ease-out',
+              opacity: olyPhase >= 1 ? 1 : 0,
+              transition: 'opacity 350ms ease-out, transform 350ms ease-out',
               pointerEvents: 'none',
             }}>
               <p style={{
@@ -1066,15 +1094,15 @@ export function NewPage() {
               position: 'absolute',
               left: 'calc(100% + 40px)',
               top: '50%',
-              transform: `translateY(-50%) scale(${olySenseVisible ? 1 : 0.9})`,
+              transform: `translateY(-50%) scale(${olyPhase >= 1 ? 1 : 0.9})`,
               transformOrigin: 'center center',
               width: 264,
               display: 'flex',
               flexDirection: 'column',
-              opacity: olySenseVisible ? 1 - pOlyFadeOut : 0,
+              opacity: olyPhase >= 1 ? 1 : 0,
               gap: 24,
-              pointerEvents: olySenseVisible && pOlyFadeOut < 1 ? 'auto' : 'none',
-              transition: 'opacity 450ms ease-out, transform 450ms ease-out',
+              pointerEvents: olyPhase >= 1 ? 'auto' : 'none',
+              transition: 'opacity 350ms ease-out, transform 350ms ease-out',
             }}>
               {/* Tag: 18px final ÷ 1.15 frame scale. */}
               <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 600, fontSize: 18, lineHeight: 'normal', color: '#000000', whiteSpace: 'nowrap', margin: 0 }}>
@@ -1149,20 +1177,20 @@ export function NewPage() {
                   canvas. The canvas paints the white square surface on top and cuts the
                   revealed grid lines out of it, so this gradient shows through the grid. */}
               {pFrameMorph > 0.01 && pStage3 < 1 && (
-                <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', backgroundColor: '#F2F7FE', opacity: pFrameMorph * (1 - pStage3), pointerEvents: 'none' }}>
+                <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', backgroundColor: '#F2F7FE', opacity: olyActive ? 1 : 0, transition: 'opacity 0.35s ease', pointerEvents: 'none' }}>
                   <style>{olyBgAnim}</style>
-                  <div style={{ position: 'absolute', inset: '-25%', background: 'radial-gradient(circle at 32% 34%, rgba(170,202,255,0.7) 0%, rgba(170,202,255,0) 62%)', animation: 'oly-bg-a 16s ease-in-out infinite' }} />
-                  <div style={{ position: 'absolute', inset: '-25%', background: 'radial-gradient(circle at 70% 66%, rgba(255,178,186,0.62) 0%, rgba(255,178,186,0) 62%)', animation: 'oly-bg-b 21s ease-in-out infinite' }} />
+                  <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(-10%, -8%) scale(1)', background: 'radial-gradient(circle at 32% 34%, rgba(170,202,255,0.7) 0%, rgba(170,202,255,0) 62%)', animation: olyPhase >= 3 ? 'oly-bg-a 16s ease-in-out infinite' : 'none' }} />
+                  <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(10%, 8%) scale(1.15)', background: 'radial-gradient(circle at 70% 66%, rgba(255,178,186,0.62) 0%, rgba(255,178,186,0) 62%)', animation: olyPhase >= 3 ? 'oly-bg-b 21s ease-in-out infinite' : 'none' }} />
                 </div>
               )}
               {/* Background trace animation — pulsing green dot leaving a dashed
                   trail, behind the carousel cards and around the endo2 video. */}
               {pFrameMorph > 0.01 && pStage3 < 1 && (
-                <OlyTraceCanvas style={{ opacity: pFrameMorph * (1 - pStage3) }} />
+                <OlyTraceCanvas style={{ opacity: olyActive ? 1 : 0, transition: 'opacity 0.35s ease' }} play={olyPhase >= 3} />
               )}
               {/* Focused-center vertical carousel, centred on screen, clearing endo2. */}
               {pFrameMorph > 0.01 && pStage3 < 1 && (
-                <OlyCarousel style={{ opacity: pFrameMorph * (1 - pStage3) }} />
+                <OlyCarousel style={{ opacity: olyPhase >= 2 ? 1 : 0, transition: 'opacity 0.35s ease' }} blurred={olyPhase >= 3} playing={olyPhase >= 3} />
               )}
               {/* endo2 — inside the square, bottom-left corner; flipped, edges
                   feathered, and loop-crossfaded so the 8s wrap dissolves. */}
@@ -1170,14 +1198,17 @@ export function NewPage() {
                 <EndoLoopVideo
                   src="/endo2.mp4"
                   loop={false}
+                  playing={olyPhase >= 3}
                   style={{
                     position: 'absolute',
-                    left: 16,
-                    bottom: 40,
+                    left: 12,
+                    bottom: 32,
                     width: 160,
                     aspectRatio: '1080 / 1920',
                     transform: 'scaleX(-1)',
-                    opacity: pFrameMorph * (1 - pStage3),
+                    opacity: olyPhase >= 2 ? 1 : 0,
+                    // Quick fade-out (it lingers otherwise), normal fade-in.
+                    transition: olyPhase >= 2 ? 'opacity 0.35s ease' : 'opacity 0.18s ease',
                     pointerEvents: 'none',
                     // Feather all four edges so the video melts into the square
                     // instead of showing a hard border from any colour mismatch.

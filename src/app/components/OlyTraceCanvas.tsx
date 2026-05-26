@@ -27,6 +27,7 @@ const MAX_DOTS = 9;
 const GRID = 80; // grid cell size (px)
 const SURFACE = '#FAFBFC'; // white square surface that the grid is cut out of
 const GRID_LINE = '#000'; // opaque — used only as a cut mask, the colour is irrelevant
+const GRID_REVEAL = 0.82; // <1 keeps some white over the cut so the revealed grid reads lighter
 const REVEAL_R = 72; // radius of the radial grid reveal around the arrow
 const STAMP = 24; // spacing of reveal stamps along the trail
 const snapG = (v: number) => Math.round(v / GRID) * GRID; // snap a coord to the grid
@@ -50,8 +51,10 @@ type Dot = {
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
-export function OlyTraceCanvas({ style }: { style?: React.CSSProperties }) {
+export function OlyTraceCanvas({ style, play = true }: { style?: React.CSSProperties; play?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const playRef = useRef(play);
+  playRef.current = play;
   useEffect(() => {
     const canvas = ref.current;
     const parent = canvas?.parentElement;
@@ -103,9 +106,17 @@ export function OlyTraceCanvas({ style }: { style?: React.CSSProperties }) {
         gctx.lineTo(W, Math.round(y) + 0.5);
       }
       gctx.stroke();
+      // Resizing clears the canvas; immediately repaint the white surface so it never
+      // blinks to transparent (the gradient) for a frame.
+      ctx.fillStyle = SURFACE;
+      ctx.fillRect(0, 0, W, H);
     };
     resize();
-    const ro = new ResizeObserver(resize);
+    // Debounce: the frame resizes every frame during the morph; resizing rebuilds + clears
+    // the canvas. Defer it until the size settles so it doesn't flicker or rebuild the grid
+    // each frame.
+    let resizeT: ReturnType<typeof setTimeout>;
+    const ro = new ResizeObserver(() => { clearTimeout(resizeT); resizeT = setTimeout(resize, 120); });
     ro.observe(parent);
 
     const arrow = new Path2D(ARROW_PATH);
@@ -191,6 +202,17 @@ export function OlyTraceCanvas({ style }: { style?: React.CSSProperties }) {
       prev = now;
       const step = SPEED * dt;
 
+      // While the square is fading in/out (not settled) skip the heavy grid-mask
+      // compositing + arrow draw — just paint the plain white surface so the fade
+      // stays smooth. The reveal animation runs once OlySense is settled.
+      if (!playRef.current) {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = SURFACE;
+        ctx.fillRect(0, 0, W, H);
+        raf = requestAnimationFrame(loop);
+        return;
+      }
+
       spawnIn -= dt;
       if (spawnIn <= 0 && dots.length < MAX_DOTS) {
         spawn();
@@ -254,7 +276,9 @@ export function OlyTraceCanvas({ style }: { style?: React.CSSProperties }) {
       ctx.fillStyle = SURFACE;
       ctx.fillRect(0, 0, W, H);
       ctx.globalCompositeOperation = 'destination-out';
+      ctx.globalAlpha = GRID_REVEAL; // partial cut → a little white stays, so the grid reads lighter
       ctx.drawImage(mask, 0, 0, W, H);
+      ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
 
       // 4) draw the trails + arrow heads on top
@@ -297,6 +321,7 @@ export function OlyTraceCanvas({ style }: { style?: React.CSSProperties }) {
 
     return () => {
       cancelAnimationFrame(raf);
+      clearTimeout(resizeT);
       ro.disconnect();
     };
   }, []);

@@ -4,24 +4,62 @@ import { Environment, PerspectiveCamera } from '@react-three/drei';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 
-// Base-view 3×3 grid of spinning 3D glass icons drawn from a larger pool. Cells
-// swap one at a time on a "tic" (a random cell ramps to a fast spin and swaps to
-// a new icon mid-spin). The board allows duplicates, so random swaps naturally
-// build up near-matches (two-in-a-line); occasionally a swap is aimed to COMPLETE
-// a line, so a tic-tac-toe match emerges organically from the swapping. A formed
-// line swells + holds, then spins out and swaps to new icons. Base scene only.
+// Base-view 3×3 grid of spinning 3D glass icons drawn from a larger pool. Cells swap
+// one at a time on a tic (fast spin hides the swap). The board allows duplicates so
+// random swaps build up near-matches; occasionally a swap completes a line, so a
+// tic-tac-toe match emerges organically — the matched three swell + hold, then spin
+// out and swap to new icons. The icons also float buoyantly (phase-offset per cell).
+// Base scene only.
 
 const ANIMATE_SPEED = 1.5;
 const CELL_GAP = 5.5;        // scene units between cell centres (3×3)
-const ICON_DEPTH = 1;
-const ICON_SMOOTHNESS = 0.85; // rounder edges, but lighter geometry than 1 (cheaper swap rebuilds)
-const ICON_SCALE = 0.65;     // icon size inside its cell
+const ICON_DEPTH = 1;        // SVG-unit extrude depth — thin glyph (original thickness)
+const ICON_SMOOTHNESS = 0.5; // fewer curve/bevel segments → cheaper re-extrude on swap (smaller frame hitch)
 const MATCH_SCALE = 1.16;    // size bump on a matched line
 const BOARD_PX = 640;
+// App-icon tile: a rounded liquid-glass square the glyph is extruded from.
+const TILE_SIZE = 5.6;       // tile side (the glyph is normalised to ~4 units)
+const TILE_DEPTH = 0.7;
+const TILE_RADIUS = 1.4;     // rounded corners (in-plane, independent of thickness)
+const CELL_FIT = 0.65;       // overall scale of the tile+glyph unit
+const ICON_IN_TILE = 1.0;    // glyph size relative to the tile (leaves padding)
+const GLYPH_GLOW = 0.5;      // emissive self-glow layered on the metallic glyph → vivid colour
+const TILE_GLOW = 0.3;       // emissive glow on the glass tile
+// Holographic shimmer: thin-film iridescence + stronger reflections (3dsvg's holographic
+// preset omits iridescence, so the rainbow sheen is added on the mesh directly).
+const HOLO_IRIDESCENCE = 1.0;
+const HOLO_IRID_IOR = 1.4;
+const HOLO_ENV_INTENSITY = 1.7;                       // punchier environment reflections
+const HOLO_THICKNESS: [number, number] = [60, 2000]; // film thickness (nm) → very broad rainbow spread (many bands)
 
-const BURST_DUR = 0.9;       // seconds of the fast spin
+// Tile geometry: a rounded-rectangle extruded thin with a small edge bevel, so the
+// corners round freely (unlike RoundedBox, whose radius is capped by the thickness).
+// Identical for every cell, so build it once and share.
+const TILE_GEO: THREE.BufferGeometry = (() => {
+  const w = TILE_SIZE / 2;
+  const r = TILE_RADIUS;
+  const sh = new THREE.Shape();
+  sh.moveTo(-w + r, -w);
+  sh.lineTo(w - r, -w);
+  sh.quadraticCurveTo(w, -w, w, -w + r);
+  sh.lineTo(w, w - r);
+  sh.quadraticCurveTo(w, w, w - r, w);
+  sh.lineTo(-w + r, w);
+  sh.quadraticCurveTo(-w, w, -w, w - r);
+  sh.lineTo(-w, -w + r);
+  sh.quadraticCurveTo(-w, -w, -w + r, -w);
+  const bevel = 0.12;
+  const g = new THREE.ExtrudeGeometry(sh, { depth: Math.max(0.01, TILE_DEPTH - bevel * 2), bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 3, curveSegments: 14 });
+  g.computeBoundingBox();
+  const bb = g.boundingBox!;
+  g.translate(0, 0, -(bb.min.z + bb.max.z) / 2); // centre in z
+  g.computeVertexNormals();
+  return g;
+})();
+
+const BURST_DUR = 1.1;       // seconds of the spin (slower = gentler, less strobe, more time to re-extrude)
 const BURST_TURNS = 2;       // whole extra turns per burst → it ends back in phase (stays in sync)
-const BASE_SPIN = 0.4 * ANIMATE_SPEED; // shared base angular speed (rad/s) — identical for every cell
+const BASE_SPIN = 0.4 * ANIMATE_SPEED; // glyph spin speed (the tile stays fixed, so gaps stay even)
 const TWO_PI = Math.PI * 2;
 const HALF_MS = BURST_DUR * 500; // ms to the peak of a burst (where swaps hide)
 const EVENT_MIN_MS = 2600;   // min gap between swaps
@@ -36,7 +74,6 @@ const LINES: number[][] = [
   [0, 4, 8], [2, 4, 6],            // diagonals
 ];
 
-// Pick `k` distinct random indices from [0, n).
 function pickDistinct(n: number, k: number): number[] {
   const idx = Array.from({ length: n }, (_, i) => i);
   for (let i = idx.length - 1; i > 0; i--) {
@@ -46,13 +83,11 @@ function pickDistinct(n: number, k: number): number[] {
   return idx.slice(0, Math.min(k, n));
 }
 
-// First fully-matched line (all 3 equal), or null.
 function anyMatch(bd: number[]): number[] | null {
   for (const ln of LINES) if (bd[ln[0]] === bd[ln[1]] && bd[ln[1]] === bd[ln[2]]) return ln;
   return null;
 }
 
-// Lines with exactly two equal cells → [cellToFill, icon] that would complete them.
 function findCompletions(bd: number[]): [number, number][] {
   const out: [number, number][] = [];
   for (const [a, b, c] of LINES) {
@@ -63,14 +98,12 @@ function findCompletions(bd: number[]): [number, number][] {
   return out;
 }
 
-// Random board (duplicates allowed) with no line already matched.
 function makeBoard(n: number): number[] {
   let b: number[];
   do { b = Array.from({ length: 9 }, () => Math.floor(Math.random() * n)); } while (anyMatch(b));
   return b;
 }
 
-// 3 distinct icons for `line` that leave the board with no match.
 function resolveIcons(bd: number[], line: number[], n: number): number[] {
   for (let t = 0; t < 12; t++) {
     const trip = pickDistinct(n, 3);
@@ -89,9 +122,10 @@ function IconCell({ svg, color, basePos, burst, bumped }: { svg: string; color: 
   const extraTurns = useRef(0);      // banked whole turns from past bursts — keeps the cell in phase
   const bumpedRef = useRef(bumped);
   bumpedRef.current = bumped;
-  // Soften the reflection (preset roughness 0.1 → 0.3) so the specular highlight is a
-  // broad band instead of a tight point that strobes/jerks as the icon spins.
-  const materialSettings = useMemo(() => resolveMaterial('holographic', { roughness: 0.3 }), []);
+  // The raised glyph: holographic (metallic), softened reflection, mostly opaque so it
+  // reads clearly against the glass tile.
+  const iconMat = useMemo(() => resolveMaterial('holographic', { roughness: 0.3, opacity: 1 }), []);
+  const emissiveColor = useMemo(() => new THREE.Color(color), [color]);
 
   useFrame((state) => {
     const c = containerRef.current;
@@ -109,25 +143,48 @@ function IconCell({ svg, color, basePos, burst, bumped }: { svg: string; color: 
         extra = extraTurns.current;
       }
     }
-    c.rotation.y = t * BASE_SPIN + extra;
-    c.position.y = basePos[1] + Math.sin(t * 1.2 * ANIMATE_SPEED) * 0.25;
+    c.rotation.y = t * BASE_SPIN + extra; // the whole tile (icon included) spins as one unit
     const target = bumpedRef.current ? MATCH_SCALE : 1;
-    c.scale.setScalar(THREE.MathUtils.lerp(c.scale.x, target, 0.12));
+    c.scale.setScalar(THREE.MathUtils.lerp(c.scale.x, target, 0.12)); // matched cell swells
+    // 3dsvg drops emissive for the holographic preset — layer the glow on here so the
+    // colour self-illuminates (vivid) while keeping the metallic reflection.
+    const g = groupRef.current;
+    if (g) g.traverse((o) => {
+      const m = (o as THREE.Mesh).material as THREE.MeshPhysicalMaterial | undefined;
+      if (!m || !m.emissive) return;
+      m.emissive.copy(emissiveColor);
+      m.emissiveIntensity = GLYPH_GLOW;
+      if (!m.userData.holo) { // set once — enabling iridescence needs a shader recompile
+        m.iridescence = HOLO_IRIDESCENCE;
+        m.iridescenceIOR = HOLO_IRID_IOR;
+        m.iridescenceThicknessRange = HOLO_THICKNESS;
+        m.envMapIntensity = HOLO_ENV_INTENSITY;
+        m.needsUpdate = true;
+        m.userData.holo = true;
+      }
+    });
   });
 
   return (
     <group ref={containerRef} position={basePos}>
-      <group scale={ICON_SCALE}>
-        <ExtrudedSVG
-          svgString={svg}
-          depth={ICON_DEPTH}
-          smoothness={ICON_SMOOTHNESS}
-          color={color}
-          materialSettings={materialSettings}
-          rotationX={0}
-          rotationY={0}
-          groupRef={groupRef}
-        />
+      <group scale={CELL_FIT}>
+        {/* Liquid-glass tile: translucent, clearcoated, reflective rounded square. */}
+        <mesh geometry={TILE_GEO}>
+          <meshPhysicalMaterial color={color} emissive={color} emissiveIntensity={TILE_GLOW} metalness={0} roughness={0.12} transparent opacity={0.4} clearcoat={1} clearcoatRoughness={0.12} ior={1.45} reflectivity={0.6} iridescence={0.6} iridescenceIOR={1.3} iridescenceThicknessRange={[100, 500]} />
+        </mesh>
+        {/* Glyph extruded from the tile's front face. */}
+        <group position={[0, 0, TILE_DEPTH / 2]} scale={ICON_IN_TILE}>
+          <ExtrudedSVG
+            svgString={svg}
+            depth={ICON_DEPTH}
+            smoothness={ICON_SMOOTHNESS}
+            color={color}
+            materialSettings={iconMat}
+            rotationX={0}
+            rotationY={0}
+            groupRef={groupRef}
+          />
+        </group>
       </group>
     </group>
   );
@@ -151,22 +208,24 @@ export function BaseMatchCanvas({ pool, color, playing }: { pool: string[]; colo
     const burstCells = (cells: number[]) => setBursts((b) => { const c = b.slice(); cells.forEach((i) => (c[i]++)); return c; });
     const setCells = (cells: number[], vals: number[]) => setBoard((bd) => { const nb = bd.slice(); cells.forEach((i, k) => (nb[i] = vals[k])); return nb; });
     const setBumpedCells = (cells: number[], on: boolean) => setBumped((b) => { const c = b.slice(); cells.forEach((i) => (c[i] = on)); return c; });
+    const freeIcons = (excludeCells: number[]) => {
+      const used = new Set(boardRef.current.filter((_, i) => !excludeCells.includes(i)));
+      const out: number[] = [];
+      for (let i = 0; i < pool.length; i++) if (!used.has(i)) out.push(i);
+      return out;
+    };
 
-    // A line just matched → swell + hold, then spin out and swap to new icons.
     const celebrate = (line: number[], done: () => void) => {
       setBumpedCells(line, true);
       after(MATCH_HOLD_MS, () => burstCells(line));            // spin the matched three
       after(MATCH_HOLD_MS + HALF_MS, () => {                   // swap them out mid-spin (breaks the match)
         const cands = resolveIcons(boardRef.current, line, pool.length);
-        // stagger the three swaps so only one geometry rebuilds per frame (no triple-hitch)
-        line.forEach((cell, k) => after(k * 90, () => setCells([cell], [cands[k]])));
+        line.forEach((cell, k) => after(k * 90, () => setCells([cell], [cands[k]]))); // stagger → no triple-hitch
         setBumpedCells(line, false);
       });
       after(MATCH_HOLD_MS + HALF_MS + 700, done);
     };
 
-    // One swap: usually a random cell→random icon; occasionally aimed to complete a
-    // near-match. After it lands, if a line is now matched, celebrate it.
     const swapTick = (done: () => void) => {
       const bd = boardRef.current;
       const comps = findCompletions(bd);
@@ -196,7 +255,7 @@ export function BaseMatchCanvas({ pool, color, playing }: { pool: string[]; colo
 
   return (
     <Canvas style={{ width: BOARD_PX, height: BOARD_PX }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.25]} resize={{ debounce: 0 }}>
-      <PerspectiveCamera makeDefault position={[0, 0, 18]} fov={50} />
+      <PerspectiveCamera makeDefault position={[0, 0, 40]} fov={24} />
       <Environment preset="lobby" environmentIntensity={1.2} />
       <ambientLight intensity={0.4} />
       {board.map((p, i) => {
