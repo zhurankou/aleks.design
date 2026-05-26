@@ -188,7 +188,7 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef, on
       boxSizing: 'border-box',
       userSelect: 'none',
     }}>
-      {/* Animated background — also runs inside the frame, in addition to the full-screen one */}
+      {/* Animated background — runs inside the PWA frame. */}
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
         <MeshBackground circleRef={circleRef} />
       </div>
@@ -253,7 +253,7 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef, on
         transition: cursorPhase === 'enter' ? 'opacity 250ms ease-in-out 300ms' : 'opacity 300ms ease-in-out',
       }}>
         {/* Copy */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 10, width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 10, width: '100%', transform: 'translateY(-16px)' }}>
           <p style={{ fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 24, color: '#D9D9D9', margin: 0, lineHeight: '28px' }}>
             Instant 1:1 Sessions
           </p>

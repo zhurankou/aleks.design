@@ -39,7 +39,7 @@ function targetRectFor(
   return startBtnEl?.getBoundingClientRect() ?? copyEl?.getBoundingClientRect() ?? null;
 }
 
-export function AnimatedCursor({ phase, copyEl, startBtnEl, frameEl, size = 180 }: AnimatedCursorProps) {
+export function AnimatedCursor({ phase, copyEl, startBtnEl, frameEl, size = 280 }: AnimatedCursorProps) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
 
   // Recompute the cursor's screen position from the current target's rect.
@@ -115,10 +115,12 @@ export function AnimatedCursor({ phase, copyEl, startBtnEl, frameEl, size = 180 
           // cursor body extends downward from there.
           left: pos?.x ?? -9999,
           top: pos?.y ?? -9999,
-          // Use height as the reference dimension; width auto-scales so the
-          // hand keeps its natural aspect ratio (forcing a square stretched it).
+          // Lock both dimensions to hand.png's natural aspect (758×2472).
+          // `size` controls the height; width derives from the aspect so the
+          // proportion is preserved at any size and the rendered width matches
+          // the current state (55.2 at size=180).
           height: size,
-          width: 'auto',
+          width: size * (758 / 2472),
           transform: 'translate(-50%, 0)',
           transformOrigin: '50% 0%',
           pointerEvents: 'none',

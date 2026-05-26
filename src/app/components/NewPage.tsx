@@ -2,7 +2,9 @@ import { useState, useEffect, useRef, memo } from 'react';
 import imgProfile from "figma:asset/f700c10be8e928d2c825e536435c89724d9f3fa1.png";
 import { PrivatHomeView } from './privat/PrivatHomeView';
 import { AnimatedCursor, type CursorPhase } from './privat/AnimatedCursor';
-import { BaseIconsCanvas } from './BaseIconsCanvas';
+import { BaseMatchCanvas } from './BaseMatchCanvas';
+import { OlyCarousel } from './OlyCarousel';
+import { OlyTraceCanvas } from './OlyTraceCanvas';
 import FigmaLogo from '../../assets/tool-figma.svg?react';
 
 // Module-load timestamp — used as the swing's reference t=0. SVG3D's internal
@@ -110,8 +112,8 @@ const homeLoadAnim = `
 `;
 
 const NAME = 'Aleks Zhurankou';
-// avatar1: plays while the name types in. avatar2: plays while the name deletes.
-const AVATAR_VIDEOS = ['/avatar1.mp4', '/avatar2.mp4'];
+// avatar2 plays during both the delete pass and the retype pass.
+const AVATAR_VIDEO = '/avatar2.mp4';
 const PAUSE_MS = 1000; // beat held after each full type / delete pass
 
 // Background typography layer on home — words ticker upward. Sourced from
@@ -122,7 +124,8 @@ const BG_GAP = 16; // px gap between words
 const BG_PAD = 8; // px top + bottom inset so words don't touch viewport edges
 const BG_CYCLE_MS = 2500; // one cycle = slide + hold
 const BG_TILT = 20; // deg — V-shape: top slot at -BG_TILT°, bottom slot at +BG_TILT°
-const TEXT_SPAN_MS = 900; // the name types / deletes over this window at the start of each video, then holds
+const TEXT_SPAN_MS = 900;   // the name types in over this window, then holds
+const DELETE_SPAN_MS = 500; // deletes faster than it types, like a quick backspace
 
 // 16 base-view icons in grid order (top-left → bottom-right, row by row):
 // 1: cloud.sunny, 2: cloud.drizzle, 3: cloud.thunder, 4: cloud.rain
@@ -164,14 +167,13 @@ const ICONS_16: string[] = [
   `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2ZM12 20C12.2151 20 12.9482 19.7737 13.7467 18.1766C14.0532 17.5635 14.3212 16.8293 14.5298 16H9.4702C9.6788 16.8293 9.94677 17.5635 10.2533 18.1766C11.0518 19.7737 11.7849 20 12 20ZM9.11146 14C9.03919 13.3641 9 12.6949 9 12C9 11.3051 9.03919 10.6359 9.11146 10H14.8885C14.9608 10.6359 15 11.3051 15 12C15 12.6949 14.9608 13.3641 14.8885 14H9.11146ZM16.584 16C16.3182 17.2166 15.9348 18.307 15.4627 19.2138C16.9162 18.5149 18.1259 17.3895 18.9297 16H16.584ZM19.748 14H16.9C16.9656 13.3538 17 12.6849 17 12C17 11.3151 16.9656 10.6462 16.9 10H19.748C19.9125 10.6392 20 11.3094 20 12C20 12.6906 19.9125 13.3608 19.748 14ZM7.10002 14H4.25203C4.08751 13.3608 4 12.6906 4 12C4 11.3094 4.08751 10.6392 4.25203 10H7.10002C7.03443 10.6462 7 11.3151 7 12C7 12.6849 7.03443 13.3538 7.10002 14ZM5.07026 16H7.41605C7.68183 17.2166 8.06515 18.307 8.53731 19.2138C7.0838 18.5149 5.87406 17.3895 5.07026 16ZM9.4702 8H14.5298C14.3212 7.17074 14.0532 6.43647 13.7467 5.82336C12.9482 4.22632 12.2151 4 12 4C11.7849 4 11.0518 4.22632 10.2533 5.82336C9.94677 6.43647 9.6788 7.17074 9.4702 8ZM16.584 8H18.9297C18.1259 6.61047 16.9162 5.48514 15.4627 4.78617C15.9348 5.69296 16.3182 6.78337 16.584 8ZM8.53731 4.78617C8.06515 5.69296 7.68183 6.78337 7.41604 8H5.07026C5.87406 6.61047 7.08379 5.48514 8.53731 4.78617Z" fill="black"/></svg>`,
 ];
 
-// Transpose the 4x4 grid: original top row becomes the new first column, row 2
-// becomes column 2, etc. Reading row-by-row, the new sequence indexes into
-// ICONS_16 as [0,4,8,12, 1,5,9,13, 2,6,10,14, 3,7,11,15].
-const ICONS_16_BY_COL: string[] = (() => {
-  const out: string[] = new Array(16);
-  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) out[c * 4 + r] = ICONS_16[r * 4 + c];
-  return out;
-})();
+// Nine distinct icons for the 3×3 base grid (spin in place, no swapping):
+// cloud, leaf, flower, car, airplane, business, fire, location, globe.
+const BASE_ICONS: string[] = [
+  ICONS_16[0], ICONS_16[4], ICONS_16[6],
+  ICONS_16[8], ICONS_16[9], ICONS_16[10],
+  ICONS_16[12], ICONS_16[14], ICONS_16[15],
+];
 
 // Base view palette — derived from the active icon colour. Layers stay in the
 // same darkness ratio as the original neutral grid (bg 8%, mid-dot 15%,
@@ -211,10 +213,10 @@ const COLOR_CYCLE_MS = 3500;
 const COLOR_THEMES: string[] = [
   '#FF3B30', // red
   '#FF9500', // orange
-  '#FFC400', // yellow
+  '#FFCC00', // yellow
   '#34C759', // green
   '#00D9FF', // cyan
-  '#4B49FF', // indigo
+  '#5856D6', // indigo
   '#FF2D92', // pink
 ];
 
@@ -247,7 +249,7 @@ function HomeBgWords({ active, progress }: { active: boolean; progress: number }
   // rotation lives on the wrapper (not the word), the word never rotates while
   // sliding — it just enters at the slot's bottom edge, holds at centre, exits
   // at the top edge, all at the slot's constant angle.
-  const slotStack = (offsetCycles: number) => (
+  const slotStack = (offsetCycles: number, gradient: 'down' | 'up' | false = false) => (
     <div
       style={{
         position: 'absolute',
@@ -263,24 +265,51 @@ function HomeBgWords({ active, progress }: { active: boolean; progress: number }
         willChange: 'transform',
       }}
     >
-      {items.map((w, i) => (
-        <div
-          key={i}
-          style={{
-            height: 'var(--slot)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <img
-            src={`/words/${w.toLowerCase()}.svg`}
-            alt=""
-            aria-hidden
-            style={{ height: '100%', width: 'auto', display: 'block' }}
-          />
-        </div>
-      ))}
+      {items.map((w, i) => {
+        const src = `/words/${w.toLowerCase()}.svg`;
+        return (
+          <div
+            key={i}
+            style={{
+              height: 'var(--slot)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {gradient ? (
+              // Hidden img preserves the SVG's natural aspect ratio as the
+              // bounding box; the masked div fills that box with a vertical
+              // black→light-grey→black gradient confined to the glyph shape.
+              <div style={{ position: 'relative', height: '100%' }}>
+                <img src={src} alt="" aria-hidden style={{ height: '100%', width: 'auto', display: 'block', visibility: 'hidden' }} />
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  // Screen-anchored radial: light-grey at the viewport centre
+                  // fading to black at the edges, shared across every word via
+                  // background-attachment: fixed (so it reads as one whole-screen
+                  // gradient rather than a per-word one).
+                  background: 'radial-gradient(circle at center, #BCBCBC 0%, #000 100%)',
+                  backgroundAttachment: 'fixed',
+                  backgroundSize: '150vw 150vh',
+                  backgroundPosition: 'center',
+                  WebkitMaskImage: `url(${src})`,
+                  maskImage: `url(${src})`,
+                  WebkitMaskSize: 'contain',
+                  maskSize: 'contain',
+                  WebkitMaskRepeat: 'no-repeat',
+                  maskRepeat: 'no-repeat',
+                  WebkitMaskPosition: 'center',
+                  maskPosition: 'center',
+                }} />
+              </div>
+            ) : (
+              <img src={src} alt="" aria-hidden style={{ height: '100%', width: 'auto', display: 'block' }} />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 
@@ -314,7 +343,7 @@ function HomeBgWords({ active, progress }: { active: boolean; progress: number }
           willChange: 'transform',
         }}
       >
-        {slotStack(0)}
+        {slotStack(0, 'down')}
       </div>
       {/* Bottom slot — bottom edge tipped toward viewer (V bent inwards) */}
       <div
@@ -329,55 +358,134 @@ function HomeBgWords({ active, progress }: { active: boolean; progress: number }
           willChange: 'transform',
         }}
       >
-        {slotStack(1)}
+        {slotStack(1, 'up')}
       </div>
     </div>
   );
 }
 
-function HomeContent({ active }: { active: boolean }) {
-  // Loop: pausedFull -> deleting (avatar2) -> pausedEmpty -> typing (avatar1) -> ...
-  // The name shows on load (pausedFull); the loop runs while home is on screen.
-  const [displayed, setDisplayed] = useState(NAME);
-  const [phase, setPhase] = useState<'pausedFull' | 'deleting' | 'pausedEmpty' | 'typing'>('pausedFull');
-  const [avatarReady, setAvatarReady] = useState(false);
-  // Which video is on screen: 0 = avatar1 (typing pass), 1 = avatar2 (deleting pass).
-  const [activeVideo, setActiveVideo] = useState(0);
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([null, null]);
+// Seamless looping video. The native `loop` attribute hard-cuts from the last
+// frame to the first, which reads as a jump. This stacks two copies of the clip
+// and crossfades them near the loop boundary, so the wrap dissolves smoothly.
+// The wrapper carries the flip / mask / scroll-opacity passed via `style`.
+function EndoLoopVideo({ src, fadeSeconds = 0.7, holdSeconds = 2.8, startDelaySeconds = 1, loop = true, style }: {
+  src: string;
+  fadeSeconds?: number;
+  holdSeconds?: number;
+  startDelaySeconds?: number;
+  loop?: boolean;
+  style: React.CSSProperties;
+}) {
+  const aRef = useRef<HTMLVideoElement>(null);
+  const bRef = useRef<HTMLVideoElement>(null);
 
-  // Play the phase's video from frame 0. The pause phases leave both videos parked.
+  useEffect(() => {
+    const a = aRef.current;
+    const b = bRef.current;
+    if (!a || !b) return;
+    let active = a;
+    let idle = b;
+    let raf = 0;
+    let phase: 'waiting' | 'playing' | 'holding' | 'crossfading' = startDelaySeconds > 0 ? 'waiting' : 'playing';
+    let phaseStart = 0;
+    let started = false;
+    active.style.opacity = '1';
+    idle.style.opacity = '0';
+    active.currentTime = 0;
+    if (phase === 'playing') active.play().catch(() => {});
+
+    const tick = (now: number) => {
+      if (!started) { phaseStart = now; started = true; }
+      const d = active.duration;
+      if (d && isFinite(d)) {
+        const remaining = d - active.currentTime;
+        if (phase === 'waiting') {
+          // Hold on the first frame a beat before playing.
+          if (now - phaseStart >= startDelaySeconds * 1000) {
+            active.play().catch(() => {});
+            phase = 'playing';
+          }
+        } else if (phase === 'playing' && (remaining <= 0.05 || active.ended)) {
+          // Reached the end — freeze on the last frame and hold a beat.
+          active.pause();
+          phase = 'holding';
+          phaseStart = now;
+        } else if (phase === 'holding' && loop && now - phaseStart >= holdSeconds * 1000) {
+          // Start the fresh copy and begin dissolving into it.
+          idle.currentTime = 0;
+          idle.play().catch(() => {});
+          phase = 'crossfading';
+          phaseStart = now;
+        } else if (phase === 'crossfading') {
+          const t = Math.min(1, (now - phaseStart) / (fadeSeconds * 1000));
+          active.style.opacity = String(1 - t);
+          idle.style.opacity = String(t);
+          if (t >= 1) {
+            active.style.opacity = '0';
+            idle.style.opacity = '1';
+            const tmp = active; active = idle; idle = tmp;
+            phase = 'playing';
+          }
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [fadeSeconds, holdSeconds, startDelaySeconds, loop]);
+
+  const videoBase: React.CSSProperties = {
+    position: 'absolute', inset: 0, width: '100%', height: '100%',
+    objectFit: 'cover', display: 'block',
+  };
+  return (
+    <div style={style}>
+      <video ref={aRef} src={src} muted playsInline preload="auto" style={videoBase} />
+      <video ref={bRef} src={src} muted playsInline preload="auto" style={{ ...videoBase, opacity: 0 }} />
+    </div>
+  );
+}
+
+function HomeContent({ active }: { active: boolean }) {
+  // Loop: pausedFull -> deleting -> pausedEmpty -> typing (avatar2 plays on both passes) -> ...
+  // The name shows on load (pausedFull); the loop runs while home is on screen.
+  // reveal 0 = name hidden, 1 = name fully shown. Drives a sub-pixel clip wipe.
+  const [reveal, setReveal] = useState(1);
+  const [phase, setPhase] = useState<'pausedFull' | 'deleting' | 'pausedEmpty' | 'typing'>('pausedFull');
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Play avatar2 from frame 0 only on the delete pass; it stays frozen while the
+  // name types back in and holds.
   useEffect(() => {
     if (!active) return;
-    const which = phase === 'deleting' ? 1 : phase === 'typing' ? 0 : -1;
-    const vid = which >= 0 ? videoRefs.current[which] : null;
+    if (phase !== 'deleting') return;
+    const vid = videoRef.current;
     if (vid) {
       vid.currentTime = 0;
       vid.play().catch(() => {});
     }
   }, [active, phase]);
 
-  // 1s beat after each full pass, then start the next phase + crossfade to its video.
+  // 1s beat after each full pass, then start the next phase.
   useEffect(() => {
     if (!active) return;
     let timer: ReturnType<typeof setTimeout>;
     if (phase === 'pausedFull') {
-      timer = setTimeout(() => { setActiveVideo(1); setPhase('deleting'); }, PAUSE_MS);
+      timer = setTimeout(() => { setPhase('deleting'); }, PAUSE_MS);
     } else if (phase === 'pausedEmpty') {
-      timer = setTimeout(() => { setActiveVideo(0); setPhase('typing'); }, PAUSE_MS);
+      timer = setTimeout(() => { setPhase('typing'); }, PAUSE_MS);
     }
     return () => clearTimeout(timer);
   }, [active, phase]);
 
-  // When home scrolls off screen, reset the loop: pause + rewind both videos and
+  // When home scrolls off screen, reset the loop: pause + rewind the video and
   // return to the name-shown state. It restarts fresh when home is back.
   useEffect(() => {
     if (active) return;
-    videoRefs.current.forEach(v => {
-      if (v) { v.pause(); v.currentTime = 0; }
-    });
-    setDisplayed(NAME);
+    const vid = videoRef.current;
+    if (vid) { vid.pause(); vid.currentTime = 0; }
+    setReveal(1);
     setPhase('pausedFull');
-    setActiveVideo(0);
   }, [active]);
 
   // Type / delete the name over TEXT_SPAN_MS with a rAF loop — smooth, wall-clock paced,
@@ -386,24 +494,28 @@ function HomeContent({ active }: { active: boolean }) {
   useEffect(() => {
     if (!active || (phase !== 'typing' && phase !== 'deleting')) return;
     const typing = phase === 'typing';
+    const span = typing ? TEXT_SPAN_MS : DELETE_SPAN_MS;
     const start = performance.now();
+    // Typing eases in and out so it settles gently. Deletion eases out (a fast,
+    // decisive start that tapers) so it reads like a quick backspace, not a wipe.
+    const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
     let raf = requestAnimationFrame(function tick(now) {
-      const progress = Math.min(1, (now - start) / TEXT_SPAN_MS);
-      const shown = typing ? progress : 1 - progress;
-      setDisplayed(NAME.slice(0, Math.round(shown * NAME.length)));
+      const progress = Math.min(1, (now - start) / span);
+      setReveal(typing ? easeInOutCubic(progress) : 1 - easeOutCubic(progress));
       if (progress < 1) raf = requestAnimationFrame(tick);
+      // The delete pass waits for avatar2 to end (handleVideoEnded); the type
+      // pass has no video, so it finishes the loop itself once fully revealed.
+      else if (typing) { setReveal(1); setPhase('pausedFull'); }
     });
     return () => cancelAnimationFrame(raf);
   }, [active, phase]);
 
-  // avatar1 ends -> name fully typed, hold. avatar2 ends -> name cleared, hold.
-  const handleVideoEnded = (which: number) => {
+  // avatar2 ends after a delete pass -> name cleared, hold.
+  const handleVideoEnded = () => {
     if (!active) return;
-    if (which === 0 && phase === 'typing') {
-      setDisplayed(NAME);
-      setPhase('pausedFull');
-    } else if (which === 1 && phase === 'deleting') {
-      setDisplayed('');
+    if (phase === 'deleting') {
+      setReveal(0);
       setPhase('pausedEmpty');
     }
   };
@@ -418,36 +530,44 @@ function HomeContent({ active }: { active: boolean }) {
         borderRadius: '50%',
         overflow: 'hidden',
       }}>
-        {[0, 1].map((i) => (
-          <video
-            key={i}
-            ref={(el) => { videoRefs.current[i] = el; }}
-            src={AVATAR_VIDEOS[i]}
-            muted
-            playsInline
-            preload="auto"
-            onLoadedMetadata={i === 0 ? () => setAvatarReady(true) : undefined}
-            onEnded={() => handleVideoEnded(i)}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: 180,
-              height: 180,
-              objectFit: 'cover',
-              // avatar1 (i=0) sits ~7.5% further left than avatar2.
-              objectPosition: i === 0 ? '37% center' : '29.5% center',
-              // avatar2 (i=1) is zoomed in ~5%.
-              transform: i === 1 ? 'scale(1.05)' : undefined,
-              opacity: i === activeVideo ? 1 : 0,
-              transition: 'opacity 900ms cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-          />
-        ))}
+        <video
+          ref={videoRef}
+          src={AVATAR_VIDEO}
+          muted
+          playsInline
+          preload="auto"
+          onEnded={handleVideoEnded}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: 180,
+            height: 180,
+            objectFit: 'cover',
+            objectPosition: '29.5% center',
+            transform: 'scale(1.05)',
+          }}
+        />
         <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.15)' }} />
       </div>
-      <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontSize: 80, fontWeight: 400, lineHeight: 'normal', letterSpacing: '-1.92px', color: '#000000', textAlign: 'center', whiteSpace: 'nowrap', margin: 0 }}>
-        {displayed}
-        <span style={{ display: 'inline-block', width: 3, height: '0.72em', backgroundColor: '#000000', marginLeft: 4, verticalAlign: 'middle', animation: 'cursor-blink 0.75s ease-in-out infinite' }} />
+      <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontSize: 80, fontWeight: 400, lineHeight: 'normal', letterSpacing: '-1.92px', color: '#000000', textAlign: 'left', whiteSpace: 'nowrap', margin: 0, position: 'relative', display: 'inline-block' }}>
+        {/* Hidden copy reserves the full name's width; the visible copy is
+            revealed left→right with a sub-pixel clip so letters wipe in
+            smoothly instead of popping one character at a time. */}
+        <span aria-hidden style={{ visibility: 'hidden' }}>{NAME}</span>
+        <span style={{ position: 'absolute', left: 0, top: 0, whiteSpace: 'nowrap', clipPath: `inset(0 ${(1 - reveal) * 100}% 0 0)` }}>{NAME}</span>
+        {/* Cursor rides the reveal edge; solid while writing, blinking when idle. */}
+        <span style={{
+          position: 'absolute',
+          left: `${reveal * 100}%`,
+          top: '50%',
+          marginLeft: 4,
+          transform: 'translateY(-50%)',
+          display: 'inline-block',
+          width: 3,
+          height: '0.72em',
+          backgroundColor: '#000000',
+          animation: (phase === 'typing' || phase === 'deleting') ? 'none' : 'cursor-blink 0.75s ease-in-out infinite',
+        }} />
       </p>
       <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 20, fontWeight: 500, lineHeight: '34px', color: '#000000', textAlign: 'center', width: 440, margin: 0 }}>
         I'm a product designer based in Seattle, WA, but living in code. I care deeply about craft, the details, and products with taste.
@@ -460,6 +580,43 @@ const FRAME_H = 792;
 const FRAME_W = 360;
 const PEEK = 40;
 const LIGHT_BLUE = '#BAE6FD'; // stage 2 frame fill + stroke
+// Line drawn across the middle of the OlySense square (792×792 viewBox; y=0
+// top). The width is divided into eighths; each interior division point bends up
+// or down by a fixed offset so the line reads as a steady up/down trajectory.
+// Endpoints stay on the centre line (the last dips below it). Straight segments.
+const CHART_DIVISIONS = 8; // 8 segments → 7 interior up/down bends
+const CHART_MID = FRAME_H / 2 - 34; // centre line, lifted up so it clears the endo2 clip + day labels
+const CHART_END_DROP = 180; // the trajectory finishes this far below the centre line
+// Fixed offsets (px from the centre line) for the 7 interior bend points; negative = up.
+// Second half (THU→SUN) sits ~40px lower than the first, so the curve steps down.
+const CHART_BENDS = [-42, 10, 10, 48, 20, 126, 120];
+const CHART_POINTS: [number, number][] = Array.from({ length: CHART_DIVISIONS + 1 }, (_, i) => {
+  const x = (i / CHART_DIVISIONS) * FRAME_H;
+  let y = CHART_MID; // start anchored on the centre line
+  if (i === CHART_DIVISIONS) y = CHART_MID + CHART_END_DROP; // end dips below centre
+  else if (i !== 0) y = CHART_MID + CHART_BENDS[i - 1]; // fixed interior bends
+  return [x, y];
+});
+// Catmull-Rom spline → cubic beziers: the line flows smoothly through every
+// point so the bends read as rounded curves. CHART_SMOOTH sets the handle length
+// (1/6 ≈ 0.167 is the standard value; higher = rounder).
+const CHART_SMOOTH = 0.2;
+const CHART_PATH = (() => {
+  const p = CHART_POINTS;
+  let d = `M ${p[0][0]} ${p[0][1]}`;
+  for (let i = 0; i < p.length - 1; i++) {
+    const p0 = p[i - 1] ?? p[i];
+    const p1 = p[i];
+    const p2 = p[i + 1];
+    const p3 = p[i + 2] ?? p[i + 1];
+    const c1x = p1[0] + (p2[0] - p0[0]) * CHART_SMOOTH;
+    const c1y = p1[1] + (p2[1] - p0[1]) * CHART_SMOOTH;
+    const c2x = p2[0] - (p3[0] - p1[0]) * CHART_SMOOTH;
+    const c2y = p2[1] - (p3[1] - p1[1]) * CHART_SMOOTH;
+    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+})();
 // Screen-x offset (from viewport centre) of the base title + description. Sits
 // 16px outside the 640×640 icon grid: half the grid width (320) + 16 = 336.
 const BASE_LABEL_OFFSET = 640 / 2 + 16;
@@ -504,11 +661,25 @@ const baseDotsAnim = `
   }
 `;
 
+// "+$5" floats up the base rectangle on each match: fades in near the bottom,
+// holds, then fades out at the top.
 // Metallic-silver shine: a diagonal highlight sweeps across the frame surface, looped slowly.
 const frameShineAnim = `
   @keyframes frame-shine {
     0%   { background-position: 200% 0; }
     100% { background-position: -100% 0; }
+  }
+`;
+
+// Drifting blobs for the OlySense page background (light blue + red over a light base).
+const olyBgAnim = `
+  @keyframes oly-bg-a {
+    0%, 100% { transform: translate(-10%, -8%) scale(1); }
+    50%      { transform: translate(12%, 10%) scale(1.2); }
+  }
+  @keyframes oly-bg-b {
+    0%, 100% { transform: translate(10%, 8%) scale(1.15); }
+    50%      { transform: translate(-12%, -10%) scale(1); }
   }
 `;
 
@@ -599,8 +770,7 @@ export function NewPage() {
 
 
   // Smooth colour blend: lerp displayedColor through HSL (vibrant intermediates)
-  // over the full swing period via rAF. transitionProgress mirrors `t` so the
-  // material flicker can fire at the midpoint.
+  // over the full swing period via rAF.
   useEffect(() => {
     const target = COLOR_THEMES[themeIndex % COLOR_THEMES.length];
     const start = displayedColor;
@@ -642,9 +812,9 @@ export function NewPage() {
   // (a darker tint of the active icon colour, so the page behind the rectangle is a
   // matched darker version of the dotted-grid bg instead of pure black).
   const bg = pStage3 > 0
-    ? lerpColor('#ffffff', palette.pageBg, pStage3)
+    ? lerpColor('#F2F7FE', palette.pageBg, pStage3)
     : pBgWhite > 0
-    ? lerpColor('#000000', '#ffffff', pBgWhite)
+    ? lerpColor('#000000', '#F2F7FE', pBgWhite) // light blue OlySense page bg
     : lerpColor('#ffffff', '#000000', pStage1);
   // Border: silver #A8AFB6 from home onwards (matches the Privat phone bezel,
   // no stage-1 colour shift); stage 2 → light blue; stage 3 → dark grey.
@@ -695,9 +865,18 @@ export function NewPage() {
         {/* Sticky visual layer */}
         <div style={{ position: 'sticky', top: 0, width: '100%', height: '100vh', overflow: 'hidden', backgroundColor: bg }}>
           <style>{homeLoadAnim}</style>
+          {/* OlySense page background — drifting light-blue + red gradient behind the square. */}
+          {pBgWhite > 0.01 && pStage3 < 1 && (
+            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', backgroundColor: '#F2F7FE', opacity: pBgWhite * (1 - pStage3) }}>
+              <style>{olyBgAnim}</style>
+              <div style={{ position: 'absolute', inset: '-25%', background: 'radial-gradient(circle at 32% 34%, rgba(170,202,255,0.7) 0%, rgba(170,202,255,0) 62%)', animation: 'oly-bg-a 16s ease-in-out infinite' }} />
+              <div style={{ position: 'absolute', inset: '-25%', background: 'radial-gradient(circle at 70% 66%, rgba(255,178,186,0.62) 0%, rgba(255,178,186,0) 62%)', animation: 'oly-bg-b 21s ease-in-out infinite' }} />
+            </div>
+          )}
           {/* Background typography layer — outlined ticker. On scroll-away,
               top words slide up, bottom slide down, middle fades. */}
-          {pStage1 < 1 && <HomeBgWords active={homeActive} progress={pStage1} />}
+          {/* Hidden for now (kept for later): {pStage1 < 1 && <HomeBgWords active={homeActive} progress={pStage1} />} */}
+          {false && pStage1 < 1 && <HomeBgWords active={homeActive} progress={pStage1} />}
           {/* White radial-fade halo behind avatar/name/intro to lift them off the ticker.
               Fades 2× faster than the content so the ticker is revealed sooner during scroll. */}
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: Math.max(0, 1 - pStage1 * 2), pointerEvents: 'none' }}>
@@ -744,6 +923,20 @@ export function NewPage() {
             height: frameHeight,
             willChange: 'transform, top, width',
           }}>
+            {/* Base fill, expanded beyond the rectangle: a solid darker tone
+                spilling 480px past each frame edge so the area around the
+                rectangle reads through the page bg. Visible only while the base
+                view is on. */}
+            {pStage3 > 0.01 && (
+              <div style={{
+                position: 'absolute',
+                inset: -480,
+                pointerEvents: 'none',
+                opacity: pStage3,
+                overflow: 'hidden',
+                backgroundColor: darkenHex(palette.gridBg, 0.55),
+              }} />
+            )}
             {/* Privat label — project name, styled like the Olysense label */}
             <div style={{
               position: 'absolute',
@@ -812,7 +1005,7 @@ export function NewPage() {
                 WIP PROJECT
               </p>
               <p style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 20, lineHeight: '34px', color: '#959595', margin: 0 }}>
-                Designing and building <span style={{ color: '#FCFCFC' }}>Privat</span>, an application for instant 1:1 video sessions.
+                Designing and building <span style={{ color: '#959595' }}>Privat</span>, an application for instant 1:1 video sessions.
               </p>
               <a
                 href="https://goprivat.com"
@@ -881,7 +1074,7 @@ export function NewPage() {
                 CASE STUDY
               </p>
               <p style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 20, lineHeight: '34px', color: '#000000', margin: 0 }}>
-                Led 0→1 research and design for <span style={{ color: '#000000', fontWeight: 700 }}>OlySense</span>, an endoscopy KPI dashboard.
+                Led 0→1 research and design for <span style={{ color: '#000000', fontWeight: 500 }}>OlySense</span>, an endoscopy KPI dashboard.
               </p>
               <a
                 href="https://olysense.com"
@@ -945,83 +1138,49 @@ export function NewPage() {
                   startBtnRef={setStartBtnEl}
                 />
               </div>
-              {/* Silver shine — a diagonal highlight sweeps the frame, fades in only while the silver border is visible. */}
-              {pFrameMorph > 0 && pStage3 < 1 && (
-                <>
-                  <style>{frameShineAnim}</style>
-                  <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    pointerEvents: 'none',
-                    opacity: pFrameMorph * (1 - pStage3),
-                    background: 'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.25) 44%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.25) 56%, transparent 70%)',
-                    backgroundSize: '280% 100%',
-                    animation: 'frame-shine 4s ease-in-out infinite',
-                    mixBlendMode: 'overlay',
-                  }} />
-                </>
+              {/* OlySense bg — the drifting blue/red gradient, sitting behind the trace
+                  canvas. The canvas paints the white square surface on top and cuts the
+                  revealed grid lines out of it, so this gradient shows through the grid. */}
+              {pFrameMorph > 0.01 && pStage3 < 1 && (
+                <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', backgroundColor: '#F2F7FE', opacity: pFrameMorph * (1 - pStage3), pointerEvents: 'none' }}>
+                  <style>{olyBgAnim}</style>
+                  <div style={{ position: 'absolute', inset: '-25%', background: 'radial-gradient(circle at 32% 34%, rgba(170,202,255,0.7) 0%, rgba(170,202,255,0) 62%)', animation: 'oly-bg-a 16s ease-in-out infinite' }} />
+                  <div style={{ position: 'absolute', inset: '-25%', background: 'radial-gradient(circle at 70% 66%, rgba(255,178,186,0.62) 0%, rgba(255,178,186,0) 62%)', animation: 'oly-bg-b 21s ease-in-out infinite' }} />
+                </div>
               )}
-              {/* Stage 2 — soft animated gradient fill (fades back out during stage 3) */}
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                opacity: pFrameMorph * (1 - pStage3),
-                pointerEvents: 'none',
-              }}>
-                {pFrameMorph > 0.01 && pStage3 < 1 && <SquareGlow />}
-                {/* Liquid-glass chrome (iOS 26 inspired): 32px inset / 32px radius.
-                    Layers:
-                    - Backdrop blur + saturation: frosts what's behind, lifts colour
-                    - Layered linear gradients: top crown highlight, soft diagonal
-                      sheen, bottom rim bounce
-                    - Subtle white veil for body
-                    - Inset shadows: bright 1px crown, faint dark bottom, soft inner
-                      luminescence, gentle refractive corner glow
-                    Three macOS dots are punched out via CSS mask so the blobs read
-                    through unobstructed. */}
-                {pFrameMorph > 0.01 && pStage3 < 1 && (() => {
-                  const holeMask = [32, 54, 76]
-                    .map(cx => `radial-gradient(circle at ${cx}px 32px, transparent 8px, black 9px)`)
-                    .join(', ');
-                  return (
-                    <div style={{
-                      position: 'absolute',
-                      inset: 32,
-                      pointerEvents: 'none',
-                      borderRadius: 32,
-                      backdropFilter: 'blur(8px) saturate(1.25)',
-                      WebkitBackdropFilter: 'blur(8px) saturate(1.25)',
-                      background: [
-                        // Top crown highlight — bright at the very top edge
-                        'linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.06) 10%, rgba(255,255,255,0.01) 22%, transparent 36%)',
-                        // Diagonal specular sheen — the liquid shimmer
-                        'linear-gradient(122deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.02) 14%, transparent 36%, transparent 64%, rgba(255,255,255,0.06) 82%, rgba(255,255,255,0.14) 98%)',
-                        // Bottom rim bounce — subtle warm lift
-                        'linear-gradient(180deg, transparent 72%, rgba(255,255,255,0.03) 85%, rgba(255,255,255,0.12) 100%)',
-                        // Faint translucent body
-                        'rgba(255,255,255,0.07)',
-                      ].join(', '),
-                      boxShadow: [
-                        // Bright crown rim — defines the upper bezel
-                        'inset 0 1px 0 rgba(255,255,255,0.78)',
-                        // Faint dark base — depth at the bottom
-                        'inset 0 -0.5px 0 rgba(0,0,0,0.05)',
-                        // Hairline highlight ring — wraps the entire bezel
-                        'inset 0 0 0 0.5px rgba(255,255,255,0.12)',
-                        // Soft inner luminescence — the volumetric body of the glass
-                        'inset 0 6px 24px rgba(255,255,255,0.16)',
-                        // Original Figma refraction glow, dialled down
-                        'inset 6px -3px 28px rgba(255,255,255,0.22)',
-                      ].join(', '),
-                      overflow: 'hidden',
-                      maskImage: holeMask,
-                      maskComposite: 'intersect',
-                      WebkitMaskImage: holeMask,
-                      WebkitMaskComposite: 'source-in',
-                    }} />
-                  );
-                })()}
-              </div>
+              {/* Background trace animation — pulsing green dot leaving a dashed
+                  trail, behind the carousel cards and around the endo2 video. */}
+              {pFrameMorph > 0.01 && pStage3 < 1 && (
+                <OlyTraceCanvas style={{ opacity: pFrameMorph * (1 - pStage3) }} />
+              )}
+              {/* Focused-center vertical carousel, centred on screen, clearing endo2. */}
+              {pFrameMorph > 0.01 && pStage3 < 1 && (
+                <OlyCarousel style={{ opacity: pFrameMorph * (1 - pStage3) }} />
+              )}
+              {/* endo2 — inside the square, bottom-left corner; flipped, edges
+                  feathered, and loop-crossfaded so the 8s wrap dissolves. */}
+              {pFrameMorph > 0.01 && pStage3 < 1 && (
+                <EndoLoopVideo
+                  src="/endo2.mp4"
+                  loop={false}
+                  style={{
+                    position: 'absolute',
+                    left: 16,
+                    bottom: 40,
+                    width: 160,
+                    aspectRatio: '1080 / 1920',
+                    transform: 'scaleX(-1)',
+                    opacity: pFrameMorph * (1 - pStage3),
+                    pointerEvents: 'none',
+                    // Feather all four edges so the video melts into the square
+                    // instead of showing a hard border from any colour mismatch.
+                    WebkitMaskImage: 'linear-gradient(to right, transparent, #000 16%, #000 84%, transparent), linear-gradient(to bottom, transparent, #000 16%, #000 100%)',
+                    maskImage: 'linear-gradient(to right, transparent, #000 16%, #000 84%, transparent), linear-gradient(to bottom, transparent, #000 16%, #000 100%)',
+                    WebkitMaskComposite: 'source-in',
+                    maskComposite: 'intersect',
+                  }}
+                />
+              )}
               {/* Stage 3 — base fill: dotted grid coloured from the active theme palette.
                   Three masked drifting wave layers reveal a lighter dot tint. */}
               <div style={{
@@ -1032,8 +1191,6 @@ export function NewPage() {
                 backgroundImage: `radial-gradient(${palette.dotMid} 2px, transparent 2px)`,
                 backgroundSize: '20px 20px',
                 pointerEvents: 'none',
-                // bg colour comes from the rAF-lerped `displayedColor` upstream — no
-                // CSS transition needed (it would fight the per-frame state updates).
               }}>
                 {pStage3 > 0.01 && (
                   <>
@@ -1046,10 +1203,8 @@ export function NewPage() {
                       <div key={i} style={{
                         position: 'absolute',
                         inset: 0,
-                        // Lighter dots on the same 20px grid, so they sit exactly on the base dots.
                         backgroundImage: `radial-gradient(${palette.dotLight} 2px, transparent 2px)`,
                         backgroundSize: '20px 20px',
-                        // Soft drifting blob reveals a patch of lighter dots; edges blend the greys.
                         WebkitMaskImage: 'radial-gradient(circle, #000 0%, #000 12%, transparent 58%)',
                         maskImage: 'radial-gradient(circle, #000 0%, #000 12%, transparent 58%)',
                         WebkitMaskSize: '65% 65%',
@@ -1062,11 +1217,9 @@ export function NewPage() {
                   </>
                 )}
               </div>
-              {/* 3D SVG — 2×2 grid of extruded icons, centred in the base rectangle.
-                  Always mounted so the 4 WebGL canvases warm up + compile shaders in the
-                  background during earlier scenes; by the time the base view appears
-                  they're all ready, and the wrapper opacity fade reveals them in unison
-                  with the base title + panel.  */}
+              {/* 3×3 grid of spinning 3D icons (fixed set, no swapping). Always mounted
+                  so the WebGL canvas warms up + compiles shaders during earlier scenes;
+                  the wrapper opacity fade reveals it with the base title + panel. */}
               <div style={{
                 position: 'absolute',
                 inset: 0,
@@ -1079,12 +1232,8 @@ export function NewPage() {
                 // icons don't linger over the rectangle as it morphs back to OlySense.
                 transition: baseVisible ? 'opacity 700ms ease-out' : 'opacity 150ms ease-in',
               }}>
-                  <div style={{
-                    width: 640,
-                    height: 640,
-                    pointerEvents: 'auto',
-                  }}>
-                    <BaseIconsCanvas icons={ICONS_16_BY_COL} color={palette.icon} />
+                  <div style={{ width: 640, height: 640, pointerEvents: 'auto' }}>
+                    <BaseMatchCanvas icons={BASE_ICONS} color={palette.icon} />
                   </div>
                 </div>
             </div>
@@ -1103,7 +1252,7 @@ export function NewPage() {
                   padding: frameBorderWidth,
                   background: 'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.35) 44%, rgba(255,255,255,1) 50%, rgba(255,255,255,0.35) 56%, transparent 70%)',
                   backgroundSize: '280% 100%',
-                  animation: 'frame-shine 5s ease-in-out infinite',
+                  animation: 'frame-shine 10s ease-in-out infinite',
                   WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
                   WebkitMaskComposite: 'xor',
                   maskComposite: 'exclude',
@@ -1121,10 +1270,10 @@ export function NewPage() {
             transform: `translateY(-50%) scale(${baseVisible ? 1 : 0.9})`,
             transformOrigin: 'center center',
             opacity: baseVisible ? 1 : 0,
-            transition: 'opacity 450ms ease-out, transform 450ms ease-out',
+            transition: baseVisible ? 'opacity 450ms ease-out, transform 450ms ease-out' : 'opacity 150ms ease-in, transform 150ms ease-in',
             pointerEvents: 'none',
           }}>
-            <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 300, fontSize: 48, lineHeight: 'normal', color: '#A8A8A8', textAlign: 'center', margin: 0, whiteSpace: 'nowrap' }}>
+            <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 300, fontSize: 48, lineHeight: 'normal', color: '#A8A8A8', textAlign: 'right', margin: 0, whiteSpace: 'nowrap' }}>
               <span style={{ color: '#FFFFFF' }}>base</span>.24
             </p>
           </div>
@@ -1140,7 +1289,7 @@ export function NewPage() {
             flexDirection: 'column',
             gap: 24,
             opacity: baseVisible ? 1 : 0,
-            transition: 'opacity 450ms ease-out, transform 450ms ease-out',
+            transition: baseVisible ? 'opacity 450ms ease-out, transform 450ms ease-out' : 'opacity 150ms ease-in, transform 150ms ease-in',
             pointerEvents: baseVisible ? 'auto' : 'none',
           }}>
             {/* Tag */}
@@ -1148,7 +1297,7 @@ export function NewPage() {
               RESOURCE
             </p>
             <p style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 20, lineHeight: '34px', color: '#A8A8A8', margin: 0 }}>
-              Created <span style={{ color: '#FFFFFF' }}>base.24</span>, an open source icon set for Figma Design Community
+              Created <span style={{ color: '#A8A8A8' }}>base.24</span>, an open source icon set for Figma Design Community
             </p>
             <a
               href="#"
