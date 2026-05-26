@@ -19,7 +19,7 @@ const CARD_H = 240;
 const RADIUS = 20;
 const STEP = 76; // vertical centre-to-centre spacing; < CARD_H so cards overlap into a stack
 const INTERVAL_MS = 4500;
-const BASE_SCALE = 1.2; // focused card scale — grows toward the endo2 clip (right edge ~176)
+const BASE_SCALE = 1.3; // focused card scale — grows toward the endo2 clip (right edge ~176)
 const SPRING = { tension: 140, friction: 26 }; // gentle, smooth settle
 const POP = { tension: 180, friction: 28 }; // soft scale, no bounce
 // Scale uses the bouncy POP spring; everything else uses the smoother SPRING.
@@ -36,15 +36,17 @@ function target(i: number, active: number) {
   return { y: r * STEP, scale: BASE_SCALE * (1 - 0.12 * ar), opacity: 1 - 0.2 * ar, veil: ar * 0.45, delay: ar * 80 };
 }
 
-const CARDS = [PdrCard, PrrCard, BySizeCard, DetectedCard, RetrievedCard, DetectedVsCard];
+const CARDS = [PdrCard, DetectedCard, PrrCard, RetrievedCard, DetectedVsCard, BySizeCard];
 
-export function OlyCarousel({ style }: { style?: React.CSSProperties }) {
+export function OlyCarousel({ style, blurred = true, playing = true }: { style?: React.CSSProperties; blurred?: boolean; playing?: boolean }) {
   const [active, setActive] = useState(0);
 
+  // Auto-advance only while playing (the parent staged-entrance gates when this starts).
   useEffect(() => {
+    if (!playing) return;
     const id = window.setInterval(() => setActive((a) => (a + 1) % COUNT), INTERVAL_MS);
     return () => window.clearInterval(id);
-  }, []);
+  }, [playing]);
 
   const [springs, api] = useSprings(COUNT, (i) => ({ ...target(i, 0), config: springConfig }));
   useEffect(() => {
@@ -69,8 +71,8 @@ export function OlyCarousel({ style }: { style?: React.CSSProperties }) {
               height: CARD_H,
               borderRadius: RADIUS,
               backgroundColor: 'rgba(223,235,255,0.55)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
+              backdropFilter: blurred ? 'blur(8px)' : 'none',
+              WebkitBackdropFilter: blurred ? 'blur(8px)' : 'none',
               border: '1px solid rgba(255,255,255,0.6)',
               boxSizing: 'border-box',
               boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
@@ -80,7 +82,7 @@ export function OlyCarousel({ style }: { style?: React.CSSProperties }) {
               transform: to([sp.y, sp.scale], (y, s) => `translate(-50%, -50%) translateY(${y}px) scale(${s})`),
             }}
           >
-            <Card focused={i === active} />
+            <Card focused={i === active && playing} />
             {/* Veil — washes non-prominent cards toward the light-blue card tint. */}
             <animated.div style={{ position: 'absolute', inset: 0, backgroundColor: '#DFEBFF', opacity: sp.veil, pointerEvents: 'none' }} />
           </animated.div>
