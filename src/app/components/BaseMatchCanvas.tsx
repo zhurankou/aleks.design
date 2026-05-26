@@ -23,14 +23,18 @@ const TILE_DEPTH = 0.7;
 const TILE_RADIUS = 1.4;     // rounded corners (in-plane, independent of thickness)
 const CELL_FIT = 0.65;       // overall scale of the tile+glyph unit
 const ICON_IN_TILE = 1.0;    // glyph size relative to the tile (leaves padding)
-const GLYPH_GLOW = 0.5;      // emissive self-glow layered on the metallic glyph → vivid colour
-const TILE_GLOW = 0.3;       // emissive glow on the glass tile
+const GLYPH_GLOW = 1.15;     // emissive self-glow layered on the metallic glyph → vivid colour (beats the metalness wash)
+const TILE_GLOW = 0.6;       // emissive glow on the glass tile
 // Holographic shimmer: thin-film iridescence + stronger reflections (3dsvg's holographic
 // preset omits iridescence, so the rainbow sheen is added on the mesh directly).
 const HOLO_IRIDESCENCE = 1.0;
-const HOLO_IRID_IOR = 1.4;
-const HOLO_ENV_INTENSITY = 1.7;                       // punchier environment reflections
+const HOLO_IRID_IOR = 1.9;
+const HOLO_ENV_INTENSITY = 2.6;                       // punchier environment reflections
 const HOLO_THICKNESS: [number, number] = [60, 2000]; // film thickness (nm) → very broad rainbow spread (many bands)
+const RIM_POWER = 2.8;       // fresnel edge sharpness (higher = thinner rim)
+const RIM_INTENSITY = 1.8;   // brightness of the glowing neon-outline edge
+const PULSE_PERIOD = 2.0;    // seconds per glow breathe
+const PULSE_AMP = 0.3;       // ± fraction the glow swings each cycle (neon buzz)
 
 // Tile geometry: a rounded-rectangle extruded thin with a small edge bevel, so the
 // corners round freely (unlike RoundedBox, whose radius is capped by the thickness).
@@ -124,7 +128,7 @@ function IconCell({ svg, color, basePos, burst, bumped }: { svg: string; color: 
   bumpedRef.current = bumped;
   // The raised glyph: holographic (metallic), softened reflection, mostly opaque so it
   // reads clearly against the glass tile.
-  const iconMat = useMemo(() => resolveMaterial('holographic', { roughness: 0.3, opacity: 1 }), []);
+  const iconMat = useMemo(() => resolveMaterial('holographic', { roughness: 0.12, opacity: 1, metalness: 0.85 }), []);
   const emissiveColor = useMemo(() => new THREE.Color(color), [color]);
 
   useFrame((state) => {
@@ -148,17 +152,33 @@ function IconCell({ svg, color, basePos, burst, bumped }: { svg: string; color: 
     c.scale.setScalar(THREE.MathUtils.lerp(c.scale.x, target, 0.12)); // matched cell swells
     // 3dsvg drops emissive for the holographic preset — layer the glow on here so the
     // colour self-illuminates (vivid) while keeping the metallic reflection.
+    const pulse = 1 + PULSE_AMP * Math.sin(t * (TWO_PI / PULSE_PERIOD)); // rhythmic neon "buzz", shared across all cells
     const g = groupRef.current;
     if (g) g.traverse((o) => {
       const m = (o as THREE.Mesh).material as THREE.MeshPhysicalMaterial | undefined;
       if (!m || !m.emissive) return;
       m.emissive.copy(emissiveColor);
-      m.emissiveIntensity = GLYPH_GLOW;
-      if (!m.userData.holo) { // set once — enabling iridescence needs a shader recompile
+      m.emissiveIntensity = GLYPH_GLOW * pulse;
+      if (m.userData.shader) {
+        m.userData.shader.uniforms.uRimColor.value.copy(emissiveColor); // keep rim hue in sync
+        m.userData.shader.uniforms.uRimIntensity.value = RIM_INTENSITY * pulse; // buzz the rim too
+      }
+      if (!m.userData.holo) { // set once — iridescence + the rim shader need a recompile
         m.iridescence = HOLO_IRIDESCENCE;
         m.iridescenceIOR = HOLO_IRID_IOR;
         m.iridescenceThicknessRange = HOLO_THICKNESS;
         m.envMapIntensity = HOLO_ENV_INTENSITY;
+        // Fresnel rim-glow: add a view-angle term to the emissive so the glyph's edges glow
+        // like a neon outline (brightest at the silhouette, fading toward the face).
+        m.onBeforeCompile = (shader) => {
+          shader.uniforms.uRimColor = { value: emissiveColor.clone() };
+          shader.uniforms.uRimPower = { value: RIM_POWER };
+          shader.uniforms.uRimIntensity = { value: RIM_INTENSITY };
+          shader.fragmentShader = shader.fragmentShader
+            .replace('#include <common>', '#include <common>\nuniform vec3 uRimColor; uniform float uRimPower; uniform float uRimIntensity;')
+            .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\nfloat rimDot = 1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0);\ntotalEmissiveRadiance += uRimColor * pow(rimDot, uRimPower) * uRimIntensity;');
+          m.userData.shader = shader;
+        };
         m.needsUpdate = true;
         m.userData.holo = true;
       }

@@ -31,26 +31,7 @@ function lerpHex(hex1: string, hex2: string, t: number) {
   return `#${ch(0)}${ch(1)}${ch(2)}`;
 }
 
-// HSL-space lerp — routes hue along the shortest path around the colour wheel
-// so intermediates stay vibrant (yellow → orange → red → magenta → blue) instead
-// of muddying through grey RGB midpoints.
-function hexToHsl(hex: string): [number, number, number] {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  let h = 0; let s = 0;
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-    else if (max === g) h = ((b - r) / d + 2) / 6;
-    else h = ((r - g) / d + 4) / 6;
-  }
-  return [h * 360, s, l];
-}
+// HSL → hex (h in degrees, s/l in 0–1) — synthesises the base view's rainbow hue drift.
 function hslToHex(h: number, s: number, l: number): string {
   h = ((h % 360) + 360) % 360;
   const c = (1 - Math.abs(2 * l - 1)) * s;
@@ -66,14 +47,6 @@ function hslToHex(h: number, s: number, l: number): string {
   const m = l - c / 2;
   const ch = (v: number) => Math.round(Math.max(0, Math.min(255, (v + m) * 255))).toString(16).padStart(2, '0');
   return `#${ch(r1)}${ch(g1)}${ch(b1)}`;
-}
-function lerpHsl(from: string, to: string, t: number): string {
-  const [h1, s1, l1] = hexToHsl(from);
-  const [h2, s2, l2] = hexToHsl(to);
-  let dh = h2 - h1;
-  if (dh > 180) dh -= 360;
-  if (dh < -180) dh += 360;
-  return hslToHex(h1 + dh * t, lerp(s1, s2, t), lerp(l1, l2, t));
 }
 
 function smoothstep(t: number) {
@@ -125,7 +98,7 @@ const BG_PAD = 8; // px top + bottom inset so words don't touch viewport edges
 const BG_CYCLE_MS = 2500; // one cycle = slide + hold
 const BG_TILT = 20; // deg — V-shape: top slot at -BG_TILT°, bottom slot at +BG_TILT°
 const TEXT_SPAN_MS = 900;   // the name types in over this window, then holds
-const DELETE_SPAN_MS = 500; // deletes faster than it types, like a quick backspace
+const DELETE_SPAN_MS = 675; // ~45ms/char — distinct backspace steps, still faster than typing
 
 // 16 base-view icons in grid order (top-left → bottom-right, row by row):
 // 1: cloud.sunny, 2: cloud.drizzle, 3: cloud.thunder, 4: cloud.rain
@@ -205,20 +178,12 @@ function paletteFromColor(color: string): BasePalette {
   };
 }
 
-// Icons stay fixed; only the colour cycles. Sequence walks the colour wheel
-// through saturated rainbow hues so each HSL-lerp step is a short forward arc
-// (red → orange → green → cyan → indigo → pink → back to red; yellow skipped —
-// its darkened grid/dot tint reads as olive).
-// Interval between target colour swaps on the base view. Lower = faster cycle.
-const COLOR_CYCLE_MS = 6500;
-const COLOR_THEMES: string[] = [
-  '#FF0040', // red
-  '#FF6A00', // orange
-  '#00FF85', // green
-  '#00F5FF', // cyan
-  '#8A2BFF', // indigo
-  '#FF0099', // pink
-];
+// Icons stay fixed; only the colour cycles — a quick, continuous one-way hue rotation through
+// the full rainbow (red → orange → yellow → green → cyan → blue → violet → magenta → back),
+// looping seamlessly. Vivid + fairly light so every hue (incl. yellow) reads bright.
+const RAINBOW_CYCLE_MS = 4000; // one full 360° rotation
+const RAINBOW_SAT = 1;         // full saturation → no pale/pastel wash
+const RAINBOW_LIGHT = 0.5;     // max-chroma lightness
 
 // Render BG_WORDS twice so a single long CSS animation can loop seamlessly:
 // at 100% the stack is shifted by exactly N×(slot+gap), and the second copy
@@ -456,17 +421,23 @@ function HomeContent({ active }: { active: boolean }) {
   const [reveal, setReveal] = useState(1);
   const [phase, setPhase] = useState<'pausedFull' | 'deleting' | 'pausedEmpty' | 'typing'>('pausedFull');
   const videoRef = useRef<HTMLVideoElement>(null);
+  // Per-character boundary fractions of the name's width, so the delete can step the
+  // reveal one whole letter at a time (the font is proportional, so equal % steps would
+  // land mid-letter). Measured once the web font is ready.
+  const breakpointsRef = useRef<number[]>([]);
 
   // Play avatar2 from frame 0 only on the delete pass; it stays frozen while the
   // name types back in and holds.
   useEffect(() => {
-    if (!active) return;
-    if (phase !== 'deleting') return;
+    if (!active || phase !== 'deleting') return;
     const vid = videoRef.current;
-    if (vid) {
-      vid.currentTime = 0;
-      vid.play().catch(() => {});
-    }
+    if (!vid) return;
+    // Play from frame 0 (= the resting ghost frame) and fade the player in over it, so the
+    // clip comes alive from the rest pose. It fades back to that frame when it ends.
+    vid.currentTime = 0;
+    vid.play().catch(() => {});
+    const r = requestAnimationFrame(() => { if (videoRef.current) videoRef.current.style.opacity = '1'; });
+    return () => cancelAnimationFrame(r);
   }, [active, phase]);
 
   // 1s beat after each full pass, then start the next phase.
@@ -486,32 +457,56 @@ function HomeContent({ active }: { active: boolean }) {
   useEffect(() => {
     if (active) return;
     const vid = videoRef.current;
-    if (vid) { vid.pause(); vid.currentTime = 0; }
+    if (vid) { vid.pause(); vid.currentTime = 0; vid.style.opacity = '0'; }
     setReveal(1);
     setPhase('pausedFull');
   }, [active]);
 
-  // Type / delete the name over TEXT_SPAN_MS with a rAF loop — smooth, wall-clock paced,
-  // independent of the video's coarse timeupdate events. Starts with the phase (and so
-  // with its video), then stops once complete and the name just holds.
+  // Measure the name's per-character boundaries (once the web font is ready) so the
+  // delete steps land on whole letters rather than mid-glyph.
+  useEffect(() => {
+    const measure = () => {
+      const ctx = document.createElement('canvas').getContext('2d');
+      if (!ctx) return;
+      ctx.font = "400 80px 'Stack Sans Notch', sans-serif";
+      try { (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = '-1.92px'; } catch { /* older browsers */ }
+      const total = ctx.measureText(NAME).width;
+      if (!total) return;
+      const bp = [0];
+      for (let k = 1; k <= NAME.length; k++) bp.push(ctx.measureText(NAME.slice(0, k)).width / total);
+      bp[NAME.length] = 1;
+      breakpointsRef.current = bp;
+    };
+    measure();
+    document.fonts?.ready?.then(measure);
+  }, []);
+
+  // Type / delete the name one character at a time while home is on screen — a real
+  // typewriter: letters appear/disappear on whole-character steps (using the measured
+  // boundaries) at a steady cadence. The delete pass holds empty until avatar2 ends
+  // (handleVideoEnded advances); the type pass finishes the loop itself.
   useEffect(() => {
     if (!active || (phase !== 'typing' && phase !== 'deleting')) return;
     const typing = phase === 'typing';
-    const span = typing ? TEXT_SPAN_MS : DELETE_SPAN_MS;
-    const start = performance.now();
-    // Typing eases in and out so it settles gently. Deletion eases out (a fast,
-    // decisive start that tapers) so it reads like a quick backspace, not a wipe.
-    const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
-    let raf = requestAnimationFrame(function tick(now) {
-      const progress = Math.min(1, (now - start) / span);
-      setReveal(typing ? easeInOutCubic(progress) : 1 - easeOutCubic(progress));
-      if (progress < 1) raf = requestAnimationFrame(tick);
-      // The delete pass waits for avatar2 to end (handleVideoEnded); the type
-      // pass has no video, so it finishes the loop itself once fully revealed.
-      else if (typing) { setReveal(1); setPhase('pausedFull'); }
-    });
-    return () => cancelAnimationFrame(raf);
+    const bp = breakpointsRef.current;
+    if (bp.length !== NAME.length + 1) { // font not measured yet → snap to the end state
+      setReveal(typing ? 1 : 0);
+      if (typing) setPhase('pausedFull');
+      return;
+    }
+    let i = typing ? 0 : NAME.length;
+    setReveal(typing ? 0 : 1);
+    const id = setInterval(() => {
+      i += typing ? 1 : -1;
+      if (typing) {
+        setReveal(i >= NAME.length ? 1 : bp[i]);
+        if (i >= NAME.length) { clearInterval(id); setPhase('pausedFull'); }
+      } else {
+        setReveal(i <= 0 ? 0 : bp[i]);
+        if (i <= 0) clearInterval(id);
+      }
+    }, (typing ? TEXT_SPAN_MS : DELETE_SPAN_MS) / NAME.length);
+    return () => clearInterval(id);
   }, [active, phase]);
 
   // avatar2 ends after a delete pass -> name cleared, hold.
@@ -520,6 +515,8 @@ function HomeContent({ active }: { active: boolean }) {
     if (phase === 'deleting') {
       setReveal(0);
       setPhase('pausedEmpty');
+      const vid = videoRef.current;
+      if (vid) vid.style.opacity = '0'; // fade back to the resting (frame-0) ghost
     }
   };
 
@@ -533,6 +530,23 @@ function HomeContent({ active }: { active: boolean }) {
         borderRadius: '50%',
         overflow: 'hidden',
       }}>
+        {/* Ghost layer: holds the clip's first frame (the rest pose) underneath, so the
+            player can fade in from it when it plays and fade back to it when it ends. */}
+        <video
+          src={AVATAR_VIDEO}
+          muted
+          playsInline
+          preload="auto"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: 180,
+            height: 180,
+            objectFit: 'cover',
+            objectPosition: '29.5% center',
+            transform: 'scale(1.05)',
+          }}
+        />
         <video
           ref={videoRef}
           src={AVATAR_VIDEO}
@@ -548,6 +562,8 @@ function HomeContent({ active }: { active: boolean }) {
             objectFit: 'cover',
             objectPosition: '29.5% center',
             transform: 'scale(1.05)',
+            opacity: 0,
+            transition: 'opacity 0.5s ease',
           }}
         />
         <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -715,11 +731,8 @@ export function NewPage() {
   const [olyVisitHovered, setOlyVisitHovered] = useState(false);
   const [baseVisitHovered, setBaseVisitHovered] = useState(false);
   // Colour cycling for the base view — icons stay fixed, only the palette changes.
-  // themeIndex is the *target*; displayedColor lerps toward COLOR_THEMES[themeIndex]
-  // through HSL space, so intermediates pass through vibrant hues instead of
-  // muddy RGB midpoints.
-  const [themeIndex, setThemeIndex] = useState(0);
-  const [displayedColor, setDisplayedColor] = useState(COLOR_THEMES[0]);
+  // displayedColor rotates continuously through the rainbow (see RAINBOW_* + the drift effect).
+  const [displayedColor, setDisplayedColor] = useState(() => hslToHex(0, RAINBOW_SAT, RAINBOW_LIGHT));
 
   useEffect(() => {
     const onResize = () => { setVh(window.innerHeight); setVw(window.innerWidth); };
@@ -785,44 +798,24 @@ export function NewPage() {
   // theme), so icon material + grid bg + dot tints all change in lockstep.
   const palette = paletteFromColor(displayedColor);
 
-  // Cycle colours timed to one full swing oscillation. 3dsvg's swing uses
-  // sin(elapsed * 1.5), and elapsed is scaled by `animateSpeed` (0.75 here),
-  // so one full back-and-forth cycle = (2π / 1.5) / 0.75 ≈ 5585 ms in real time.
+  // Quick one-way hue rotation through the full rainbow, looping. Throttled to ~16fps so the
+  // whole-page recolour doesn't fight the 60fps spin (the spin runs in useFrame regardless).
   useEffect(() => {
-    if (!baseVisible || COLOR_THEMES.length < 2) return;
-    const id = window.setInterval(() => {
-      setThemeIndex(prev => (prev + 1) % COLOR_THEMES.length);
-    }, COLOR_CYCLE_MS);
-    return () => window.clearInterval(id);
-  }, [baseVisible]);
-
-
-  // Smooth colour blend: lerp displayedColor through HSL (vibrant intermediates)
-  // over the full swing period via rAF.
-  useEffect(() => {
-    const target = COLOR_THEMES[themeIndex % COLOR_THEMES.length];
-    const start = displayedColor;
-    if (start === target) return;
-    const startTime = performance.now();
-    const SWING_PERIOD_MS = COLOR_CYCLE_MS;
+    if (!baseVisible) return;
+    const start = performance.now();
     let raf = 0;
     let lastPaint = 0;
     const tick = (now: number) => {
-      const t = Math.min(1, (now - startTime) / SWING_PERIOD_MS);
-      // Throttle colour writes to ~16fps. The hue drifts slowly so it still looks
-      // smooth, but this cuts the whole-page re-render (and the WebGL scene reconcile
-      // riding on it) ~3.7×, freeing the main thread so the 60fps spin + reflections
-      // stay smooth. The spin itself runs in useFrame, unaffected by this rate.
-      if (now - lastPaint >= 60 || t >= 1) {
+      if (now - lastPaint >= 60) {
         lastPaint = now;
-        setDisplayedColor(lerpHsl(start, target, t)); // linear, constant-speed hue glide
+        const hue = (((now - start) / RAINBOW_CYCLE_MS) * 360) % 360;
+        setDisplayedColor(hslToHex(hue, RAINBOW_SAT, RAINBOW_LIGHT));
       }
-      if (t < 1) raf = requestAnimationFrame(tick);
+      raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [themeIndex]);
+  }, [baseVisible]);
 
   // Frame and its contents are rendered 1:1 — no scaling anywhere. Source
   // pixels = display pixels.
@@ -847,9 +840,9 @@ export function NewPage() {
   // (a darker tint of the active icon colour, so the page behind the rectangle is a
   // matched darker version of the dotted-grid bg instead of pure black).
   const bg = pStage3 > 0
-    ? lerpColor('#F2F7FE', palette.pageBg, pStage3)
+    ? lerpColor('#FBFDFF', palette.pageBg, pStage3)
     : pBgWhite > 0
-    ? lerpColor('#000000', '#F2F7FE', pBgWhite) // light blue OlySense page bg
+    ? lerpColor('#000000', '#FBFDFF', pBgWhite) // light blue OlySense page bg
     : lerpColor('#ffffff', '#000000', pStage1);
   // Border: silver #A8AFB6 from home onwards (matches the Privat phone bezel,
   // no stage-1 colour shift); stage 2 → light blue; stage 3 → dark grey.
@@ -902,7 +895,7 @@ export function NewPage() {
           <style>{homeLoadAnim}</style>
           {/* OlySense page background — drifting light-blue + red gradient behind the square. */}
           {pBgWhite > 0.01 && pStage3 < 1 && (
-            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', backgroundColor: '#F2F7FE', opacity: pBgWhite * (1 - pStage3) }}>
+            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', backgroundColor: '#FBFDFF', opacity: pBgWhite * (1 - pStage3) }}>
               <style>{olyBgAnim}</style>
               <div style={{ position: 'absolute', inset: '-25%', background: 'radial-gradient(circle at 32% 34%, rgba(170,202,255,0.7) 0%, rgba(170,202,255,0) 62%)', animation: 'oly-bg-a 16s ease-in-out infinite' }} />
               <div style={{ position: 'absolute', inset: '-25%', background: 'radial-gradient(circle at 70% 66%, rgba(255,178,186,0.62) 0%, rgba(255,178,186,0) 62%)', animation: 'oly-bg-b 21s ease-in-out infinite' }} />
@@ -1177,7 +1170,7 @@ export function NewPage() {
                   canvas. The canvas paints the white square surface on top and cuts the
                   revealed grid lines out of it, so this gradient shows through the grid. */}
               {pFrameMorph > 0.01 && pStage3 < 1 && (
-                <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', backgroundColor: '#F2F7FE', opacity: olyActive ? 1 : 0, transition: 'opacity 0.35s ease', pointerEvents: 'none' }}>
+                <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', backgroundColor: '#FBFDFF', opacity: olyActive ? 1 : 0, transition: 'opacity 0.35s ease', pointerEvents: 'none' }}>
                   <style>{olyBgAnim}</style>
                   <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(-10%, -8%) scale(1)', background: 'radial-gradient(circle at 32% 34%, rgba(170,202,255,0.7) 0%, rgba(170,202,255,0) 62%)', animation: olyPhase >= 3 ? 'oly-bg-a 16s ease-in-out infinite' : 'none' }} />
                   <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(10%, 8%) scale(1.15)', background: 'radial-gradient(circle at 70% 66%, rgba(255,178,186,0.62) 0%, rgba(255,178,186,0) 62%)', animation: olyPhase >= 3 ? 'oly-bg-b 21s ease-in-out infinite' : 'none' }} />
