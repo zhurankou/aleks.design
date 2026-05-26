@@ -14,17 +14,19 @@ import * as THREE from 'three';
 const ANIMATE_SPEED = 1.5;
 const CELL_GAP = 5.5;        // scene units between cell centres (3×3)
 const ICON_DEPTH = 1;
-const ICON_SMOOTHNESS = 0.6;
+const ICON_SMOOTHNESS = 0.85; // rounder edges, but lighter geometry than 1 (cheaper swap rebuilds)
 const ICON_SCALE = 0.65;     // icon size inside its cell
 const MATCH_SCALE = 1.16;    // size bump on a matched line
 const BOARD_PX = 640;
 
 const BURST_DUR = 0.9;       // seconds of the fast spin
-const BURST_EXTRA = 11;      // peak extra angular speed during a burst (rad/s)
+const BURST_TURNS = 2;       // whole extra turns per burst → it ends back in phase (stays in sync)
+const BASE_SPIN = 0.4 * ANIMATE_SPEED; // shared base angular speed (rad/s) — identical for every cell
+const TWO_PI = Math.PI * 2;
 const HALF_MS = BURST_DUR * 500; // ms to the peak of a burst (where swaps hide)
 const EVENT_MIN_MS = 2600;   // min gap between swaps
 const EVENT_MAX_MS = 5200;   // max gap between swaps
-const COMPLETE_CHANCE = 0.22; // when a near-match exists, chance this swap completes it (~1 in 4-5)
+const COMPLETE_CHANCE = 0.45; // when a near-match exists, chance this swap completes it
 const MATCH_HOLD_MS = 1100;  // how long a formed line is shown before it resolves
 
 // The 8 tic-tac-toe lines, as indices into the 9-cell board (row-major).
@@ -82,23 +84,33 @@ function resolveIcons(bd: number[], line: number[], n: number): number[] {
 function IconCell({ svg, color, basePos, burst, bumped }: { svg: string; color: string; basePos: [number, number, number]; burst: number; bumped: boolean }) {
   const containerRef = useRef<THREE.Group>(null);
   const groupRef = useRef<THREE.Group>(null);
-  const tRef = useRef(0);            // raw elapsed seconds
-  const burstStart = useRef(-100);
-  const prevBurst = useRef(burst);
-  if (burst !== prevBurst.current) { prevBurst.current = burst; burstStart.current = tRef.current; }
+  const burstSeen = useRef(burst);
+  const burstStart = useRef(-1);     // shared-clock time this burst began (-1 = none)
+  const extraTurns = useRef(0);      // banked whole turns from past bursts — keeps the cell in phase
   const bumpedRef = useRef(bumped);
   bumpedRef.current = bumped;
-  const materialSettings = useMemo(() => resolveMaterial('glass', { roughness: 0.55 }), []);
+  // Soften the reflection (preset roughness 0.1 → 0.3) so the specular highlight is a
+  // broad band instead of a tight point that strobes/jerks as the icon spins.
+  const materialSettings = useMemo(() => resolveMaterial('holographic', { roughness: 0.3 }), []);
 
-  useFrame((_, delta) => {
+  useFrame((state) => {
     const c = containerRef.current;
     if (!c) return;
-    tRef.current += delta;
-    let spin = 0.4 * ANIMATE_SPEED;
-    const since = tRef.current - burstStart.current;
-    if (since >= 0 && since < BURST_DUR) spin += Math.sin((since / BURST_DUR) * Math.PI) * BURST_EXTRA; // bell ramp
-    c.rotation.y += delta * spin;
-    c.position.y = basePos[1] + Math.sin(tRef.current * 1.2 * ANIMATE_SPEED) * 0.25;
+    const t = state.clock.elapsedTime; // shared across all cells → identical base angle
+    if (burst !== burstSeen.current) { burstSeen.current = burst; burstStart.current = t; }
+    let extra = extraTurns.current;
+    if (burstStart.current >= 0) {
+      const p = (t - burstStart.current) / BURST_DUR;
+      if (p < 1) {
+        extra = extraTurns.current + p * p * (3 - 2 * p) * BURST_TURNS * TWO_PI; // smoothstep ramp of whole turns
+      } else {
+        extraTurns.current += BURST_TURNS * TWO_PI; // bank the turns → exactly back in phase
+        burstStart.current = -1;
+        extra = extraTurns.current;
+      }
+    }
+    c.rotation.y = t * BASE_SPIN + extra;
+    c.position.y = basePos[1] + Math.sin(t * 1.2 * ANIMATE_SPEED) * 0.25;
     const target = bumpedRef.current ? MATCH_SCALE : 1;
     c.scale.setScalar(THREE.MathUtils.lerp(c.scale.x, target, 0.12));
   });
@@ -145,7 +157,9 @@ export function BaseMatchCanvas({ pool, color, playing }: { pool: string[]; colo
       setBumpedCells(line, true);
       after(MATCH_HOLD_MS, () => burstCells(line));            // spin the matched three
       after(MATCH_HOLD_MS + HALF_MS, () => {                   // swap them out mid-spin (breaks the match)
-        setCells(line, resolveIcons(boardRef.current, line, pool.length));
+        const cands = resolveIcons(boardRef.current, line, pool.length);
+        // stagger the three swaps so only one geometry rebuilds per frame (no triple-hitch)
+        line.forEach((cell, k) => after(k * 90, () => setCells([cell], [cands[k]])));
         setBumpedCells(line, false);
       });
       after(MATCH_HOLD_MS + HALF_MS + 700, done);
@@ -181,7 +195,7 @@ export function BaseMatchCanvas({ pool, color, playing }: { pool: string[]; colo
   }, [playing, pool.length]);
 
   return (
-    <Canvas style={{ width: BOARD_PX, height: BOARD_PX }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.5]} resize={{ debounce: 0 }}>
+    <Canvas style={{ width: BOARD_PX, height: BOARD_PX }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.25]} resize={{ debounce: 0 }}>
       <PerspectiveCamera makeDefault position={[0, 0, 18]} fov={50} />
       <Environment preset="lobby" environmentIntensity={1.2} />
       <ambientLight intensity={0.4} />
