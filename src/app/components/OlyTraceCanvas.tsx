@@ -30,7 +30,6 @@ const GRID_LINE = '#000'; // opaque — used only as a cut mask, the colour is i
 const GRID_REVEAL = 0.82; // <1 keeps some white over the cut so the revealed grid reads lighter
 const REVEAL_R = 72; // radius of the radial grid reveal around the arrow
 const STAMP = 24; // spacing of reveal stamps along the trail
-const snapG = (v: number) => Math.round(v / GRID) * GRID; // snap a coord to the grid
 
 type Dir = 'right' | 'up' | 'down' | 'left';
 type Pt = { x: number; y: number; len: number };
@@ -82,9 +81,18 @@ export function OlyTraceCanvas({ style, play = true }: { style?: React.CSSProper
 
     let W = 0;
     let H = 0;
+    // Grid origin offsets — centre the line pattern in the square so the leftover
+    // space splits evenly on both sides (left==right, top==bottom) instead of
+    // hanging off the top-left edge. snapGX/snapGY snap to these centred lines.
+    let offX = 0;
+    let offY = 0;
+    const snapGX = (v: number) => offX + Math.round((v - offX) / GRID) * GRID;
+    const snapGY = (v: number) => offY + Math.round((v - offY) / GRID) * GRID;
     const resize = () => {
       W = parent.clientWidth;
       H = parent.clientHeight;
+      offX = (W % GRID) / 2;
+      offY = (H % GRID) / 2;
       for (const c of [canvas, grid, mask]) {
         c.width = Math.round(W * dpr);
         c.height = Math.round(H * dpr);
@@ -97,11 +105,11 @@ export function OlyTraceCanvas({ style, play = true }: { style?: React.CSSProper
       gctx.strokeStyle = GRID_LINE;
       gctx.lineWidth = 1.5;
       gctx.beginPath();
-      for (let x = GRID; x < W; x += GRID) {
+      for (let x = offX; x < W; x += GRID) {
         gctx.moveTo(Math.round(x) + 0.5, 0);
         gctx.lineTo(Math.round(x) + 0.5, H);
       }
-      for (let y = GRID; y < H; y += GRID) {
+      for (let y = offY; y < H; y += GRID) {
         gctx.moveTo(0, Math.round(y) + 0.5);
         gctx.lineTo(W, Math.round(y) + 0.5);
       }
@@ -129,9 +137,10 @@ export function OlyTraceCanvas({ style, play = true }: { style?: React.CSSProper
       const endoBottom = H - ENDO_BOTTOM;
       const canAbove = endoTop > 60;
       // Snap entry points to grid lines so the arrows ride the grid (fixed coord on a
-      // line, moving coord entering from a grid-aligned edge).
-      const gridBottom = Math.floor(H / GRID) * GRID;
-      const gridRight = Math.floor(W / GRID) * GRID;
+      // line, moving coord entering from a grid-aligned edge). Bottom/right use the
+      // last centred line that still fits inside the square.
+      const gridBottom = offY + Math.floor((H - offY) / GRID) * GRID;
+      const gridRight = offX + Math.floor((W - offX) / GRID) * GRID;
       const green = Math.random() < 0.5;
       const sideways = W > ENDO_RIGHT + 60 && Math.random() < 0.4;
       let x: number;
@@ -140,24 +149,24 @@ export function OlyTraceCanvas({ style, play = true }: { style?: React.CSSProper
       let belowEndo = false;
       if (green) {
         if (sideways) {
-          x = snapG(rand(ENDO_RIGHT + 10, W - 20));
+          x = snapGX(rand(ENDO_RIGHT + 10, W - 20));
           y = gridBottom;
           dir = 'up';
         } else {
           belowEndo = !canAbove || Math.random() > 0.75;
           x = 0;
-          y = snapG(belowEndo ? rand(endoBottom + 8, H - 10) : rand(20, endoTop - 12));
+          y = snapGY(belowEndo ? rand(endoBottom + 8, H - 10) : rand(20, endoTop - 12));
           dir = 'right';
         }
       } else {
         if (sideways) {
-          x = snapG(rand(ENDO_RIGHT + 10, W - 20));
+          x = snapGX(rand(ENDO_RIGHT + 10, W - 20));
           y = 0;
           dir = 'down';
         } else {
           const above = canAbove && Math.random() < 0.55;
           x = gridRight;
-          y = snapG(above ? rand(20, endoTop - 12) : rand(endoBottom + 8, H - 10));
+          y = snapGY(above ? rand(20, endoTop - 12) : rand(endoBottom + 8, H - 10));
           dir = 'left';
         }
       }
@@ -232,8 +241,8 @@ export function OlyTraceCanvas({ style, play = true }: { style?: React.CSSProper
           if (d.segDist >= d.segLen) {
             // snap the moving coord onto the grid line just crossed (correct the
             // per-frame step overshoot) so every turn lands on the grid
-            if (d.dir === 'right' || d.dir === 'left') d.hx = snapG(d.hx);
-            else d.hy = snapG(d.hy);
+            if (d.dir === 'right' || d.dir === 'left') d.hx = snapGX(d.hx);
+            else d.hy = snapGY(d.hy);
             d.points.push({ x: d.hx, y: d.hy, len: d.headLen });
             turn(d);
           }
