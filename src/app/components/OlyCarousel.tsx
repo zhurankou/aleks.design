@@ -19,7 +19,7 @@ const CARD_H = 240;
 const RADIUS = 20;
 const STEP = 76; // vertical centre-to-centre spacing; < CARD_H so cards overlap into a stack
 const INTERVAL_MS = 4500;
-const BASE_SCALE = 1.3; // focused card scale — grows toward the endo2 clip (right edge ~176)
+const BASE_SCALE = 1.235; // focused card scale (1.3 − 5%) — grows toward the endo2 clip (right edge ~176)
 const SPRING = { tension: 140, friction: 26 }; // gentle, smooth settle
 const POP = { tension: 180, friction: 28 }; // soft scale, no bounce
 // Scale uses the bouncy POP spring; everything else uses the smoother SPRING.
@@ -33,7 +33,7 @@ function target(i: number, active: number) {
   // Strong contrast between focus and neighbours so a card visibly grows,
   // brightens, and un-veils as it takes focus (a pronounced swap). `delay` staggers
   // the cards (focus leads, outer cards trail) so they don't move in lockstep.
-  return { y: r * STEP, scale: BASE_SCALE * (1 - 0.12 * ar), opacity: 1 - 0.2 * ar, veil: ar * 0.45, delay: ar * 80 };
+  return { y: r * STEP, scale: BASE_SCALE * (1 - 0.12 * ar), opacity: 1, veil: 0, delay: ar * 80 };
 }
 
 const CARDS = [PdrCard, DetectedCard, PrrCard, RetrievedCard, DetectedVsCard, BySizeCard];
@@ -70,12 +70,17 @@ export function OlyCarousel({ style, blurred = true, playing = true }: { style?:
               width: CARD_W,
               height: CARD_H,
               borderRadius: RADIUS,
-              backgroundColor: 'rgba(223,235,255,0.55)',
-              backdropFilter: blurred ? 'blur(8px)' : 'none',
-              WebkitBackdropFilter: blurred ? 'blur(8px)' : 'none',
-              border: '1px solid rgba(255,255,255,0.6)',
+              // Directional fill — lit top-left → dimmer bottom-right gives the pane "thickness".
+              background:
+                'linear-gradient(135deg, rgba(240,245,252,0.60) 0%, rgba(226,234,247,0.44) 100%)',
+              // saturate+brightness keep the blurred backdrop lively instead of grey mud.
+              backdropFilter: blurred ? 'blur(14px) saturate(1.6) brightness(1.05)' : 'none',
+              WebkitBackdropFilter: blurred ? 'blur(14px) saturate(1.6) brightness(1.05)' : 'none',
               boxSizing: 'border-box',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
+              // Inner bezel: bright top rim, soft inner blue glow.
+              // The perimeter edge-catch is the gradient ring overlay below.
+              boxShadow:
+                'inset 0 1px 1px rgba(255,255,255,0.9), inset 0 0 26px rgba(212,222,242,0.40)',
               overflow: 'hidden',
               zIndex: COUNT - Math.abs(r),
               opacity: sp.opacity,
@@ -83,8 +88,35 @@ export function OlyCarousel({ style, blurred = true, playing = true }: { style?:
             }}
           >
             <Card focused={i === active && playing} />
+            {/* Glass shine — diagonal specular sheen sweeping from the top-left corner. */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                pointerEvents: 'none',
+                background:
+                  'linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(236,242,250,0.24) 22%, rgba(255,255,255,0) 48%)',
+              }}
+            />
             {/* Veil — washes non-prominent cards toward the light-blue card tint. */}
-            <animated.div style={{ position: 'absolute', inset: 0, backgroundColor: '#DFEBFF', opacity: sp.veil, pointerEvents: 'none' }} />
+            <animated.div style={{ position: 'absolute', inset: 0, backgroundColor: '#E9EFF7', opacity: sp.veil, pointerEvents: 'none' }} />
+            {/* Bezel rim — gradient edge-catch ring (top-left spark, faint mid, soft
+                bottom-right catch). Drawn last so the corner sparks stay crisp.
+                mask-composite punches out the interior, leaving only the 1.5px ring. */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: RADIUS,
+                padding: 2,
+                pointerEvents: 'none',
+                background:
+                  'linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 5%, rgba(224,232,247,0.55) 14%, rgba(200,216,242,0.1) 50%, rgba(242,246,252,0.85) 100%)',
+                WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                WebkitMaskComposite: 'xor',
+                maskComposite: 'exclude',
+              }}
+            />
           </animated.div>
         );
       })}

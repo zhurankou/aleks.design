@@ -147,7 +147,7 @@ function IconCell({ svg, color, basePos, burst, bumped }: { svg: string; color: 
         extra = extraTurns.current;
       }
     }
-    c.rotation.y = t * BASE_SPIN + extra; // the whole tile (icon included) spins as one unit
+    c.rotation.y = t * BASE_SPIN + extra; // continuous spin
     const target = bumpedRef.current ? MATCH_SCALE : 1;
     c.scale.setScalar(THREE.MathUtils.lerp(c.scale.x, target, 0.12)); // matched cell swells
     // 3dsvg drops emissive for the holographic preset — layer the glow on here so the
@@ -210,7 +210,7 @@ function IconCell({ svg, color, basePos, burst, bumped }: { svg: string; color: 
   );
 }
 
-export function BaseMatchCanvas({ pool, color, playing }: { pool: string[]; color: string; playing: boolean }) {
+export function BaseMatchCanvas({ pool, color, playing, matching = true }: { pool: string[]; color: string; playing: boolean; matching?: boolean }) {
   const [board, setBoard] = useState<number[]>(() => makeBoard(pool.length));
   const [bursts, setBursts] = useState<number[]>(() => Array(9).fill(0));
   const [bumped, setBumped] = useState<boolean[]>(() => Array(9).fill(false));
@@ -248,7 +248,7 @@ export function BaseMatchCanvas({ pool, color, playing }: { pool: string[]; colo
 
     const swapTick = (done: () => void) => {
       const bd = boardRef.current;
-      const comps = findCompletions(bd);
+      const comps = matching ? findCompletions(bd) : []; // no deliberate match-completions when matching is off
       let cell: number;
       let icon: number;
       if (comps.length && Math.random() < COMPLETE_CHANCE) {
@@ -262,7 +262,7 @@ export function BaseMatchCanvas({ pool, color, playing }: { pool: string[]; colo
       burstCells([cell]);
       after(HALF_MS, () => setCells([cell], [icon]));          // the icon swaps in (mid-spin)
       after(HALF_MS + 220, () => {
-        const line = anyMatch(boardRef.current);
+        const line = matching ? anyMatch(boardRef.current) : null;
         if (line) celebrate(line, done);                      // a match emerged → celebrate it
         else after(280, done);
       });
@@ -271,7 +271,7 @@ export function BaseMatchCanvas({ pool, color, playing }: { pool: string[]; colo
     const next = () => after(EVENT_MIN_MS + Math.random() * (EVENT_MAX_MS - EVENT_MIN_MS), () => swapTick(next));
     next();
     return () => { cancelled = true; timers.forEach(clearTimeout); };
-  }, [playing, pool.length]);
+  }, [playing, pool.length, matching]);
 
   return (
     <Canvas style={{ width: BOARD_PX, height: BOARD_PX }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.25]} resize={{ debounce: 0 }}>
