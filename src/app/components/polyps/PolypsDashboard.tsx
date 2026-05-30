@@ -17,6 +17,9 @@ const HOVER_CSS = `
   .polyps-iconbtn:hover { background-color: rgba(15,17,19,0.06); }
   .polyps-tab:hover .polyps-tab-label { color: #0068f0 !important; }
   @keyframes polyps-tip-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+  /* Chart-content fade when the active tab changes — the keyed wrapper
+     remounts on tab flip and plays this from frame 0. */
+  @keyframes polyps-tab-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 `;
 
 // ── Design tokens (resolved from the Figma variable system) ──────────────────
@@ -29,7 +32,7 @@ const C = {
 
 // ── Top application bar ──────────────────────────────────────────────────────
 // node I12413:4900 — OS-level app bar, sticky to top.
-function OlysenseBar() {
+export function OlysenseBar() {
   return (
     <div
       style={{
@@ -73,7 +76,7 @@ function OlysenseBar() {
 // ── Sidebar menu (264px) ── node 12413:4902 ──────────────────────────────────
 const MENU_IDLE = '#1f2124'; // text/menu/idle + active + selected all resolve here
 const MENU_SELECTED_BG = '#e6f0fe'; // background/menu/selected
-const PAGE_BG = '#f9fafc'; // background/page (sub-item idle fill in spec)
+export const PAGE_BG = '#f9fafc'; // background/page (sub-item idle fill in spec)
 
 // Sub-items under "Procedures". Per the Figma spec every sub-item except the
 // first carries the page-bg fill; the first ("Over Time") is transparent.
@@ -172,7 +175,7 @@ function GhostButton({ icon, iconW, iconH, label }: { icon: string; iconW: numbe
   );
 }
 
-function Header() {
+export function Header() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 48 }}>
       <p style={{ fontFamily: FONT, fontWeight: 600, fontSize: 24, lineHeight: 1.4, color: '#393f4c', whiteSpace: 'nowrap', margin: 0 }}>Polyps</p>
@@ -186,7 +189,7 @@ function Header() {
 }
 
 // ── Controls ── node 12413:4914 ──────────────────────────────────────────────
-function Controls() {
+export function Controls() {
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', rowGap: 8, alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
       {/* Data source select (184px) */}
@@ -288,11 +291,14 @@ const PRR_CFG: ReportConfig = {
   ],
 };
 
-function Tab({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
+function Tab({ label, selected, hovered = false, onClick }: { label: string; selected: boolean; hovered?: boolean; onClick: () => void }) {
+  // `hovered` is a programmatic hover (used by square 5's animated cursor,
+  // which can't trigger the real :hover); it tints the label a lighter grey,
+  // leaving the underline alone like a real hover.
   return (
     <div className="polyps-tab" onClick={onClick} style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', justifyContent: 'center', paddingTop: 8, cursor: 'pointer' }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '0 12px' }}>
-        <span className="polyps-tab-label" style={{ fontFamily: FONT, fontWeight: 600, fontSize: 14, lineHeight: 1.5, color: selected ? SELECTED : SOFT, textAlign: 'center', whiteSpace: 'nowrap', transition: 'color 0.15s ease' }}>{label}</span>
+        <span className="polyps-tab-label" style={{ fontFamily: FONT, fontWeight: 600, fontSize: 14, lineHeight: 1.5, color: selected ? SELECTED : hovered ? '#8e95a1' : SOFT, textAlign: 'center', whiteSpace: 'nowrap', transition: 'color 0.15s ease' }}>{label}</span>
       </div>
       <div style={{ height: 1, width: '100%', backgroundColor: selected ? SELECTED : DIVIDER, transition: 'background-color 0.2s ease' }} />
     </div>
@@ -309,20 +315,40 @@ function Kpi({ value, valueSize, label }: { value: string; valueSize: number; la
   );
 }
 
-function FullSizeReport() {
-  const [tab, setTab] = useState(0);
+export function FullSizeReport({
+  lockedTab,
+  hideTabs = false,
+  hoveredTab = null,
+}: { lockedTab?: 0 | 1; hideTabs?: boolean; hoveredTab?: 0 | 1 | null } = {}) {
+  // `lockedTab` (when set) is a CONTROLLED value — every render reflects the
+  // current prop, so a parent can drive the active tab via state or a
+  // setTimeout (e.g. the Hi-Fi compare carousel switches PDR → PRR after the
+  // cursor click). When `lockedTab` is undefined the card behaves
+  // uncontrolled and remembers the user's last click.
+  const [internalTab, setInternalTab] = useState(0);
+  const tab = lockedTab ?? internalTab;
+  const setTab = setInternalTab;
+  const showTabs = !hideTabs;
   const [hoverDot, setHoverDot] = useState<number | null>(null);
   const cfg = tab === 0 ? PDR_CFG : PRR_CFG;
   const selectTab = (i: number) => { setTab(i); setHoverDot(null); };
 
   return (
     <div style={{ backgroundColor: '#ffffff', boxShadow: CARD_SHADOW, display: 'flex', flexDirection: 'column', gap: 16, padding: 16, borderRadius: 8, boxSizing: 'border-box', width: '100%' }}>
-      {/* Tabs */}
-      <div style={{ borderBottom: `1px solid ${DIVIDER}`, display: 'flex', gap: 12, alignItems: 'center', padding: '0 8px' }}>
-        <Tab label="Polyp Detection Rate" selected={tab === 0} onClick={() => selectTab(0)} />
-        <Tab label="Polyp Retrieval Rate" selected={tab === 1} onClick={() => selectTab(1)} />
-      </div>
+      {/* Tabs — hidden when the card is locked to a single metric (Option 2). */}
+      {showTabs && (
+        <div style={{ borderBottom: `1px solid ${DIVIDER}`, display: 'flex', gap: 12, alignItems: 'center', padding: '0 8px' }}>
+          <Tab label="Polyp Detection Rate" selected={tab === 0} hovered={hoveredTab === 0} onClick={() => selectTab(0)} />
+          <Tab label="Polyp Retrieval Rate" selected={tab === 1} hovered={hoveredTab === 1} onClick={() => selectTab(1)} />
+        </div>
+      )}
 
+      {/* Tab content — keyed on `tab` so it re-mounts and plays the
+          polyps-tab-fade keyframe whenever the active tab flips. */}
+      <div
+        key={tab}
+        style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', animation: 'polyps-tab-fade 0.35s ease-out' }}
+      >
       {/* Header: title + more, description, KPIs */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
@@ -392,7 +418,7 @@ function FullSizeReport() {
 
         {/* Line + area + dots overlay — plot starts 61px in (17 + 32 + 12). */}
         <div style={{ position: 'absolute', left: 61, right: 0, top: cfg.boxTop, height: cfg.boxHeight, pointerEvents: 'none' }}>
-          <img src={cfg.area} alt="" style={{ position: 'absolute', left: 0, right: 0, top: '0.75%', width: '100%', height: 'calc(99.25% + 3px)', display: 'block' }} />
+          <img src={cfg.area} alt="" style={{ position: 'absolute', left: 0, right: 0, top: '0.75%', width: '100%', height: '99.25%', display: 'block' }} />
           <img src={cfg.line} alt="" style={{ position: 'absolute', left: 0, right: 0, top: '0.75%', height: '46.75%', width: '100%', display: 'block' }} />
           {cfg.dots.map((d, i) => (
             <div
@@ -438,27 +464,28 @@ function FullSizeReport() {
           );
         })()}
       </div>
+      </div>
     </div>
   );
 }
 
 // ── 2-up bar charts (Polyps by Size / by Location) ── nodes 12413:4995 / 5073 ─
-const DETECTED = '#2683d1'; // chart/dataset-01
-const RETRIEVED = '#eb4850'; // chart/dataset-02
+export const DETECTED = '#2683d1'; // chart/dataset-01
+export const RETRIEVED = '#eb4850'; // chart/dataset-02
 const BASE_TEXT = '#0f1113'; // text/base
 const NUM_FONT = "'Segoe UI', system-ui, sans-serif"; // bar value labels (Segoe UI Semibold)
 const TWO_UP_SHADOW = '0px 2px 2px rgba(0,0,0,0.04), 0px 1px 1px rgba(0,0,0,0.04)';
 
 // Each item carries literal bar pixel widths from Figma (normalised per card).
 type Bar = { w: number; v: string; c: string };
-const SIZE_DATA: { label: string; bars: Bar[] }[] = [
+export const SIZE_DATA: { label: string; bars: Bar[] }[] = [
   { label: '<5mm', bars: [{ w: 165, v: '90', c: DETECTED }] },
   { label: '5-10mm', bars: [{ w: 247.5, v: '140', c: DETECTED }] },
   { label: '10-20mm', bars: [{ w: 67.5, v: '40', c: DETECTED }] },
   { label: '>20mm', bars: [{ w: 157.5, v: '85', c: DETECTED }] },
   { label: 'Not specified', bars: [{ w: 20, v: '10', c: DETECTED }] },
 ];
-const LOCATION_DATA: { label: string; bars: Bar[] }[] = [
+export const LOCATION_DATA: { label: string; bars: Bar[] }[] = [
   { label: 'Cecum, Ilium, and Ascending Colon', bars: [{ w: 165, v: '105', c: DETECTED }, { w: 142.5, v: '95', c: RETRIEVED }] },
   { label: 'Transverse Colon', bars: [{ w: 247.5, v: '152', c: DETECTED }, { w: 240, v: '150', c: RETRIEVED }] },
   { label: 'Descending Colon', bars: [{ w: 67.5, v: '45', c: DETECTED }, { w: 52.5, v: '35', c: RETRIEVED }] },
@@ -485,7 +512,7 @@ function BarItem({ label, bars, maxW }: { label: string; bars: Bar[]; maxW: numb
   );
 }
 
-function BarChartCard({ title, data, legend }: { title: string; data: { label: string; bars: Bar[] }[]; legend: { color: string; label: string }[] }) {
+export function BarChartCard({ title, data, legend }: { title: string; data: { label: string; bars: Bar[] }[]; legend: { color: string; label: string }[] }) {
   return (
     <div style={{ flex: '1 1 0', minWidth: 0, minHeight: 400, backgroundColor: '#ffffff', boxShadow: TWO_UP_SHADOW, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 16, padding: 16, borderRadius: 8, boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
@@ -527,7 +554,7 @@ type Col = { label: string; align: 'left' | 'right'; flex?: boolean; width?: num
 
 // Column-based table (matches Figma) so each column owns one width and its cells
 // align — needed for the auto-width numeric columns in the Resection table.
-function DataTable({ title, columns, rows, total }: { title: string; columns: Col[]; rows: string[][]; total: string[] }) {
+export function DataTable({ title, columns, rows, total }: { title: string; columns: Col[]; rows: string[][]; total: string[] }) {
   const cellShell = (align: 'left' | 'right', extra?: object): object => ({
     height: 46, display: 'flex', flexDirection: 'column', justifyContent: 'center',
     alignItems: align === 'right' ? 'flex-end' : 'flex-start', padding: '0 16px', boxSizing: 'border-box', ...extra,
@@ -558,13 +585,13 @@ function DataTable({ title, columns, rows, total }: { title: string; columns: Co
   );
 }
 
-const BY_TYPE_COLS: Col[] = [
+export const BY_TYPE_COLS: Col[] = [
   { label: 'Type', align: 'left', flex: true },
   { label: 'Procedures', align: 'right', width: 126 },
   { label: 'Detected Polyps', align: 'right', width: 126 },
   { label: 'Retrieved polyps', align: 'right', width: 126 },
 ];
-const BY_TYPE_ROWS: string[][] = [
+export const BY_TYPE_ROWS: string[][] = [
   ['Pedunculated (Ip)', '1', '3', '1'],
   ['Semi-Pedunculated (Isp)', '1', '3', '1'],
   ['Sessile (Is)', '1', '3', '1'],
@@ -574,14 +601,14 @@ const BY_TYPE_ROWS: string[][] = [
   ['Not specified', '1', '3', '1'],
 ];
 
-const BY_RESECTION_COLS: Col[] = [
+export const BY_RESECTION_COLS: Col[] = [
   { label: 'Method', align: 'left', flex: true },
   { label: 'Procedures', align: 'right' },
   { label: 'Resected polyps', align: 'right' },
   { label: 'Partially retrieved polyps', align: 'right' },
   { label: 'Fully retrieved polyps', align: 'right' },
 ];
-const BY_RESECTION_ROWS: string[][] = [
+export const BY_RESECTION_ROWS: string[][] = [
   ['Polypectomy', '1', '2', '1', '1'],
   ['Mucosectomy (EMR)', '1', '2', '1', '1'],
   ['Endoscopic submucosal dissection (ESD)', '1', '2', '1', '1'],
@@ -609,7 +636,7 @@ function Content() {
 }
 
 // ── Footer ── node 12413:5144 ────────────────────────────────────────────────
-function Footer() {
+export function Footer() {
   return (
     <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 24, alignItems: 'flex-start', justifyContent: 'center', padding: '0 16px 24px', boxSizing: 'border-box', width: '100%' }}>
       <div style={{ height: 1, width: '100%', backgroundColor: '#d8dbe2' }} />

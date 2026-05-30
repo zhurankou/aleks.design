@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router';
 import { PolypsDashboard } from './polyps/PolypsDashboard';
 import { BrowserFrame } from './BrowserFrame';
 import { LoFiPolypsCharts } from './LoFiPolypsCharts';
+import { HiFiCompare } from './HiFiCompare';
+import { HiFiCorrelated } from './HiFiCorrelated';
 
 // OlySense case-study page. White canvas with a single scroll-driven transition
 // modelled on the home→Privat frame move in NewPage: as you scroll, the title +
@@ -29,6 +32,12 @@ const loadAnim = `
   @keyframes oly-load {
     from { opacity: 0; transform: scale(0.9); }
     to   { opacity: 1; transform: scale(1); }
+  }
+  /* Mirror of NewPage's arrow-nudge-right for the left-pointing arrow in the
+     Back Home button — same 3px amplitude, 0.7s loop on hover. */
+  @keyframes oly-arrow-nudge-left {
+    0%, 100% { transform: translateX(0); }
+    50%       { transform: translateX(-3px); }
   }
   @keyframes selected-wave {
     0%, 100% { color: #A8AFB6; }
@@ -79,9 +88,9 @@ const loadAnim = `
 const AVATAR_SIZE = 80;
 const OVERLAP = 16; // negative margin on the 2nd/3rd avatars
 const AVATARS = [
-  { src: '/team/a1.png', align: 'center bottom' as const, flip: false, tilt: -8,  label: 'Designer: Aleks Zhurankou', link: 'https://www.linkedin.com/in/zhurankou/' },     // 15832:5687
-  { src: '/team/a2.png', align: 'center center' as const, flip: false, tilt: 8,   label: 'Researcher: Ailea Richter', link: 'https://www.linkedin.com/in/ailea-richter/' }, // 15832:5695
-  { src: '/team/a3.png', align: 'center bottom' as const, flip: true,  tilt: -12, label: 'PM: Jui Sathe',             link: 'https://www.linkedin.com/in/juisathe/' },      // 15832:5705
+  { src: '/team/a1.png', align: 'center bottom' as const, flip: false, tilt: -8,  imgScale: 1,    label: 'Designer: Aleks Zhurankou', link: 'https://www.linkedin.com/in/zhurankou/' },     // 15832:5687
+  { src: '/team/a2.png', align: 'center center' as const, flip: false, tilt: 8,   imgScale: 1,    label: 'Researcher: Ailea Richter', link: 'https://www.linkedin.com/in/ailea-richter/' }, // 15832:5695
+  { src: '/team/a3.png', align: 'center bottom' as const, flip: true,  tilt: -12, imgScale: 1,    label: 'PM: Jui Sathe',             link: 'https://www.linkedin.com/in/juisathe/' },      // 15832:5705
 ];
 
 // Plays the same `oly-load` fade-in (fade + scale-up from 0.9) used by the
@@ -233,7 +242,8 @@ function TeamAvatars() {
                   width: '100%', height: '100%',
                   objectFit: 'cover',
                   objectPosition: a.align,
-                  transform: a.flip ? 'scaleX(-1)' : undefined,
+                  // Compose flip + per-avatar img scale (PM is downsized 10%).
+                  transform: `${a.flip ? 'scaleX(-1) ' : ''}scale(${a.imgScale})`,
                   display: 'block',
                 }}
               />
@@ -331,7 +341,7 @@ function PolaroidRow() {
               style={{
                 margin: 0,
                 fontFamily: "'Manrope', sans-serif",
-                fontWeight: 700,
+                fontWeight: 600,
                 fontSize: 16,
                 lineHeight: 'normal',
                 width: 339,
@@ -355,6 +365,9 @@ export function OlySensePage() {
   const [vh, setVh] = useState(() => window.innerHeight);
   const [p, setP] = useState(0); // smoothed transition progress (0 = scaled-down, 1 = full)
   const [dashProgress, setDashProgress] = useState(0); // 0 = top of dashboard, 1 = scrolled to bottom; drives the tag fade-out near the end
+  const [hasScrolled, setHasScrolled] = useState(false); // gates the top peel + Back Home button appearance
+  const [spinDeg, setSpinDeg] = useState(0);             // avatar rotation in the peel, driven by scroll position
+  const [homeHovered, setHomeHovered] = useState(false);
 
   // Refs mirror live values for the rAF easing loop (avoids stale closures).
   const vhRef = useRef(vh);
@@ -414,6 +427,10 @@ export function OlySensePage() {
       if (dash) dash.scrollTop = Math.max(0, Math.min(dashMaxRef.current, stRel - vhRef.current));
       const dashTop = Math.max(0, Math.min(dashMaxRef.current, stRel - vhRef.current));
       setDashProgress(dashMaxRef.current > 0 ? dashTop / dashMaxRef.current : 0);
+      // Top peel + avatar — peel fades in after ~40 px of scroll; avatar spins
+      // at 0.25 deg/px so a full rotation comes from ~1440 px of scroll.
+      setHasScrolled(st > 40);
+      setSpinDeg(st * 0.25);
       if (!rafRef.current) rafRef.current = requestAnimationFrame(tick);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
@@ -423,6 +440,132 @@ export function OlySensePage() {
 
   const scale = lerp(START_SCALE, 1, p);
   const dy = (vh / 2) * (1 - p);
+
+  // Peel opacity — clears the stage early, well before the Final Design
+  // rectangle reaches full width: fully visible up to p ≈ 0.12, gone by
+  // p = 0.45.
+  const peelTopOpacity = hasScrolled ? Math.max(0, Math.min(1, (0.45 - p) * 3)) : 0;
+
+  const peelChrome: React.CSSProperties = {
+    position: 'fixed',
+    left: '50%',
+    zIndex: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    backdropFilter: 'blur(24px) saturate(1.6)',
+    WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
+    border: '1px solid rgba(255, 255, 255, 0.5)',
+    boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 8px 32px rgba(20, 24, 40, 0.08)',
+    borderRadius: 999,
+    padding: 4,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+    transform: 'translateX(-50%)',
+    transition: 'opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
+  };
+
+  // Shared inner content for both top and bottom peels.
+  const peelInner = (
+    <>
+      <Link
+        to="/"
+        onMouseEnter={() => setHomeHovered(true)}
+        onMouseLeave={() => setHomeHovered(false)}
+        style={{
+          border: '2px solid #000000',
+          borderRadius: 32,
+          padding: '6px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          boxSizing: 'border-box',
+          textDecoration: 'none',
+          backgroundImage: 'linear-gradient(to right, #000000, #000000)',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: '0 0',
+          backgroundSize: homeHovered ? '100% 100%' : '0% 100%',
+          transition: 'background-size 0.4s ease-out',
+        }}
+      >
+        {/* Left-pointing arrow — same lucide arrow path as the home CTA,
+            flipped via scaleX(-1) so it points left; nudges leftward on
+            hover via oly-arrow-nudge-left. */}
+        <div
+          style={{
+            position: 'relative',
+            flexShrink: 0,
+            width: 20,
+            height: 20,
+            animation: homeHovered ? 'oly-arrow-nudge-left 0.7s ease-in-out infinite' : 'none',
+          }}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', transform: 'scaleX(-1)' }}
+          >
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M12 4.58579L19.4142 12L12 19.4142L10.5858 18L15.5858 13H5V11H15.5858L10.5858 6L12 4.58579Z"
+              style={{ fill: homeHovered ? '#FFFFFF' : '#000000' }}
+            />
+          </svg>
+        </div>
+        <p
+          style={{
+            fontFamily: "'Stack Sans Notch', sans-serif",
+            fontWeight: 300,
+            fontSize: 16,
+            letterSpacing: '0.14px',
+            textAlign: 'center',
+            whiteSpace: 'nowrap',
+            margin: 0,
+            flexShrink: 0,
+            paddingRight: 4,
+          }}
+        >
+          {'Home'.split('').map((char, i) => (
+            <span
+              key={i}
+              style={{
+                color: homeHovered ? '#FFFFFF' : '#000000',
+                fontSize: 16,
+                lineHeight: '24px',
+                transition: `color 0.35s ease-out ${i * 22}ms`,
+              }}
+            >
+              {char === ' ' ? ' ' : char}
+            </span>
+          ))}
+        </p>
+      </Link>
+
+      {/* Avatar — 40 px circular avatar1 video. Rotates with page scroll. */}
+      <div
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: '50%',
+          overflow: 'hidden',
+          flexShrink: 0,
+          backgroundColor: '#F0F0F2',
+          transform: `rotate(${spinDeg}deg)`,
+          // No transition — angle follows scroll directly for a 1:1 feel.
+        }}
+      >
+        <video
+          src="/avatar1.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: '36.5% center', display: 'block' }}
+        />
+      </div>
+    </>
+  );
 
   return (
     <div
@@ -437,6 +580,21 @@ export function OlySensePage() {
       }}
     >
       <style>{loadAnim}</style>
+
+      {/* Peel — glass pill anchored 24 px from the top of the viewport,
+          centred. Fades in once the page begins scrolling and stays visible
+          for the rest of the page. */}
+      <div
+        style={{
+          ...peelChrome,
+          top: 24,
+          opacity: peelTopOpacity,
+          pointerEvents: peelTopOpacity > 0.5 ? 'auto' : 'none',
+        }}
+      >
+        {peelInner}
+      </div>
+
       {/* Hero — static title + subtext. The rectangle interaction has moved down
           to the Final Design section below Process, so this is just the page
           header now. Hero sizes to its content (no 100vh fill) so the Team
@@ -618,22 +776,48 @@ export function OlySensePage() {
                   Final Design
                 </h2>
               </ScrollFadeIn>
-              <ScrollFadeIn>
+              {/* Workflows paragraph + THANK YOU! tag — wrapped in a 16px-gap
+                  flex column so the THANK YOU! tag sits 16px below the
+                  paragraph (matching PROBLEM's distance from "Clinicians needed…"
+                  in the hero stack above). */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                <ScrollFadeIn>
+                  <p
+                    style={{
+                      fontFamily: "'Manrope', sans-serif",
+                      fontWeight: 500,
+                      fontSize: 20,
+                      lineHeight: '34px',
+                      color: '#000000',
+                      textAlign: 'center',
+                      width: 440,
+                      margin: 0,
+                    }}
+                  >
+                    OlySense workflows were validated before launch through usability evaluation with target users, where participants completed 82% of key tasks successfully.
+                  </p>
+                </ScrollFadeIn>
+                {/* THANK YOU! tag — same style as the home SELECTED WORK label
+                    and the PROBLEM tag above (per-char colour wave). */}
                 <p
                   style={{
-                    fontFamily: "'Manrope', sans-serif",
-                    fontWeight: 500,
-                    fontSize: 20,
-                    lineHeight: '34px',
-                    color: '#000000',
-                    textAlign: 'center',
-                    width: 440,
                     margin: 0,
+                    fontFamily: "'Stack Sans Notch', sans-serif",
+                    fontWeight: 600,
+                    fontSize: 18,
+                    lineHeight: '34px',
+                    color: '#A8AFB6',
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  OlySense workflows were validated before launch through usability evaluation with target users, where participants completed 82% of key tasks successfully.
+                  {Array.from('THANK YOU!').map((ch, i) => (
+                    <span key={i} style={{ display: 'inline-block', whiteSpace: 'pre', animation: 'selected-wave 2s ease-in-out infinite', animationDelay: `${i * 0.12}s` }}>
+                      {ch}
+                    </span>
+                  ))}
                 </p>
-              </ScrollFadeIn>
+              </div>
             </div>
             {/* Rectangle — base frame size (1200 × 792). Rests at 0.75 scale with its
                 centre on the bottom edge (half bleeds off); slides up + scales to full
@@ -1165,8 +1349,8 @@ const PROCESS_SQUARES: { dropdownIdx: number; content?: React.ReactNode; fullBle
   { dropdownIdx: 1, content: <PolypMorphologyCarousel /> },                    // square2 — Understanding polyps & users
   { dropdownIdx: 1, content: <EndoLeadDuet /> },                               // square3 — Understanding polyps & users (continued)
   { dropdownIdx: 2, content: <LoFiPolypsCharts />, fullBleed: true },          // square4 — Lo-Fi study and key learnings
-  { dropdownIdx: 2 },                                                          // square5 — Lo-Fi study and key learnings (continued)
-  { dropdownIdx: 3 },                                                          // square6 — Hi-Fi study and key findings
+  { dropdownIdx: 3, content: <HiFiCompare /> },                                 // square5 — Hi-Fi study and key findings
+  { dropdownIdx: 3, content: <HiFiCorrelated /> },                              // square6 — Hi-Fi study and key findings (Correlated charts)
 ];
 
 function ProcessScrollytell() {
@@ -1306,10 +1490,10 @@ const TIMELINE_DAYS = [
 
 const TIMELINE_PHASES = [
   { label: 'Discovery',              x: 0.98,   width: 115, color: '#FF3B30' },
-  { label: 'Lo-Fi study',            x: 195.98, width: 188, color: '#FF9500' },
-  { label: 'Hi-Fi study',            x: 389.98, width: 188, color: '#34C759' },
-  { label: 'Design specs',           x: 583.98, width: 90,  color: '#007AFF' },
-  { label: 'Engineering support...', x: 679.98, width: 255, color: '#AF52DE' },
+  { label: 'Lo-Fi study',            x: 195.98, width: 190, color: '#FF9500' },
+  { label: 'Hi-Fi study',            x: 389.98, width: 190, color: '#34C759' },
+  { label: 'Design specs',           x: 583.98, width: 92,  color: '#AF52DE' },
+  { label: 'Engineering support...', x: 679.98, width: 248.04, color: '#007AFF' },
 ];
 
 // Per-phase avatars. Mapping derived from the Figma's three avatar assets:
@@ -1488,7 +1672,6 @@ function PortfolioTimeline() {
             top: 107.82,
             width: p.width,
             backgroundColor: hexToRgba(p.color, 0.12),
-            border: `1px solid ${p.color}`,
             borderRadius: 4,
             padding: '2px 6px',
             display: 'flex',
