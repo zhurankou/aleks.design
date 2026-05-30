@@ -267,7 +267,7 @@ const QUOTES = [
     attribution: 'Anna de Vries, Erasmus MC,\nRotterdam, Netherlands',
   },
   {
-    bg: '#FF3B30',
+    bg: 'rgba(255, 45, 85, 0.5)',
     quote: '“I want to see more context alongside the score, so I can tell whether a change is meaningful or just a temporary fluctuation.”',
     attribution: 'Thomas Müller, University Hospital Heidelberg, Heidelberg, Germany',
   },
@@ -277,7 +277,7 @@ const QUOTES = [
     attribution: 'Marta García, Hospital Universitario\nLa Paz, Madrid, Spain',
   },
   {
-    bg: '#007AFF',
+    bg: 'rgba(48, 176, 199, 0.5)',
     quote: '“I need a faster way to spot which results need follow-up, because the current view gives me numbers but not enough direction.”',
     attribution: 'Sophie Janssen,\nUMC Utrecht, Netherlands',
   },
@@ -287,7 +287,7 @@ const QUOTES = [
     attribution: 'Lukas Schneider, Charité – Universitätsmedizin Berlin, Germany',
   },
   {
-    bg: '#34C759',
+    bg: 'rgba(175, 82, 222, 0.5)',
     quote: '“I want a solution that makes the results easy to interpret\nat a glance, so I can act quickly without second-guessing\nthe numbers.”',
     attribution: " Elena Rossi, Sant'Orsola-Malpighi \nHospital, Bologna, Italy",
   },
