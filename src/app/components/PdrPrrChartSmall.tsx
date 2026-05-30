@@ -36,7 +36,17 @@ const COL_MUTED = '#8e8e93';
 const COL_INK = '#000000';
 const COL_PRR = '#8e8e93';
 
-export function PdrPrrChartSmall({ sizePct = 50 }: { sizePct?: number }) {
+export function PdrPrrChartSmall({
+  sizePct = 50,
+  hoveredIndex,
+  hoverTransition = 'r 70ms ease-out',
+}: {
+  sizePct?: number;
+  /** Index of the PDR data point to render in a "hover" state (enlarged dot). */
+  hoveredIndex?: number;
+  /** CSS transition for the hovered dot's radius — used to sync with a cursor. */
+  hoverTransition?: string;
+}) {
   const sizeStyle = `${sizePct}%`;
   return (
     <div
@@ -113,7 +123,14 @@ export function PdrPrrChartSmall({ sizePct = 50 }: { sizePct?: number }) {
           strokeLinecap="round"
         />
         {PDR.map((d, i) => (
-          <circle key={d.month} cx={PX(i)} cy={PY(d.value)} r={4} fill={COL_INK} />
+          <circle
+            key={d.month}
+            cx={PX(i)}
+            cy={PY(d.value)}
+            r={i === hoveredIndex ? 5.5 : 4}
+            fill={COL_INK}
+            style={{ transition: hoverTransition }}
+          />
         ))}
 
         {/* X-axis labels — centred under each dot, 24 px below 0% Y label. */}

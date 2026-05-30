@@ -37,10 +37,13 @@ const COL_INK = '#000000';
 export function PdrChartSmall({
   sizePct = 70,
   hoveredIndex,
+  hoverTransition = 'r 70ms ease-out',
 }: {
   sizePct?: number;
   /** Index of the data point to render in a "hover" state (enlarged dot). */
   hoveredIndex?: number;
+  /** CSS transition for the hovered dot's radius — used to sync with a cursor. */
+  hoverTransition?: string;
 }) {
   const sizeStyle = `${sizePct}%`;
   return (
@@ -113,7 +116,7 @@ export function PdrChartSmall({
             cy={PY(d.value)}
             r={i === hoveredIndex ? 5.5 : 4}
             fill={COL_INK}
-            style={{ transition: 'r 70ms ease-out' }}
+            style={{ transition: hoverTransition }}
           />
         ))}
 
