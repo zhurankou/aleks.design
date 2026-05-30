@@ -10,15 +10,15 @@ import { BaseTest } from "./components/BaseTest";
 export const router = createBrowserRouter([
   {
     path: "/",
+    element: <NewPage />,
+  },
+  {
+    path: "/cv",
     element: <LandingPage />,
   },
   {
     path: "/canvas",
     element: <MainApp />,
-  },
-  {
-    path: "/new",
-    element: <NewPage />,
   },
   {
     path: "/olysense",
