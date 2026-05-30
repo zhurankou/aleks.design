@@ -276,7 +276,7 @@ export function BaseMatchCanvas({ pool, color, playing, matching = true }: { poo
   return (
     <Canvas style={{ width: BOARD_PX, height: BOARD_PX }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.25]} resize={{ debounce: 0 }}>
       <PerspectiveCamera makeDefault position={[0, 0, 40]} fov={24} />
-      <Environment preset="lobby" environmentIntensity={1.2} />
+      <Environment files="/hdri/st_fagans_interior_1k.hdr" environmentIntensity={1.2} />
       <ambientLight intensity={0.4} />
       {board.map((p, i) => {
         const col = i % 3;

@@ -106,7 +106,7 @@ export function OlyChartCanvas() {
       style={{ width: '100%', height: '100%' }}
     >
       <CameraAim />
-      <Environment preset="city" environmentIntensity={0.7} />
+      <Environment files="/hdri/potsdamer_platz_1k.hdr" environmentIntensity={0.7} />
       <ambientLight intensity={0.55} />
       <directionalLight position={[4, 12, 8]} intensity={1.5} />
       <Bars />
