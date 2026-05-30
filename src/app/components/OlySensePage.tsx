@@ -1241,14 +1241,9 @@ function EndoLeadDuet() {
   };
 
   const handleLeadEnded = () => {
-    setActive('endo');
-    setCaptionIdx(0);
-    scheduleCaptions();
-    const v = endoRef.current;
-    if (v) {
-      v.currentTime = 0;
-      v.play().catch(() => {});
-    }
+    // Play once: endo → lead is the full sequence. Don't loop back to endo
+    // (which used to create an infinite endo ↔ lead cycle). Both videos
+    // rest on their final frame after the captioned pass is complete.
   };
 
   // Map playback progress → caption phrase index, but only for the playing video.

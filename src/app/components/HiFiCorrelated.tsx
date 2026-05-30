@@ -212,10 +212,10 @@ export function HiFiCorrelated() {
       timers.push(window.setTimeout(() => setPhase('done'),   11500));
     };
     cycle();
-    const restart = window.setInterval(cycle, CYCLE_S * 1000);
+    // Play once per scroll-in. Re-entry bumps revealCount and re-runs the
+    // effect, restarting the cycle from frame 0.
     return () => {
       timers.forEach(window.clearTimeout);
-      window.clearInterval(restart);
     };
   }, [playing, revealCount]);
 

@@ -274,9 +274,10 @@ export function LoFiPolypsCharts() {
       timers.push(window.setTimeout(() => setPhase('cursor2-travel'), 7850));
       timers.push(window.setTimeout(() => setPhase('cursor2-click'),  8400));
       timers.push(window.setTimeout(() => setPhase('modal2-show'),    8600));
-      // Swap back — modal2+overlay fade out as the swap-back begins.
+      // Swap back — modal2+overlay fade out as the swap-back begins. The
+      // sequence ends here: one full playthrough per scroll-in, then rests
+      // on flow1.1. Re-entering the viewport re-triggers cycle() via the IO.
       timers.push(window.setTimeout(() => setPhase('swap-to-flow1'),  11700));
-      timers.push(window.setTimeout(cycle,                             13400));
     };
     const io = new IntersectionObserver(
       ([entry]) => {

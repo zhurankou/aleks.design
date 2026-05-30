@@ -253,10 +253,9 @@ function HomeBgWords({ active, progress }: { active: boolean; progress: number }
                 <div style={{
                   position: 'absolute',
                   inset: 0,
-                  // Screen-anchored radial: light-grey at the viewport centre
-                  // fading to black at the edges, shared across every word via
-                  // background-attachment: fixed (so it reads as one whole-screen
-                  // gradient rather than a per-word one).
+                  // Screen-anchored radial: solid black, shared across every word
+                  // via background-attachment: fixed (so it reads as one
+                  // whole-screen gradient rather than a per-word one).
                   background: 'radial-gradient(circle at center, #000 0%, #000 100%)',
                   backgroundAttachment: 'fixed',
                   backgroundSize: '150vw 150vh',
@@ -879,12 +878,12 @@ export function NewPage() {
   // (a darker tint of the active icon colour, so the page behind the rectangle is a
   // matched darker version of the dotted-grid bg instead of pure black).
   const bg = s4 > 0.001
-    ? lerpColor(palette.pageBg, '#F0F0F2', s4) // stage 4: fade to very light grey
+    ? lerpColor(palette.pageBg, '#E0E0E4', s4) // stage 4: fade to home grey
     : pStage3 > 0
     ? lerpColor('#FBFDFF', palette.pageBg, pStage3)
     : pBgWhite > 0
     ? lerpColor('#000000', '#FBFDFF', pBgWhite) // light blue OlySense page bg
-    : lerpColor('#F0F0F2', '#000000', pStage1);
+    : lerpColor('#FFFFFF', '#000000', pStage1);
   // Border: silver #A8AFB6 from home onwards (matches the Privat phone bezel,
   // no stage-1 colour shift); stage 2 → light blue; stage 3 → dark grey.
   const borderColor = pStage3 > 0
@@ -1370,7 +1369,7 @@ export function NewPage() {
                   startDelaySeconds={0}
                   loop={false}
                   playing
-                  style={{ position: 'absolute', top: 52, left: '50%', transform: 'translateX(-50%)', width: 180, height: 180, borderRadius: '50%', overflow: 'hidden', backgroundColor: '#F0F0F2', animation: 'badge-avatar-in 0.7s cubic-bezier(0.22,1,0.36,1) both' }}
+                  style={{ position: 'absolute', top: 52, left: '50%', transform: 'translateX(-50%)', width: 180, height: 180, borderRadius: '50%', overflow: 'hidden', backgroundColor: '#E0E0E4', animation: 'badge-avatar-in 0.7s cubic-bezier(0.22,1,0.36,1) both' }}
                 />
                 {/* Name — Sora 40px, stacked under the avatar */}
                 <div style={{ position: 'absolute', top: 264, left: 0, right: 0, textAlign: 'center', fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 400, fontSize: 44, letterSpacing: '-1.15px', lineHeight: 1.12, color: '#1A1A1A', animation: 'badge-item-in 0.7s cubic-bezier(0.22,1,0.36,1) 0.12s both' }}>
