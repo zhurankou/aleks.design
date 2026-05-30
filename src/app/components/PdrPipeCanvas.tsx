@@ -147,7 +147,7 @@ export function PdrPipeCanvas({
       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
     >
       <CameraAim />
-      <Environment preset="city" environmentIntensity={0.9} />
+      <Environment files="/hdri/potsdamer_platz_1k.hdr" environmentIntensity={0.9} />
       <ambientLight intensity={0.5} />
       <directionalLight position={[300, 400, 600]} intensity={1.3} />
       {/* Flat constant-width line (screen-space px) instead of a 3D pipe. */}
