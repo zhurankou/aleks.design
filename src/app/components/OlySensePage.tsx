@@ -5,6 +5,9 @@ import { BrowserFrame } from './BrowserFrame';
 import { LoFiPolypsCharts } from './LoFiPolypsCharts';
 import { HiFiCompare } from './HiFiCompare';
 import { HiFiCorrelated } from './HiFiCorrelated';
+import { ScrollFadeIn } from './ui/ScrollFadeIn';
+import { useBreakpoint } from './ui/use-breakpoint';
+import { FitWidth } from './ui/FitWidth';
 
 // OlySense case-study page. White canvas with a single scroll-driven transition
 // modelled on the home→Privat frame move in NewPage: as you scroll, the title +
@@ -92,39 +95,6 @@ const AVATARS = [
   { src: '/team/a2.png', align: 'center center' as const, flip: false, tilt: 8,   imgScale: 1,    label: 'Researcher: Ailea Richter', link: 'https://www.linkedin.com/in/ailea-richter/' }, // 15832:5695
   { src: '/team/a3.png', align: 'center bottom' as const, flip: true,  tilt: -12, imgScale: 1,    label: 'PM: Jui Sathe',             link: 'https://www.linkedin.com/in/juisathe/' },      // 15832:5705
 ];
-
-// Plays the same `oly-load` fade-in (fade + scale-up from 0.9) used by the
-// page title every time the wrapped element scrolls into view. Pattern matches
-// the TeamAvatars bounce: an IO on a stable outer wrapper increments `count`
-// on each viewport entry; that count is keyed on an inner div so it remounts
-// and the CSS animation restarts from frame 0.
-function ScrollFadeIn({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setCount((c) => c + 1); },
-      { threshold: 0.4 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return (
-    <div ref={ref} style={style}>
-      <div
-        key={count}
-        style={{
-          opacity: count === 0 ? 0 : undefined,
-          animation: count === 0 ? 'none' : 'oly-load 0.45s ease-out both',
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
 
 // Hover tooltip — recreated from Figma 15603:2694 (dark bubble + downward tail).
 function Tag({ children }: { children: React.ReactNode }) {
@@ -358,11 +328,20 @@ function PolaroidRow() {
 }
 
 export function OlySensePage() {
+  // Mobile gets a dedicated stacked layout; the scroll-morph machinery below
+  // (sticky Process, scroll-driven Final Design rectangle) never mounts there.
+  const bp = useBreakpoint();
+  if (bp === 'mobile') return <OlySenseMobile />;
+  return <OlySensePageDesktop />;
+}
+
+function OlySensePageDesktop() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const dashRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null); // wraps the Final Design sticky+rectangle below Process
   const [dashMax, setDashMax] = useState(0);
   const [vh, setVh] = useState(() => window.innerHeight);
+  const [vw, setVw] = useState(() => window.innerWidth);
   const [p, setP] = useState(0); // smoothed transition progress (0 = scaled-down, 1 = full)
   const [dashProgress, setDashProgress] = useState(0); // 0 = top of dashboard, 1 = scrolled to bottom; drives the tag fade-out near the end
   const [hasScrolled, setHasScrolled] = useState(false); // gates the top peel + Back Home button appearance
@@ -375,11 +354,22 @@ export function OlySensePage() {
   const scrollTopRef = useRef(0);
   const pRef = useRef(0);
   const rafRef = useRef(0);
-  useEffect(() => { vhRef.current = vh; }, [vh]);
+  // Tablet (768–1023px): render the desktop tree at a fixed reference width and
+  // scale it to fit. All scroll math runs in design space (scrollTop, track
+  // heights and layoutVh are unscaled), so the transform on the scroller only
+  // affects pixels on screen. Desktop (≥1024) keeps k=1 — nothing changes.
+  const bpKind = useBreakpoint();
+  const isTablet = bpKind === 'tablet';
+  const DESIGN_W = 1280;
+  const k = isTablet ? vw / DESIGN_W : 1;
+  const layoutVw = isTablet ? DESIGN_W : vw;
+  const layoutVh = isTablet ? vh / k : vh;
+
+  useEffect(() => { vhRef.current = layoutVh; }, [layoutVh]);
   useEffect(() => { dashMaxRef.current = dashMax; }, [dashMax]);
 
   useEffect(() => {
-    const onResize = () => setVh(window.innerHeight);
+    const onResize = () => { setVh(window.innerHeight); setVw(window.innerWidth); };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
@@ -439,7 +429,7 @@ export function OlySensePage() {
   }, []);
 
   const scale = lerp(START_SCALE, 1, p);
-  const dy = (vh / 2) * (1 - p);
+  const dy = (layoutVh / 2) * (1 - p);
 
   // Peel opacity — clears the stage early, well before the Final Design
   // rectangle reaches full width: fully visible up to p ≈ 0.12, gone by
@@ -567,12 +557,17 @@ export function OlySensePage() {
     </>
   );
 
+  // On desktop the outer wrapper is display:contents (a true no-op); on tablet it
+  // clips the scaled scroller to the viewport.
   return (
+    <div style={isTablet ? { width: '100vw', height: '100vh', overflow: 'hidden' } : { display: 'contents' }}>
     <div
       ref={scrollRef}
       style={{
-        width: '100vw',
-        height: '100vh',
+        width: isTablet ? layoutVw : '100vw',
+        height: isTablet ? layoutVh : '100vh',
+        transform: isTablet ? `scale(${k})` : undefined,
+        transformOrigin: 'top left',
         overflowY: 'auto',
         overflowX: 'hidden',
         overscrollBehavior: 'none',
@@ -741,7 +736,7 @@ export function OlySensePage() {
       {/* Process scrollytell — sticky-left heading + section list, scrolling-right
           stack of light-grey mock rectangles. Active section swaps as each right-side
           rectangle reaches viewport centre. */}
-      <ProcessScrollytell />
+      <ProcessScrollytell viewportH={isTablet ? layoutVh : undefined} />
       {/* Final Design — the rectangle interaction lives here. Same mechanic as
           the old hero: 100vh of scroll scales the rectangle up from 0.75 (with
           its centre on the track's bottom edge) to full size, then the next
@@ -749,7 +744,7 @@ export function OlySensePage() {
           scroll handler computes progress relative to trackRef.offsetTop so the
           mechanic fires from this position instead of the page top. */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div ref={trackRef} style={{ width: '100%', height: `calc(200vh + ${dashMax}px)`, position: 'relative' }}>
+        <div ref={trackRef} style={{ width: '100%', height: isTablet ? layoutVh * 2 + dashMax : `calc(200vh + ${dashMax}px)`, position: 'relative' }}>
           {/* Sticky viewport — pinned while scrolling through the track. Holds
               BOTH the Final Design heading (pinned at top:120 inside the sticky
               so it lands at viewport y:120 the moment the sticky engages, same
@@ -757,7 +752,7 @@ export function OlySensePage() {
               bottom-bleeding from translateY(vh/2) at p=0). When the user
               reaches this section they see the heading snap to the top and the
               rectangle simultaneously rise from the bottom. */}
-          <div style={{ position: 'sticky', top: 0, width: '100%', height: '100vh', overflow: 'hidden' }}>
+          <div style={{ position: 'sticky', top: 0, width: '100%', height: isTablet ? layoutVh : '100vh', overflow: 'hidden' }}>
             {/* Heading + summary — absolutely positioned at top:120 of the sticky.
                 Sits in front of the rectangle (zIndex) so the dashboard never
                 paints over it as the rectangle scales up. Both fade out as the
@@ -873,6 +868,7 @@ export function OlySensePage() {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
@@ -1316,6 +1312,7 @@ function EndoLeadDuet() {
           <video
             ref={leadRef}
             src="/endo.mp4"
+            poster="/endo-poster.jpg"
             muted
             playsInline
             preload="auto"
@@ -1348,7 +1345,7 @@ const PROCESS_SQUARES: { dropdownIdx: number; content?: React.ReactNode; fullBle
   { dropdownIdx: 3, content: <HiFiCorrelated /> },                              // square6 — Hi-Fi study and key findings (Correlated charts)
 ];
 
-function ProcessScrollytell() {
+function ProcessScrollytell({ viewportH }: { viewportH?: number }) {
   const squaresRef = useRef<(HTMLDivElement | null)[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -1391,7 +1388,7 @@ function ProcessScrollytell() {
           style={{
             position: 'sticky',
             top: 160,
-            height: 'calc(100vh - 160px)',
+            height: viewportH ? viewportH - 160 : 'calc(100vh - 160px)',
             display: 'flex',
             flexDirection: 'column',
           }}
@@ -1761,6 +1758,120 @@ function DropdownRow({ dropdown, active, isFirst }: { dropdown: ProcessDropdown;
               {para}
             </p>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Mobile (<768px) ─────────────────────────────────────────────────────────
+// Dedicated stacked layout. Reuses the desktop sub-components (TeamAvatars,
+// PortfolioTimeline, PolaroidRow, the Process squares, the dashboard preview)
+// in normal document flow — no sticky columns, no scroll-driven rectangle.
+// Fixed-size content (the 935px timeline, the 696px process squares, the
+// 1200×792 dashboard) is shrunk to the column width via FitWidth.
+
+// Per-character colour-wave label (CASE STUDY / PROBLEM / THANK YOU!), matching
+// the desktop tags.
+function WaveTag({ text }: { text: string }) {
+  return (
+    <p style={{ margin: 0, fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 600, fontSize: 16, lineHeight: '28px', color: '#A8AFB6', textAlign: 'center', whiteSpace: 'nowrap' }}>
+      {Array.from(text).map((ch, i) => (
+        <span key={i} style={{ display: 'inline-block', whiteSpace: 'pre', animation: 'selected-wave 2s ease-in-out infinite', animationDelay: `${i * 0.12}s` }}>
+          {ch}
+        </span>
+      ))}
+    </p>
+  );
+}
+
+const mobileH2: React.CSSProperties = {
+  margin: 0, fontFamily: "'Stack Sans Notch', sans-serif",
+  fontWeight: 300, fontSize: 34, lineHeight: 'normal', color: '#000000', textAlign: 'center',
+};
+const mobileBody: React.CSSProperties = {
+  margin: 0, fontFamily: "'Manrope', sans-serif",
+  fontWeight: 500, fontSize: 17, lineHeight: '28px', color: '#000000',
+};
+
+function OlySenseMobile() {
+  return (
+    <div style={{ width: '100%', minHeight: '100dvh', backgroundColor: '#FFFFFF', overflowX: 'hidden' }}>
+      <style>{loadAnim}</style>
+
+      {/* Back-home pill — fixed, glass. */}
+      <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 50, backgroundColor: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(16px) saturate(1.6)', WebkitBackdropFilter: 'blur(16px) saturate(1.6)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 4px 16px rgba(20,24,40,0.1)', borderRadius: 999, padding: 4 }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 4, border: '2px solid #000', borderRadius: 32, padding: '5px 14px', textDecoration: 'none' }}>
+          <svg viewBox="0 0 24 24" fill="none" style={{ width: 18, height: 18, transform: 'scaleX(-1)' }}>
+            <path fillRule="evenodd" clipRule="evenodd" d="M12 4.58579L19.4142 12L12 19.4142L10.5858 18L15.5858 13H5V11H15.5858L10.5858 6L12 4.58579Z" fill="#000" />
+          </svg>
+          <span style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 300, fontSize: 15, color: '#000' }}>Home</span>
+        </Link>
+      </div>
+
+      {/* Content stack. */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '96px 20px 80px', gap: 96, boxSizing: 'border-box' }}>
+
+        {/* Hero */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+          <WaveTag text="CASE STUDY" />
+          <h1 style={{ ...mobileH2, fontSize: 40, fontWeight: 300 }}>Polyps Metrics in<br />OlySense Insights</h1>
+          <p style={{ ...mobileBody, textAlign: 'center' }}>Objective: Helping endoscopists to understand performance across key colonoscopy quality metrics.</p>
+        </div>
+
+        {/* Team */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%' }}>
+          <ScrollFadeIn><h2 style={mobileH2}>Team</h2></ScrollFadeIn>
+          <TeamAvatars />
+        </div>
+
+        {/* Timeline */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%' }}>
+          <ScrollFadeIn><h2 style={mobileH2}>Timeline</h2></ScrollFadeIn>
+          <FitWidth designW={935} designH={140}>
+            <PortfolioTimeline />
+          </FitWidth>
+        </div>
+
+        {/* Problem */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
+          <WaveTag text="PROBLEM" />
+          <ScrollFadeIn><p style={{ ...mobileH2, maxWidth: 520 }}>Clinicians needed a clearer, more actionable way to understand polyp quality metrics and what was driving their results.</p></ScrollFadeIn>
+          <div style={{ alignSelf: 'stretch', marginTop: 8 }}><PolaroidRow /></div>
+        </div>
+
+        {/* Process — each dropdown's title + full description, then its square(s) scaled to width */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 48, width: '100%' }}>
+          <ScrollFadeIn><h2 style={mobileH2}>Process</h2></ScrollFadeIn>
+          {PROCESS_DROPDOWNS.map((d, di) => (
+            <div key={d.id} style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
+              <h3 style={{ ...mobileH2, fontSize: 26, textAlign: 'left' }}>{d.title}</h3>
+              {d.description.split('\n\n').map((para, pi) => (
+                <p key={pi} style={{ ...mobileBody, fontWeight: 400, fontSize: 16 }}>{para}</p>
+              ))}
+              {PROCESS_SQUARES.map((s, si) => s.dropdownIdx === di ? (
+                <FitWidth key={si} designW={696} designH={696} style={{ borderRadius: 24, backgroundColor: '#f5f5f7' }}>
+                  <div style={{ width: 696, height: 696, ...(s.fullBleed ? {} : { padding: 40, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center' }) }}>
+                    {s.content}
+                  </div>
+                </FitWidth>
+              ) : null)}
+            </div>
+          ))}
+        </div>
+
+        {/* Final Design — static scaled dashboard preview + interactive-prototype tag */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
+          <ScrollFadeIn><h2 style={mobileH2}>Final Design</h2></ScrollFadeIn>
+          <p style={{ ...mobileBody, textAlign: 'center' }}>OlySense workflows were validated before launch through usability evaluation with target users, where participants completed 82% of key tasks successfully.</p>
+          <div style={{ position: 'relative', width: '100%', marginTop: 8, pointerEvents: 'none' }}>
+            <FitWidth designW={BASE_W} designH={BASE_H}>
+              <BrowserFrame expand={1}>
+                <PolypsDashboard selfScroll={false} />
+              </BrowserFrame>
+            </FitWidth>
+          </div>
+          <WaveTag text="THANK YOU!" />
         </div>
       </div>
     </div>

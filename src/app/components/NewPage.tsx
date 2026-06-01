@@ -8,6 +8,8 @@ import { OlyCarousel } from './OlyCarousel';
 import { OlyTraceCanvas } from './OlyTraceCanvas';
 import { PolaroidWall } from './PolaroidWall';
 import FigmaLogo from '../../assets/tool-figma.svg?react';
+import { useBreakpoint } from './ui/use-breakpoint';
+import { FitWidth } from './ui/FitWidth';
 
 // Module-load timestamp — used as the swing's reference t=0. SVG3D's internal
 // elapsed clock starts when each canvas first renders (close to module load),
@@ -730,6 +732,14 @@ const SquareGlow = memo(function SquareGlow() {
 });
 
 export function NewPage() {
+  // Mobile gets a dedicated stacked layout; the 4-stage scroll-morph machinery
+  // (scroll listener, rAF easers, scroll-snap) never mounts there.
+  const bp = useBreakpoint();
+  if (bp === 'mobile') return <NewPageMobile />;
+  return <NewPageDesktop />;
+}
+
+function NewPageDesktop() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const sharedCircleRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
@@ -857,9 +867,21 @@ export function NewPage() {
   // Frame and its contents are rendered 1:1 — no scaling anywhere. Source
   // pixels = display pixels.
   const frameScale = 1;
+  // Tablet (768–1023px): render the desktop tree at a fixed reference width and
+  // scale it to fit. The layout computes in design space (DESIGN_W wide, vh/k
+  // tall); a transform on the scroller fits it to the real viewport. Desktop
+  // (≥1024) keeps k=1 so nothing changes. progress is a scroll ratio, so the
+  // morph timing is scale-invariant; heights are expressed in design-space px
+  // so the snap stops stay aligned under the transform.
+  const bpKind = useBreakpoint();
+  const isTablet = bpKind === 'tablet';
+  const DESIGN_W = 1280;
+  const k = isTablet ? vw / DESIGN_W : 1;
+  const layoutVw = isTablet ? DESIGN_W : vw;
+  const layoutVh = isTablet ? vh / k : vh;
   // Stage 2 morphs the PWA rectangle into a square (FRAME_H × FRAME_H). Stage 3
   // widens it to display width = vw - 240 (i.e. 120px inset left + right).
-  const baseWidthSource = vw - 240;
+  const baseWidthSource = layoutVw - 240;
   // Stage 4 shrinks the frame from base size down to the 240×480 hero-tile footprint.
   const frameWidth = lerp(lerp(lerp(FRAME_W, FRAME_H, pFrameMorph), baseWidthSource, pStage3), 300, s4);
   const frameHeight = lerp(FRAME_H, 560, s4);
@@ -867,7 +889,7 @@ export function NewPage() {
   const frameBorderWidth = lerp(5, 0, pFrameMorph);
   // Home start position is shifted 38px lower (less peek visible) than the raw
   // PEEK; the lerp still ends at centred on Privat.
-  const frameTop = lerp(vh - PEEK, (vh - frameHeight) / 2, pStage1);
+  const frameTop = lerp(layoutVh - PEEK, (layoutVh - frameHeight) / 2, pStage1);
   // Panels fade in like the home-load intro (opacity 0→1, scale 0.9→1, 700ms)
   // when the showcase is reached, and fade back out when scrolling away or into stage 2.
   const panelsVisible = pStage1 >= 0.9 && pPanelFade === 0;
@@ -899,31 +921,38 @@ export function NewPage() {
   // Home is "active" only at the top snap point — gates the avatar video loop.
   const homeActive = pStage1 < 0.05;
 
+  // On desktop the outer wrapper is display:contents (a true no-op); on tablet it
+  // clips the scaled scroller to the viewport.
   return (
+    <div style={isTablet ? { width: '100vw', height: '100vh', overflow: 'hidden' } : { display: 'contents' }}>
     <div
       ref={scrollRef}
       style={{
-        width: '100vw',
-        height: '100vh',
+        width: isTablet ? layoutVw : '100vw',
+        height: isTablet ? layoutVh : '100vh',
+        transform: isTablet ? `scale(${k})` : undefined,
+        transformOrigin: 'top left',
         overflowY: 'auto',
         overflowX: 'hidden',
         overscrollBehavior: 'none',
         scrollSnapType: 'y mandatory',
       }}
     >
-      {/* Scroll track — 500vh: home→Privat→Olysense→base→hero tile (4 transitions). */}
-      <div style={{ height: '500vh', position: 'relative' }}>
-        {/* Native CSS scroll-snap targets at 0/100/200/300/400vh.
+      {/* Scroll track — 5 viewport-heights: home→Privat→Olysense→base→hero tile.
+          On tablet, heights are design-space px (layoutVh) so the snap stops stay
+          aligned under the scale transform; desktop keeps the original vh units. */}
+      <div style={{ height: isTablet ? layoutVh * 5 : '500vh', position: 'relative' }}>
+        {/* Native CSS scroll-snap targets at each viewport height.
             `scroll-snap-stop: always` forces a stop at each — momentum can't skip mid. */}
         {[0, 1, 2, 3, 4].map((i) => (
           <div
             key={i}
             style={{
               position: 'absolute',
-              top: `${i * 100}vh`,
+              top: isTablet ? i * layoutVh : `${i * 100}vh`,
               left: 0,
               width: 1,
-              height: '100vh',
+              height: isTablet ? layoutVh : '100vh',
               scrollSnapAlign: 'start',
               scrollSnapStop: 'always',
               pointerEvents: 'none',
@@ -931,7 +960,7 @@ export function NewPage() {
           />
         ))}
         {/* Sticky visual layer */}
-        <div style={{ position: 'sticky', top: 0, width: '100%', height: '100vh', overflow: 'hidden', backgroundColor: bg }}>
+        <div style={{ position: 'sticky', top: 0, width: '100%', height: isTablet ? layoutVh : '100vh', overflow: 'hidden', backgroundColor: bg }}>
           <style>{homeLoadAnim}</style>
           {/* OlySense page background — drifting light-blue + red gradient behind the square. */}
           {pBgWhite > 0.01 && pStage3 < 1 && (
@@ -1384,15 +1413,20 @@ export function NewPage() {
                   `}</style>
                   <a href="mailto:hi@aleks.design" className="badge-email" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 20, color: '#333333', pointerEvents: 'auto' }}>hi@aleks.design</a>
                 </div>
-                {/* LinkedIn footer — monochrome black mark, 24px from the bottom edge */}
-                <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, textAlign: 'center', lineHeight: 0, animation: 'badge-item-in 0.7s cubic-bezier(0.22,1,0.36,1) 0.32s both' }}>
+                {/* Social footer — monochrome black marks, 24px from the bottom edge */}
+                <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14, lineHeight: 0, animation: 'badge-item-in 0.7s cubic-bezier(0.22,1,0.36,1) 0.32s both' }}>
                   <style>{`
-                    .badge-linkedin { transition: transform 0.2s ease, filter 0.2s ease; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15)); }
-                    .badge-linkedin:hover { transform: scale(1.12); filter: drop-shadow(0 4px 10px rgba(0,0,0,0.35)); }
+                    .badge-social { transition: transform 0.2s ease, filter 0.2s ease; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15)); }
+                    .badge-social:hover { transform: scale(1.12); filter: drop-shadow(0 4px 10px rgba(0,0,0,0.35)); }
                   `}</style>
-                  <a href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="badge-linkedin" style={{ display: 'inline-block', pointerEvents: 'auto', borderRadius: 4, overflow: 'hidden' }}>
-                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
+                  <a href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="badge-social" style={{ display: 'inline-block', pointerEvents: 'auto', borderRadius: 4, overflow: 'hidden' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
                       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z" />
+                    </svg>
+                  </a>
+                  <a href="https://github.com/zhurankou" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="badge-social" style={{ display: 'inline-block', pointerEvents: 'auto', borderRadius: 4, overflow: 'hidden' }}>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
+                      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
                     </svg>
                   </a>
                 </div>
@@ -1507,6 +1541,155 @@ export function NewPage() {
             frameEl={frameElRef.current}
           />
         )}
+      </div>
+    </div>
+    </div>
+  );
+}
+
+// ── Mobile (<768px) ─────────────────────────────────────────────────────────
+// Dedicated stacked layout. The 4-stage scroll-morph is replaced by a vertical
+// document that reuses the same sub-components (HomeContent, PrivatHomeView, the
+// OlySense square's carousel/trace/video, BaseMatchCanvas, PolaroidWall). Fixed
+// desktop sizes are shrunk to the column width via FitWidth.
+
+const mobileTag: React.CSSProperties = {
+  margin: 0, fontFamily: "'Stack Sans Notch', sans-serif",
+  fontWeight: 600, fontSize: 18, lineHeight: '28px', whiteSpace: 'nowrap', textAlign: 'center',
+};
+const mobileDesc: React.CSSProperties = {
+  margin: 0, fontFamily: "'Manrope', sans-serif",
+  fontWeight: 500, fontSize: 17, lineHeight: '28px',
+};
+
+// Per-character colour-wave label (matches the desktop SELECTED WORK tag).
+function MobileWaveLabel({ text, color = '#A8AFB6' }: { text: string; color?: string }) {
+  return (
+    <p style={{ ...mobileTag, color }}>
+      {Array.from(text).map((ch, i) => (
+        <span key={i} style={{ display: 'inline-block', whiteSpace: 'pre', animation: 'selected-wave 2s ease-in-out infinite', animationDelay: `${i * 0.12}s` }}>
+          {ch}
+        </span>
+      ))}
+    </p>
+  );
+}
+
+// Static "Visit" pill — internal (Link) or external (anchor). No hover wiring on
+// touch; just a tappable bordered pill matching the desktop visit buttons.
+function MobileVisitLink({ to, href, color, children }: { to?: string; href?: string; color: string; children: React.ReactNode }) {
+  const style: React.CSSProperties = {
+    border: `2px solid ${color}`, borderRadius: 32, padding: '10px 18px',
+    display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none',
+    fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 300, fontSize: 15, color,
+    width: 'fit-content',
+  };
+  const arrow = (
+    <svg viewBox="0 0 24 24" fill="none" style={{ width: 20, height: 20 }}>
+      <path fillRule="evenodd" clipRule="evenodd" d="M12 4.58579L19.4142 12L12 19.4142L10.5858 18L15.5858 13H5V11H15.5858L10.5858 6L12 4.58579Z" fill={color} />
+    </svg>
+  );
+  if (to) return <Link to={to} style={style}>{children}{arrow}</Link>;
+  return <a href={href} target="_blank" rel="noopener noreferrer" style={style}>{children}{arrow}</a>;
+}
+
+function NewPageMobile() {
+  // Fixed base palette (no scroll-driven rainbow on mobile).
+  const palette = paletteFromColor('#5B8DEF');
+  const cardLabel: React.CSSProperties = {
+    margin: 0, fontFamily: "'Stack Sans Notch', sans-serif",
+    fontWeight: 300, fontSize: 40, lineHeight: 'normal', color: '#000',
+  };
+  return (
+    <div style={{ width: '100%', minHeight: '100dvh', backgroundColor: '#E0E0E4', overflowX: 'hidden' }}>
+      <style>{homeLoadAnim}</style>
+      <style>{olyBgAnim}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '64px 20px 72px', gap: 88, boxSizing: 'border-box' }}>
+
+        {/* Hero — scaled to fit so the fixed 440px subtitle never overflows. */}
+        <FitWidth designW={440} designH={480} style={{ overflow: 'visible' }}>
+          <div style={{ width: 440, display: 'flex', justifyContent: 'center' }}>
+            <HomeContent active={true} />
+          </div>
+        </FitWidth>
+
+        <MobileWaveLabel text="SELECTED WORK" />
+
+        {/* Privat — phone mock auto-playing the scripted Privat demo. */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
+          <div style={{ width: 'min(280px, 78vw)' }}>
+            <FitWidth designW={FRAME_W} designH={FRAME_H}>
+              <div style={{ width: FRAME_W, height: FRAME_H, border: '5px solid #A8AFB6', borderRadius: 40, overflow: 'hidden', boxSizing: 'border-box' }}>
+                <PrivatHomeView active={true} />
+              </div>
+            </FitWidth>
+          </div>
+          <p style={{ ...cardLabel, textAlign: 'center' }}>Privat</p>
+          <p style={{ ...mobileDesc, color: '#5b5b5b', textAlign: 'center' }}>Designing and building Privat, an application for instant 1:1 video sessions.</p>
+          <MobileVisitLink href="https://goprivat.com" color="#000">Visit goprivat.com</MobileVisitLink>
+        </div>
+
+        {/* OlySense — white square replicating the desktop square's contents. */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
+          <FitWidth designW={FRAME_H} designH={FRAME_H} style={{ borderRadius: 32 }}>
+            <div style={{ position: 'relative', width: FRAME_H, height: FRAME_H, backgroundColor: '#FBFDFF', overflow: 'hidden' }}>
+              {/* Drifting blue/red gradient behind the trace canvas. */}
+              <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+                <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(-10%, -8%)', background: 'radial-gradient(circle at 32% 34%, rgba(198,221,255,0.7) 0%, rgba(198,221,255,0) 62%)', animation: 'oly-bg-a 16s ease-in-out infinite' }} />
+                <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(10%, 8%) scale(1.15)', background: 'radial-gradient(circle at 70% 66%, rgba(255,206,211,0.62) 0%, rgba(255,206,211,0) 62%)', animation: 'oly-bg-b 21s ease-in-out infinite' }} />
+              </div>
+              <OlyTraceCanvas style={{ position: 'absolute', inset: 0 }} play={true} />
+              <OlyCarousel style={{ position: 'absolute', inset: 0 }} blurred={false} playing={true} />
+              <EndoLoopVideo
+                src="/endo2.mp4"
+                loop={false}
+                playing={true}
+                style={{
+                  position: 'absolute', left: 12, bottom: 36, width: 164.6,
+                  aspectRatio: '1080 / 1920', transform: 'scaleX(-1)', pointerEvents: 'none',
+                  WebkitMaskImage: 'linear-gradient(to right, transparent, #000 16%, #000 84%, transparent), linear-gradient(to bottom, transparent, #000 16%, #000 100%)',
+                  maskImage: 'linear-gradient(to right, transparent, #000 16%, #000 84%, transparent), linear-gradient(to bottom, transparent, #000 16%, #000 100%)',
+                  WebkitMaskComposite: 'source-in', maskComposite: 'intersect',
+                }}
+              />
+            </div>
+          </FitWidth>
+          <p style={{ ...cardLabel, textAlign: 'center' }}>OlySense</p>
+          <p style={{ ...mobileDesc, color: '#000', textAlign: 'center' }}>Led 0→1 research and design for OlySense, an endoscopy KPI dashboard.</p>
+          <MobileVisitLink to="/olysense" color="#000">Visit case study</MobileVisitLink>
+        </div>
+
+        {/* Base — dark dotted grid with the 3D icon canvas. */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
+          <FitWidth
+            designW={640}
+            designH={640}
+            style={{
+              borderRadius: 32,
+              backgroundColor: palette.gridBg,
+              backgroundImage: `radial-gradient(${palette.dotMid} 2px, transparent 2px)`,
+              backgroundSize: '20px 20px',
+            }}
+          >
+            <div style={{ width: 640, height: 640 }}>
+              <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} playing={true} />
+            </div>
+          </FitWidth>
+          <MobileWaveLabel text="RESOURCE" color="#000" />
+          <p style={{ ...cardLabel, textAlign: 'center' }}>base.24</p>
+          <p style={{ ...mobileDesc, color: '#5b5b5b', textAlign: 'center' }}>Created base.24, an open source icon set for Figma Design Community.</p>
+          <MobileVisitLink href="https://www.figma.com/community/file/1641498563291641806" color="#000">
+            View on
+            <FigmaLogo style={{ width: 12, height: 18, display: 'inline-block', verticalAlign: 'middle' }} />
+            Community
+          </MobileVisitLink>
+        </div>
+
+        {/* About */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, width: '100%' }}>
+          <div style={{ alignSelf: 'stretch' }}><PolaroidWall /></div>
+          <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 16, color: '#888' }}>© 2026</div>
+        </div>
       </div>
     </div>
   );
