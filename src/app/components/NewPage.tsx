@@ -966,8 +966,8 @@ function NewPageDesktop() {
           {pBgWhite > 0.01 && pStage3 < 1 && (
             <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', backgroundColor: '#FBFDFF', opacity: pBgWhite * (1 - pStage3) }}>
               <style>{olyBgAnim}</style>
-              <div style={{ position: 'absolute', inset: '-25%', background: 'radial-gradient(circle at 32% 34%, rgba(198,221,255,0.7) 0%, rgba(198,221,255,0) 62%)', animation: 'oly-bg-a 16s ease-in-out infinite' }} />
-              <div style={{ position: 'absolute', inset: '-25%', background: 'radial-gradient(circle at 70% 66%, rgba(255,206,211,0.62) 0%, rgba(255,206,211,0) 62%)', animation: 'oly-bg-b 21s ease-in-out infinite' }} />
+              <div style={{ position: 'absolute', inset: '-25%', background: 'radial-gradient(circle at 32% 34%, rgba(198,221,255,0.7) 0%, rgba(198,221,255,0) 62%)', animation: 'oly-bg-a 16s ease-in-out infinite', willChange: 'transform' }} />
+              <div style={{ position: 'absolute', inset: '-25%', background: 'radial-gradient(circle at 70% 66%, rgba(255,206,211,0.62) 0%, rgba(255,206,211,0) 62%)', animation: 'oly-bg-b 21s ease-in-out infinite', willChange: 'transform' }} />
             </div>
           )}
           {/* Background typography layer — outlined ticker. On scroll-away,
@@ -1250,8 +1250,8 @@ function NewPageDesktop() {
               {pFrameMorph > 0.01 && pStage3 < 1 && (
                 <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', backgroundColor: '#FBFDFF', opacity: olyActive ? 1 : 0, transition: 'opacity 0.35s ease', pointerEvents: 'none' }}>
                   <style>{olyBgAnim}</style>
-                  <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(-10%, -8%) scale(1)', background: 'radial-gradient(circle at 32% 34%, rgba(198,221,255,0.7) 0%, rgba(198,221,255,0) 62%)', animation: olyPhase >= 3 ? 'oly-bg-a 16s ease-in-out infinite' : 'none' }} />
-                  <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(10%, 8%) scale(1.15)', background: 'radial-gradient(circle at 70% 66%, rgba(255,206,211,0.62) 0%, rgba(255,206,211,0) 62%)', animation: olyPhase >= 3 ? 'oly-bg-b 21s ease-in-out infinite' : 'none' }} />
+                  <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(-10%, -8%) scale(1)', background: 'radial-gradient(circle at 32% 34%, rgba(198,221,255,0.7) 0%, rgba(198,221,255,0) 62%)', animation: olyPhase >= 3 ? 'oly-bg-a 16s ease-in-out infinite' : 'none', willChange: 'transform' }} />
+                  <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(10%, 8%) scale(1.15)', background: 'radial-gradient(circle at 70% 66%, rgba(255,206,211,0.62) 0%, rgba(255,206,211,0) 62%)', animation: olyPhase >= 3 ? 'oly-bg-b 21s ease-in-out infinite' : 'none', willChange: 'transform' }} />
                 </div>
               )}
               {/* Background trace animation — pulsing green dot leaving a dashed
@@ -1273,7 +1273,7 @@ function NewPageDesktop() {
                   style={{
                     position: 'absolute',
                     left: 12,
-                    bottom: 36,
+                    bottom: 40,
                     width: 164.6,
                     aspectRatio: '1080 / 1920',
                     transform: 'scaleX(-1)',
@@ -1635,8 +1635,8 @@ function NewPageMobile() {
             <div style={{ position: 'relative', width: FRAME_H, height: FRAME_H, backgroundColor: '#FBFDFF', overflow: 'hidden' }}>
               {/* Drifting blue/red gradient behind the trace canvas. */}
               <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-                <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(-10%, -8%)', background: 'radial-gradient(circle at 32% 34%, rgba(198,221,255,0.7) 0%, rgba(198,221,255,0) 62%)', animation: 'oly-bg-a 16s ease-in-out infinite' }} />
-                <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(10%, 8%) scale(1.15)', background: 'radial-gradient(circle at 70% 66%, rgba(255,206,211,0.62) 0%, rgba(255,206,211,0) 62%)', animation: 'oly-bg-b 21s ease-in-out infinite' }} />
+                <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(-10%, -8%)', background: 'radial-gradient(circle at 32% 34%, rgba(198,221,255,0.7) 0%, rgba(198,221,255,0) 62%)', animation: 'oly-bg-a 16s ease-in-out infinite', willChange: 'transform' }} />
+                <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(10%, 8%) scale(1.15)', background: 'radial-gradient(circle at 70% 66%, rgba(255,206,211,0.62) 0%, rgba(255,206,211,0) 62%)', animation: 'oly-bg-b 21s ease-in-out infinite', willChange: 'transform' }} />
               </div>
               <OlyTraceCanvas style={{ position: 'absolute', inset: 0 }} play={true} />
               <OlyCarousel style={{ position: 'absolute', inset: 0 }} blurred={false} playing={true} />
@@ -1645,7 +1645,7 @@ function NewPageMobile() {
                 loop={false}
                 playing={true}
                 style={{
-                  position: 'absolute', left: 12, bottom: 36, width: 164.6,
+                  position: 'absolute', left: 12, bottom: 40, width: 164.6,
                   aspectRatio: '1080 / 1920', transform: 'scaleX(-1)', pointerEvents: 'none',
                   WebkitMaskImage: 'linear-gradient(to right, transparent, #000 16%, #000 84%, transparent), linear-gradient(to bottom, transparent, #000 16%, #000 100%)',
                   maskImage: 'linear-gradient(to right, transparent, #000 16%, #000 84%, transparent), linear-gradient(to bottom, transparent, #000 16%, #000 100%)',
