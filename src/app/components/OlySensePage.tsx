@@ -1162,7 +1162,8 @@ function EndoLeadDuet() {
   const containerRef = useRef<HTMLDivElement>(null);
   const endoRef = useRef<HTMLVideoElement>(null);
   const leadRef = useRef<HTMLVideoElement>(null);
-  const startedRef = useRef(false); // first-entry guard for the IO trigger
+  const inViewRef = useRef(false);             // whether square3 is currently in view
+  const startTimerRef = useRef<number | null>(null); // pending 500ms play delay
   const captionsTimerRef = useRef<number | null>(null);
   const [active, setActive] = useState<'endo' | 'lead'>('endo');
   // Index of the YouTube-style caption phrase currently showing on the active
@@ -1182,6 +1183,7 @@ function EndoLeadDuet() {
 
   useEffect(() => () => {
     if (captionsTimerRef.current) window.clearTimeout(captionsTimerRef.current);
+    if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
   }, []);
 
   const BIG = 432;
@@ -1203,20 +1205,35 @@ function EndoLeadDuet() {
     'and seamless access to patient data during endoscopies.',
   ];
 
-  // Start the loop only when square 3 scrolls into view (first time only); the
-  // existing endo→lead→endo handoff keeps it running from there.
+  // Run the full endo → lead sequence every time square3 scrolls into view.
+  // Each fresh entry restarts from the top (endo big + playing); leaving the
+  // view pauses both videos and cancels any pending start. Neither video's
+  // currentTime is reset until the moment it actually plays, so the smiling
+  // poster / final frame stays on screen while a column is idle.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !startedRef.current) {
-          startedRef.current = true;
-          window.setTimeout(() => {
-            endoRef.current?.play().catch(() => {});
+        const visible = entry.intersectionRatio >= 0.3;
+        if (visible && !inViewRef.current) {
+          inViewRef.current = true;
+          setActive('endo');
+          setCaptionIdx(0);
+          endoRef.current?.pause();
+          leadRef.current?.pause();
+          if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
+          startTimerRef.current = window.setTimeout(() => {
+            const e = endoRef.current;
+            if (e) { e.currentTime = 0; e.play().catch(() => {}); }
             scheduleCaptions();
           }, 500);
-          io.disconnect();
+        } else if (!visible && inViewRef.current) {
+          inViewRef.current = false;
+          if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
+          endoRef.current?.pause();
+          leadRef.current?.pause();
+          setCaptionsReady(false);
         }
       },
       { threshold: 0.3 },
