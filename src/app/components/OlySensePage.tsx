@@ -1293,6 +1293,7 @@ function EndoLeadDuet() {
           <video
             ref={endoRef}
             src="/endo-lead.mp4"
+            poster="/endo-lead-poster.jpg"
             muted
             playsInline
             preload="auto"
