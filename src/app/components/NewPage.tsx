@@ -10,6 +10,7 @@ import { PolaroidWall } from './PolaroidWall';
 import FigmaLogo from '../../assets/tool-figma.svg?react';
 import { useBreakpoint } from './ui/use-breakpoint';
 import { FitWidth } from './ui/FitWidth';
+import { MobileNotice } from './ui/MobileNotice';
 
 // Module-load timestamp — used as the swing's reference t=0. SVG3D's internal
 // elapsed clock starts when each canvas first renders (close to module load),
@@ -151,6 +152,35 @@ export const BASE_ICON_POOL: string[] = [
   ICONS_16[0], ICONS_16[4], ICONS_16[5], ICONS_16[6], ICONS_16[7], ICONS_16[8],
   ICONS_16[9], ICONS_16[10], ICONS_16[12], ICONS_16[13], ICONS_16[14], ICONS_16[15],
 ];
+
+// One vivid colour per base-grid cell. Hues are curated (NOT evenly spaced — even
+// spacing clusters greens, which the eye can't split) and luminance-compensated so the
+// intrinsically-bright hues (green/yellow/cyan) don't wash out pale on the glass.
+// Shared by the /new base view and the /base-test sandbox.
+const ICON_HUES = [350, 32, 54, 132, 182, 213, 252, 296, 322];
+function vividHue(h: number): string {
+  const probe = hslToHex(h, 1, 0.5);
+  const r = parseInt(probe.slice(1, 3), 16) / 255;
+  const g = parseInt(probe.slice(3, 5), 16) / 255;
+  const b = parseInt(probe.slice(5, 7), 16) / 255;
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const l = Math.max(0.3, Math.min(0.5, 0.21 / lum));
+  return hslToHex(h, 1, l);
+}
+export const ICON_COLORS = ICON_HUES.map(vividHue);
+
+// Base-rectangle backdrop: the area outside the rectangle is masked dark; inside, the
+// dot grid is coloured by an animated vivid gradient (the dots are the icon colours,
+// revealed through a dot mask, drifting). Exported so /base-test matches.
+const DOT_COLORS = ICON_COLORS.map((c) => darkenHex(c, 0.55)); // darkened so the dots aren't glaring
+export const ICON_GRADIENT = `linear-gradient(120deg, ${[...DOT_COLORS, DOT_COLORS[0]].join(', ')})`;
+const BASE_BG_DARK = '#0b0b0d'; // dark base of the continuous dotted field
+const baseGradDriftAnim = '@keyframes base-grad-drift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }';
+// Shared fragments for the base-view dotted gradient (smooth gradient outside the
+// rectangle; a dark dot-hole mask reveals the same gradient as dots inside it).
+const BASE_GRAD_DRIFT = 'base-grad-drift 24s ease-in-out infinite';
+const BASE_DOT_HOLES = `radial-gradient(circle, transparent 1.2px, ${BASE_BG_DARK} 1.7px)`; // dark fill, transparent dot holes
+const BASE_DOT_SIZE = '18px 18px';
 
 // Base view palette — derived from the active icon colour. Layers stay in the
 // same darkness ratio as the original neutral grid (bg 8%, mid-dot 15%,
@@ -735,7 +765,9 @@ export function NewPage() {
   // Mobile gets a dedicated stacked layout; the 4-stage scroll-morph machinery
   // (scroll listener, rAF easers, scroll-snap) never mounts there.
   const bp = useBreakpoint();
-  if (bp === 'mobile') return <NewPageMobile />;
+  // Temporary: show a "view on tablet/desktop" notice on mobile while the mobile
+  // layout is being finished. Swap back to <NewPageMobile /> to restore it.
+  if (bp === 'mobile') return <MobileNotice />;
   return <NewPageDesktop />;
 }
 
@@ -762,6 +794,7 @@ function NewPageDesktop() {
   // Colour cycling for the base view — icons stay fixed, only the palette changes.
   // displayedColor rotates continuously through the rainbow (see RAINBOW_* + the drift effect).
   const [displayedColor, setDisplayedColor] = useState(() => hslToHex(0, RAINBOW_SAT, RAINBOW_LIGHT));
+  const [baseShuffle, setBaseShuffle] = useState(0); // bumped each time the base view scrolls in → reshuffles the icon set
 
   useEffect(() => {
     const onResize = () => { setVh(window.innerHeight); setVw(window.innerWidth); };
@@ -840,6 +873,10 @@ function NewPageDesktop() {
   // Stage 3 sub-phases — Olysense → base.
   const baseVisible = pStage3 >= 0.85;             // base title + description appear once the square is essentially grown
   const baseFade = 1 - s4;                          // stage 4 fades the base content out as the hero tile forms
+  // The dotted background fades in/out faster than the rest of the base content — a
+  // steeper ramp on both ends (scroll-in via pStage3, scroll-out via baseFade).
+  const dotFade = smoothstep(Math.min(1, Math.max(0, (pStage3 - 0.6) / 0.22)))
+    * smoothstep(Math.min(1, Math.max(0, (baseFade - 0.6) / 0.22)));
 
   // Active palette — derived from displayedColor (which lerps toward the target
   // theme), so icon material + grid bg + dot tints all change in lockstep.
@@ -862,6 +899,14 @@ function NewPageDesktop() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
+  }, [baseVisible]);
+
+  // Every time the base view scrolls into view, reshuffle the icon set to a new
+  // non-matching arrangement (only on the false→true edge, not while it stays visible).
+  const baseWasVisible = useRef(false);
+  useEffect(() => {
+    if (baseVisible && !baseWasVisible.current) setBaseShuffle((k) => k + 1);
+    baseWasVisible.current = baseVisible;
   }, [baseVisible]);
 
   // Frame and its contents are rendered 1:1 — no scaling anywhere. Source
@@ -900,7 +945,7 @@ function NewPageDesktop() {
   // (a darker tint of the active icon colour, so the page behind the rectangle is a
   // matched darker version of the dotted-grid bg instead of pure black).
   const bg = s4 > 0.001
-    ? lerpColor(palette.pageBg, '#E0E0E4', s4) // stage 4: fade to home grey
+    ? lerpColor(palette.pageBg, '#FAFAFC', s4) // stage 4 (about): fade to a light grey
     : pStage3 > 0
     ? lerpColor('#FBFDFF', palette.pageBg, pStage3)
     : pBgWhite > 0
@@ -1020,6 +1065,23 @@ function NewPageDesktop() {
           {s4 > 0.001 && (
             <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, textAlign: 'center', fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 16, color: '#888888', opacity: s4, pointerEvents: 'none' }}>© 2026</div>
           )}
+          {/* Base-view background — smooth animated gradient (the colours, NO dots) behind
+              the frame, so the area outside the rectangle continues the colours of the
+              rectangle's dots. The rectangle (below) adds the dots on top. */}
+          {pStage3 > 0.01 && (
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              opacity: dotFade,
+              overflow: 'hidden',
+              backgroundImage: ICON_GRADIENT,
+              backgroundSize: '400% 400%',
+              animation: BASE_GRAD_DRIFT,
+            }}>
+              <style>{baseGradDriftAnim}</style>
+            </div>
+          )}
           {/* PWA frame + label */}
           <div ref={frameElRef} style={{
             position: 'absolute',
@@ -1031,20 +1093,8 @@ function NewPageDesktop() {
             height: frameHeight,
             willChange: 'transform, top, width',
           }}>
-            {/* Base fill, expanded beyond the rectangle: a solid darker tone
-                spilling 480px past each frame edge so the area around the
-                rectangle reads through the page bg. Visible only while the base
-                view is on. */}
-            {pStage3 > 0.01 && (
-              <div style={{
-                position: 'absolute',
-                inset: -2000,
-                pointerEvents: 'none',
-                opacity: pStage3 * baseFade,
-                overflow: 'hidden',
-                backgroundColor: darkenHex(palette.gridBg, 0.55),
-              }} />
-            )}
+            {/* Base-view background is a viewport-sized animated gradient layer rendered
+                at the sticky-container level (see below), so it never tiles/seams. */}
             {/* Privat label — project name, styled like the Olysense label */}
             <div style={{
               position: 'absolute',
@@ -1234,6 +1284,11 @@ function NewPageDesktop() {
               overflow: 'hidden',
               boxSizing: 'border-box',
               position: 'relative',
+              // Base view only: darken the area outside the rectangle (respects the rounded
+              // corners), leaving the gradient + bright dots inside untouched.
+              // Solid BLACK surround (no blur → no gradient halo → no animation outside;
+              // the dots inside still animate). Crisp rounded corners.
+              boxShadow: `0 0 0 100vmax rgba(0, 0, 0, ${dotFade})`,
             }}>
               <div style={{ width: '100%', height: '100%', opacity: frameContentOpacity }}>
                 <PrivatHomeView
@@ -1290,42 +1345,19 @@ function NewPageDesktop() {
                   }}
                 />
               )}
-              {/* Stage 3 — base fill: dotted grid coloured from the active theme palette.
-                  Three masked drifting wave layers reveal a lighter dot tint. */}
+              {/* Stage 3 — base rectangle: a static dark dot-grid overlay (dark fill with
+                  transparent dot holes) over the single smooth gradient layer behind, so
+                  the dots reveal the SAME gradient as the area outside — perfectly
+                  continuous, and only one animated gradient runs. */}
               <div style={{
                 position: 'absolute',
                 inset: 0,
-                opacity: pStage3 * baseFade,
-                backgroundColor: palette.gridBg,
-                backgroundImage: `radial-gradient(${palette.dotMid} 2px, transparent 2px)`,
-                backgroundSize: '20px 20px',
+                opacity: dotFade,
                 pointerEvents: 'none',
-              }}>
-                {pStage3 > 0.01 && (
-                  <>
-                    <style>{baseDotsAnim}</style>
-                    {[
-                      'base-dots-a 13s ease-in-out infinite',
-                      'base-dots-b 17s ease-in-out infinite',
-                      'base-dots-c 21s ease-in-out infinite',
-                    ].map((anim, i) => (
-                      <div key={i} style={{
-                        position: 'absolute',
-                        inset: 0,
-                        backgroundImage: `radial-gradient(${palette.dotLight} 2px, transparent 2px)`,
-                        backgroundSize: '20px 20px',
-                        WebkitMaskImage: 'radial-gradient(circle, #000 0%, #000 12%, transparent 58%)',
-                        maskImage: 'radial-gradient(circle, #000 0%, #000 12%, transparent 58%)',
-                        WebkitMaskSize: '65% 65%',
-                        maskSize: '65% 65%',
-                        WebkitMaskRepeat: 'no-repeat',
-                        maskRepeat: 'no-repeat',
-                        animation: anim,
-                      }} />
-                    ))}
-                  </>
-                )}
-              </div>
+                backgroundImage: BASE_DOT_HOLES,
+                backgroundSize: BASE_DOT_SIZE,
+                backgroundPosition: 'center',
+              }} />
               {/* 3×3 grid of spinning 3D icons; once in a while one spins up fast and
                   swaps to a new icon mid-spin. Always mounted so the WebGL canvas warms
                   up + compiles shaders during earlier scenes; the wrapper opacity fade
@@ -1343,7 +1375,7 @@ function NewPageDesktop() {
                 transition: pStage4 > 0.01 ? 'none' : baseVisible ? 'opacity 700ms ease-out' : 'opacity 150ms ease-in',
               }}>
                   <div style={{ width: 640, height: 640, pointerEvents: 'auto' }}>
-                    <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} playing={pStage3 > 0.4} />
+                    <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={baseShuffle} />
                   </div>
                 </div>
             </div>
@@ -1506,7 +1538,7 @@ function NewPageDesktop() {
                   </span>
                 ))}
                 {/* Figma logo — sized to the 16px text height, sits before "Community" */}
-                <FigmaLogo style={{ width: 13.79, height: 20.66, display: 'inline-block', verticalAlign: 'middle', position: 'relative', top: -2, marginLeft: 3, marginRight: 5 }} />
+                <FigmaLogo style={{ width: 12.1, height: 18.13, display: 'inline-block', verticalAlign: 'middle', position: 'relative', top: -2, marginLeft: 3, marginRight: 5 }} />
                 {'Community'.split('').map((char, i) => (
                   <span
                     key={`community-${i}`}
@@ -1666,13 +1698,17 @@ function NewPageMobile() {
             designH={640}
             style={{
               borderRadius: 32,
-              backgroundColor: palette.gridBg,
-              backgroundImage: `radial-gradient(${palette.dotMid} 2px, transparent 2px)`,
-              backgroundSize: '20px 20px',
+              // Dark fill with vivid-coloured dots: a dark layer with transparent dot
+              // holes (top) over the vivid gradient (bottom) → the gradient shows only
+              // through the holes. Static on mobile.
+              backgroundColor: BASE_BG_DARK,
+              backgroundImage: `${BASE_DOT_HOLES}, ${ICON_GRADIENT}`,
+              backgroundSize: `${BASE_DOT_SIZE}, auto`,
+              backgroundPosition: 'center',
             }}
           >
             <div style={{ width: 640, height: 640 }}>
-              <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} playing={true} />
+              <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={baseShuffle} />
             </div>
           </FitWidth>
           <MobileWaveLabel text="RESOURCE" color="#000" />
@@ -1688,6 +1724,39 @@ function NewPageMobile() {
         {/* About */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, width: '100%' }}>
           <div style={{ alignSelf: 'stretch' }}><PolaroidWall /></div>
+
+          {/* Contact — mobile rendering of the desktop stage-4 about badge:
+              avatar → name → email → social icons (LinkedIn + GitHub). */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+            <EndoLoopVideo
+              src="/avatar1.mp4"
+              objectPosition="36.5% center"
+              fadeSeconds={0.6}
+              holdSeconds={0}
+              startDelaySeconds={0}
+              loop={false}
+              playing
+              style={{ width: 160, height: 160, borderRadius: '50%', overflow: 'hidden', backgroundColor: '#E0E0E4' }}
+            />
+            <div style={{ textAlign: 'center', fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 400, fontSize: 40, letterSpacing: '-1.05px', lineHeight: 1.12, color: '#1A1A1A' }}>
+              <div>Aleks</div>
+              <div>Zhurankou</div>
+            </div>
+            <a href="mailto:hi@aleks.design" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 20, color: '#333333', textDecoration: 'none' }}>hi@aleks.design</a>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14, lineHeight: 0 }}>
+              <a href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" style={{ display: 'inline-block', borderRadius: 4, overflow: 'hidden' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z" />
+                </svg>
+              </a>
+              <a href="https://github.com/zhurankou" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style={{ display: 'inline-block', borderRadius: 4, overflow: 'hidden' }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
+                  <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+                </svg>
+              </a>
+            </div>
+          </div>
+
           <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 16, color: '#888' }}>© 2026</div>
         </div>
       </div>
