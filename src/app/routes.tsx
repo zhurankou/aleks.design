@@ -5,7 +5,6 @@ import { LandingPage } from "./components/LandingPage";
 import { NewPage } from "./components/NewPage";
 import { OlySensePage } from "./components/OlySensePage";
 import { PolypsDashboard } from "./components/polyps/PolypsDashboard";
-import { BaseTest } from "./components/BaseTest";
 
 export const router = createBrowserRouter([
   {
@@ -27,10 +26,6 @@ export const router = createBrowserRouter([
   {
     path: "/polyps",
     element: <PolypsDashboard />,
-  },
-  {
-    path: "/base-test",
-    element: <BaseTest />,
   },
   {
     path: "/project/:projectId",

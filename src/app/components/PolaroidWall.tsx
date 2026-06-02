@@ -35,7 +35,7 @@ function Polaroid({ card }: { card: Card }) {
       padding: '14px 14px 40px 14px',
       backgroundColor: '#FFFFFF',
       borderRadius: 3,
-      boxShadow: '0 10px 36px rgba(20,24,40,0.03)',
+      boxShadow: '0 12px 40px rgba(20,24,40,0.12)',
       transform: `rotate(${card.tilt}deg)`,
     }}>
       <img

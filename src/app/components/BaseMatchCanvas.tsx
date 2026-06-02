@@ -1,5 +1,5 @@
 import { Canvas, useFrame } from '@react-three/fiber';
-import { ExtrudedSVG, resolveMaterial } from '3dsvg';
+import { ExtrudedIcon } from './ExtrudedIcon';
 import { Environment, PerspectiveCamera } from '@react-three/drei';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
@@ -14,7 +14,8 @@ import * as THREE from 'three';
 const ANIMATE_SPEED = 1.5;
 const CELL_GAP = 5.5;        // scene units between cell centres (3×3)
 const ICON_DEPTH = 1;        // SVG-unit extrude depth — thin glyph (original thickness)
-const ICON_SMOOTHNESS = 0.5; // fewer curve/bevel segments → cheaper re-extrude on swap (smaller frame hitch)
+const ICON_SMOOTHNESS = 0.7; // curve/bevel segment count (cached now, so cost is one-off) — higher = smoother bevel
+const ICON_ROUNDNESS = 3.5;  // scales the edge bevel → rounder glyph edges (1 = near-sharp original)
 const MATCH_SCALE = 1.16;    // size bump on a matched line
 const BOARD_PX = 640;
 // App-icon tile: a rounded liquid-glass square the glyph is extruded from.
@@ -23,18 +24,28 @@ const TILE_DEPTH = 0.7;
 const TILE_RADIUS = 1.4;     // rounded corners (in-plane, independent of thickness)
 const CELL_FIT = 0.65;       // overall scale of the tile+glyph unit
 const ICON_IN_TILE = 1.0;    // glyph size relative to the tile (leaves padding)
-const GLYPH_GLOW = 1.15;     // emissive self-glow layered on the metallic glyph → vivid colour (beats the metalness wash)
+const GLYPH_GLOW = 0.55;     // emissive self-glow — kept low so the glass stays see-through and deep (high glow floods it solid + washes pale)
 const TILE_GLOW = 0.6;       // emissive glow on the glass tile
-// Holographic shimmer: thin-film iridescence + stronger reflections (3dsvg's holographic
-// preset omits iridescence, so the rainbow sheen is added on the mesh directly).
-const HOLO_IRIDESCENCE = 1.0;
+// Reflections + a fresnel rim glow. Iridescence is off (0) — the glass look is a single
+// pure hue, not a rainbow sheen; the constant stays so it's a one-flip toggle.
+const HOLO_IRIDESCENCE = 0;
 const HOLO_IRID_IOR = 1.9;
-const HOLO_ENV_INTENSITY = 2.6;                       // punchier environment reflections
+const HOLO_ENV_INTENSITY = 0.4;                       // low reflections — high values make the glass read mirror/chrome
 const HOLO_THICKNESS: [number, number] = [60, 2000]; // film thickness (nm) → very broad rainbow spread (many bands)
 const RIM_POWER = 2.8;       // fresnel edge sharpness (higher = thinner rim)
 const RIM_INTENSITY = 1.8;   // brightness of the glowing neon-outline edge
 const PULSE_PERIOD = 2.0;    // seconds per glow breathe
 const PULSE_AMP = 0.3;       // ± fraction the glow swings each cycle (neon buzz)
+// Glyph PBR — translucent coloured glass: light transmits through it (glassy depth),
+// the volume tints toward the icon colour by thickness (Beer–Lambert), and it self-glows.
+const GLYPH_METALNESS = 0;            // dielectric — metals can't be coloured/translucent glass
+const GLYPH_ROUGHNESS = 0.06;         // smooth, glossy surface streaks
+const GLYPH_IOR = 1.5;                // glass-ish refraction
+const GLYPH_TRANSMISSION = 1.0;       // light passes through → see depth/the back of the glyph
+const GLYPH_THICKNESS = 1.6;          // volume thickness driving the colour absorption
+const GLYPH_ATTEN_DISTANCE = 1.4;     // how far light travels before fully absorbed (higher = clearer/more see-through)
+const GLYPH_CLEARCOAT = 0.25;         // low — clearcoat adds a glossy mirror coat that reads metallic
+const GLYPH_CLEARCOAT_ROUGHNESS = 0.05;
 
 // Tile geometry: a rounded-rectangle extruded thin with a small edge bevel, so the
 // corners round freely (unlike RoundedBox, whose radius is capped by the thickness).
@@ -64,6 +75,8 @@ const TILE_GEO: THREE.BufferGeometry = (() => {
 const BURST_DUR = 1.1;       // seconds of the spin (slower = gentler, less strobe, more time to re-extrude)
 const BURST_TURNS = 2;       // whole extra turns per burst → it ends back in phase (stays in sync)
 const BASE_SPIN = 0.4 * ANIMATE_SPEED; // glyph spin speed (the tile stays fixed, so gaps stay even)
+const WOBBLE_AMP = 0.6;    // max wobble swing on each axis (radians, ~34°)
+const WOBBLE_SPEED = 0.8;  // base wobble rate (rad/s) — per-cell randomised around this
 const TWO_PI = Math.PI * 2;
 const HALF_MS = BURST_DUR * 500; // ms to the peak of a burst (where swaps hide)
 const EVENT_MIN_MS = 2600;   // min gap between swaps
@@ -118,7 +131,7 @@ function resolveIcons(bd: number[], line: number[], n: number): number[] {
   return pickDistinct(n, 3);
 }
 
-function IconCell({ svg, color, basePos, burst, bumped }: { svg: string; color: string; basePos: [number, number, number]; burst: number; bumped: boolean }) {
+function IconCell({ svg, color, basePos, burst, bumped, spin, wobble, depth, showTile, cellFit, roundness }: { svg: string; color: string; basePos: [number, number, number]; burst: number; bumped: boolean; spin: boolean; wobble: boolean; depth: number; showTile: boolean; cellFit: number; roundness: number }) {
   const containerRef = useRef<THREE.Group>(null);
   const groupRef = useRef<THREE.Group>(null);
   const burstSeen = useRef(burst);
@@ -126,10 +139,15 @@ function IconCell({ svg, color, basePos, burst, bumped }: { svg: string; color: 
   const extraTurns = useRef(0);      // banked whole turns from past bursts — keeps the cell in phase
   const bumpedRef = useRef(bumped);
   bumpedRef.current = bumped;
-  // The raised glyph: holographic (metallic), softened reflection, mostly opaque so it
+  // The raised glyph: holographic (metallic), softened reflection, opaque so it
   // reads clearly against the glass tile.
-  const iconMat = useMemo(() => resolveMaterial('holographic', { roughness: 0.12, opacity: 1, metalness: 0.85 }), []);
   const emissiveColor = useMemo(() => new THREE.Color(color), [color]);
+  // Per-cell random wobble params (stable for the cell's life) → each sways out of sync.
+  const wob = useMemo(() => ({
+    ax: WOBBLE_AMP * (0.6 + Math.random() * 0.4), ay: WOBBLE_AMP * (0.6 + Math.random() * 0.4),
+    fx: WOBBLE_SPEED * (0.7 + Math.random() * 0.6), fy: WOBBLE_SPEED * (0.7 + Math.random() * 0.6),
+    px: Math.random() * TWO_PI, py: Math.random() * TWO_PI,
+  }), []);
 
   useFrame((state) => {
     const c = containerRef.current;
@@ -147,11 +165,13 @@ function IconCell({ svg, color, basePos, burst, bumped }: { svg: string; color: 
         extra = extraTurns.current;
       }
     }
-    c.rotation.y = t * BASE_SPIN + extra; // continuous spin
+    // Spin (continuous) + an independent random wobble on each axis.
+    c.rotation.y = (spin ? t * BASE_SPIN + extra : 0) + (wobble ? wob.ay * Math.sin(t * wob.fy + wob.py) : 0);
+    c.rotation.x = wobble ? wob.ax * Math.sin(t * wob.fx + wob.px) : 0;
     const target = bumpedRef.current ? MATCH_SCALE : 1;
     c.scale.setScalar(THREE.MathUtils.lerp(c.scale.x, target, 0.12)); // matched cell swells
-    // 3dsvg drops emissive for the holographic preset — layer the glow on here so the
-    // colour self-illuminates (vivid) while keeping the metallic reflection.
+    // Layer the glow on here so the colour self-illuminates (vivid) while keeping
+    // the metallic reflection.
     const pulse = 1 + PULSE_AMP * Math.sin(t * (TWO_PI / PULSE_PERIOD)); // rhythmic neon "buzz", shared across all cells
     const g = groupRef.current;
     if (g) g.traverse((o) => {
@@ -159,6 +179,7 @@ function IconCell({ svg, color, basePos, burst, bumped }: { svg: string; color: 
       if (!m || !m.emissive) return;
       m.emissive.copy(emissiveColor);
       m.emissiveIntensity = GLYPH_GLOW * pulse;
+      m.attenuationColor.copy(emissiveColor); // glass volume tints toward the current icon hue
       if (m.userData.shader) {
         m.userData.shader.uniforms.uRimColor.value.copy(emissiveColor); // keep rim hue in sync
         m.userData.shader.uniforms.uRimIntensity.value = RIM_INTENSITY * pulse; // buzz the rim too
@@ -187,35 +208,56 @@ function IconCell({ svg, color, basePos, burst, bumped }: { svg: string; color: 
 
   return (
     <group ref={containerRef} position={basePos}>
-      <group scale={CELL_FIT}>
+      <group scale={cellFit}>
         {/* Liquid-glass tile: translucent, clearcoated, reflective rounded square. */}
+        {showTile && (
         <mesh geometry={TILE_GEO}>
           <meshPhysicalMaterial color={color} emissive={color} emissiveIntensity={TILE_GLOW} metalness={0} roughness={0.12} transparent opacity={0.4} clearcoat={1} clearcoatRoughness={0.12} ior={1.45} reflectivity={0.6} iridescence={0.6} iridescenceIOR={1.3} iridescenceThicknessRange={[100, 500]} />
         </mesh>
-        {/* Glyph extruded from the tile's front face. */}
-        <group position={[0, 0, TILE_DEPTH / 2]} scale={ICON_IN_TILE}>
-          <ExtrudedSVG
-            svgString={svg}
-            depth={ICON_DEPTH}
-            smoothness={ICON_SMOOTHNESS}
-            color={color}
-            materialSettings={iconMat}
-            rotationX={0}
-            rotationY={0}
-            groupRef={groupRef}
-          />
+        )}
+        {/* Glyph extruded from the tile's front face. Material is ours — the per-frame
+            loop above layers iridescence, envMap, emissive glow + the rim shader on top. */}
+        <group position={[0, 0, showTile ? TILE_DEPTH / 2 : 0]} scale={ICON_IN_TILE}>
+          <ExtrudedIcon svgString={svg} depth={depth} smoothness={ICON_SMOOTHNESS} roundness={roundness} groupRef={groupRef}>
+            <meshPhysicalMaterial
+              color={color}
+              metalness={GLYPH_METALNESS}
+              roughness={GLYPH_ROUGHNESS}
+              ior={GLYPH_IOR}
+              transmission={GLYPH_TRANSMISSION}
+              thickness={GLYPH_THICKNESS}
+              attenuationDistance={GLYPH_ATTEN_DISTANCE}
+              clearcoat={GLYPH_CLEARCOAT}
+              clearcoatRoughness={GLYPH_CLEARCOAT_ROUGHNESS}
+              side={THREE.DoubleSide}
+            />
+          </ExtrudedIcon>
         </group>
       </group>
     </group>
   );
 }
 
-export function BaseMatchCanvas({ pool, color, playing, matching = true }: { pool: string[]; color: string; playing: boolean; matching?: boolean }) {
-  const [board, setBoard] = useState<number[]>(() => makeBoard(pool.length));
+export function BaseMatchCanvas({ pool, color, colors, playing, matching = true, spin = true, wobble = false, depth = ICON_DEPTH, showTile = true, cellFit = CELL_FIT, roundness = ICON_ROUNDNESS, shuffleKey = 0 }: { pool: string[]; color: string; colors?: string[]; playing: boolean; matching?: boolean; spin?: boolean; wobble?: boolean; depth?: number; showTile?: boolean; cellFit?: number; roundness?: number; shuffleKey?: number }) {
+  // Static board (no swaps) shows 9 distinct icons so none ever match; the live game
+  // uses makeBoard (duplicates allowed, no winning line) so matches can emerge.
+  const [board, setBoard] = useState<number[]>(() =>
+    !playing && pool.length >= 9 ? pickDistinct(pool.length, 9) : makeBoard(pool.length),
+  );
   const [bursts, setBursts] = useState<number[]>(() => Array(9).fill(0));
   const [bumped, setBumped] = useState<boolean[]>(() => Array(9).fill(false));
   const boardRef = useRef(board);
   boardRef.current = board;
+
+  // Reshuffle the static set to a fresh 9 distinct icons whenever shuffleKey changes
+  // (e.g. each time the base view scrolls into view). Skips the initial mount — the
+  // initializer already set a distinct board.
+  const shuffleMounted = useRef(false);
+  useEffect(() => {
+    if (!shuffleMounted.current) { shuffleMounted.current = true; return; }
+    if (playing || pool.length < 9) return;
+    setBoard(pickDistinct(pool.length, 9));
+  }, [shuffleKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!playing) return;
@@ -276,12 +318,12 @@ export function BaseMatchCanvas({ pool, color, playing, matching = true }: { poo
   return (
     <Canvas style={{ width: BOARD_PX, height: BOARD_PX }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.25]} resize={{ debounce: 0 }}>
       <PerspectiveCamera makeDefault position={[0, 0, 40]} fov={24} />
-      <Environment files="/hdri/st_fagans_interior_1k.hdr" environmentIntensity={1.2} />
-      <ambientLight intensity={0.4} />
+      <Environment files="/hdri/st_fagans_interior_1k.hdr" environmentIntensity={0.7} />
+      <ambientLight intensity={0.25} />
       {board.map((p, i) => {
         const col = i % 3;
         const row = Math.floor(i / 3);
-        return <IconCell key={i} svg={pool[p]} color={color} basePos={[(col - 1) * CELL_GAP, (1 - row) * CELL_GAP, 0]} burst={bursts[i]} bumped={bumped[i]} />;
+        return <IconCell key={i} svg={pool[p]} color={colors ? colors[i % colors.length] : color} basePos={[(col - 1) * CELL_GAP, (1 - row) * CELL_GAP, 0]} burst={bursts[i]} bumped={bumped[i]} spin={spin} wobble={wobble} depth={depth} showTile={showTile} cellFit={cellFit} roundness={roundness} />;
       })}
     </Canvas>
   );
