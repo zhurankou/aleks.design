@@ -148,10 +148,7 @@ const ICONS_16: string[] = [
 // Icon pool for the 3×3 base grid: 9 show at a time and occasionally one spins
 // up and swaps to another from this pool. Distinct silhouettes: cloud, leaf,
 // tree.evergreen, flower, tree, car, airplane, business, fire, compass, location, globe.
-export const BASE_ICON_POOL: string[] = [
-  ICONS_16[0], ICONS_16[4], ICONS_16[5], ICONS_16[6], ICONS_16[7], ICONS_16[8],
-  ICONS_16[9], ICONS_16[10], ICONS_16[12], ICONS_16[13], ICONS_16[14], ICONS_16[15],
-];
+export const BASE_ICON_POOL: string[] = [...ICONS_16];
 
 // One vivid colour per base-grid cell. Hues are curated (NOT evenly spaced — even
 // spacing clusters greens, which the eye can't split) and luminance-compensated so the
