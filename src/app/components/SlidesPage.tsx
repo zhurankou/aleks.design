@@ -241,8 +241,8 @@ function Bullets({ points, gap = 14, fontSize = 18, lineHeight = '28px' }: { poi
       {points.map((p, i) => {
         const sub = p.startsWith('—');
         return (
-          <li key={i} style={{ display: 'flex', gap: 10, paddingLeft: sub ? 26 : 0, fontFamily: FONT_BODY, fontWeight: 500, fontSize, lineHeight, color: '#1d1d1f' }}>
-            {!sub && <span aria-hidden style={{ flexShrink: 0, fontWeight: 800 }}>_</span>}
+          <li key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 10, paddingLeft: sub ? 26 : 0, fontFamily: FONT_BODY, fontWeight: 500, fontSize, lineHeight, color: '#1d1d1f' }}>
+            {!sub && <span aria-hidden style={{ flexShrink: 0, fontFamily: FONT_TITLE, fontWeight: 900, fontSize: '1.25em', lineHeight: 1, transform: 'translateY(2px)' }}>✜</span>}
             <span>{sub ? p.replace(/^—\s*/, '') : p}</span>
           </li>
         );
