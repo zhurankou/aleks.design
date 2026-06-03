@@ -552,7 +552,9 @@ const SLIDES: Slide[] = [
               <span style={{ color: '#FFFFFF' }}>base</span>.24
             </p>
             <div style={{ width: 640, height: 640, flexShrink: 0, animation: 'el-fade 0.6s ease-out 0.3s both' }}>
-              <BaseMatchCanvas pool={BASE_ICON_POOL} color={paletteFromColor('#5B8DEF').icon} colors={ICON_COLORS} playing={true} matching={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={0} />
+              {/* Static, distinct 9 (never matches); re-picks on every mount, i.e.
+                  every time the user slides to this view. No rotation while viewing. */}
+              <BaseMatchCanvas pool={BASE_ICON_POOL} color={paletteFromColor('#5B8DEF').icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={0} />
             </div>
             <div style={{ width: 264, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 24 }}>
               <p style={{ margin: 0, fontFamily: FONT_TITLE, fontWeight: 600, fontSize: 18, lineHeight: 'normal', color: '#FFFFFF', whiteSpace: 'nowrap' }}>RESOURCE</p>
