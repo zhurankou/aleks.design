@@ -27,12 +27,12 @@ function shuffle<T>(arr: T[]): T[] {
 
 type Card = { n: number; tilt: number };
 
-function Polaroid({ card }: { card: Card }) {
+function Polaroid({ card, scale }: { card: Card; scale: number }) {
   return (
     <div style={{
       flexShrink: 0,
-      margin: '0 16px',
-      padding: '14px 14px 40px 14px',
+      margin: `0 ${16 * scale}px`,
+      padding: `${14 * scale}px ${14 * scale}px ${40 * scale}px ${14 * scale}px`,
       backgroundColor: '#FFFFFF',
       borderRadius: 3,
       boxShadow: '0 12px 40px rgba(20,24,40,0.12)',
@@ -43,24 +43,24 @@ function Polaroid({ card }: { card: Card }) {
         alt=""
         draggable={false}
         decoding="async"
-        style={{ width: PHOTO_W, height: PHOTO_H, objectFit: 'cover', objectPosition: `${FOCUS_X[card.n] ?? 'center'} 28%`, display: 'block', backgroundColor: '#E8E8EA' }}
+        style={{ width: PHOTO_W * scale, height: PHOTO_H * scale, objectFit: 'cover', objectPosition: `${FOCUS_X[card.n] ?? 'center'} 28%`, display: 'block', backgroundColor: '#E8E8EA' }}
       />
     </div>
   );
 }
 
-function Row({ items, dir, duration }: { items: Card[]; dir: 'left' | 'right'; duration: number }) {
+function Row({ items, dir, duration, scale }: { items: Card[]; dir: 'left' | 'right'; duration: number; scale: number }) {
   const seq = [...items, ...items]; // duplicated so the -50% translate loops seamlessly
   return (
     <div style={{ display: 'flex', width: 'max-content', willChange: 'transform', animation: `polaroid-${dir} ${duration}s linear infinite` }}>
-      {seq.map((c, i) => <Polaroid key={i} card={c} />)}
+      {seq.map((c, i) => <Polaroid key={i} card={c} scale={scale} />)}
     </div>
   );
 }
 
 // memo + no props: the wall renders once (the marquee animation then runs undisturbed). The
 // parent fades it via a wrapper's opacity, so per-frame scroll re-renders don't touch it.
-export const PolaroidWall = memo(function PolaroidWall() {
+export const PolaroidWall = memo(function PolaroidWall({ scale = 1 }: { scale?: number }) {
   // Shuffle once, give each a small left/right tilt, split across the two rows.
   const rows = useMemo(() => {
     const cards: Card[] = shuffle(NUMS).map((n) => ({ n, tilt: (Math.random() * 2 - 1) * 3 })); // −3°…+3°
@@ -70,8 +70,8 @@ export const PolaroidWall = memo(function PolaroidWall() {
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly', alignItems: 'flex-start' }}>
       <style>{wallAnim}</style>
-      <Row items={rows[0]} dir="left" duration={130} />
-      <Row items={rows[1]} dir="right" duration={150} />
+      <Row items={rows[0]} dir="left" duration={130} scale={scale} />
+      <Row items={rows[1]} dir="right" duration={150} scale={scale} />
     </div>
   );
 });

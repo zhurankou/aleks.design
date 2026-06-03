@@ -8,6 +8,7 @@ import { HiFiCorrelated } from './HiFiCorrelated';
 import { ScrollFadeIn } from './ui/ScrollFadeIn';
 import { useBreakpoint } from './ui/use-breakpoint';
 import { FitWidth } from './ui/FitWidth';
+import { MobileNotice } from './ui/MobileNotice';
 
 // OlySense case-study page. White canvas with a single scroll-driven transition
 // modelled on the home→Privat frame move in NewPage: as you scroll, the title +
@@ -31,7 +32,7 @@ const BASE_H = 792;
 const START_SCALE = 0.75;
 
 // Page-load entrance — same fade + scale-up as the home-load intro in NewPage.
-const loadAnim = `
+export const loadAnim = `
   @keyframes oly-load {
     from { opacity: 0; transform: scale(0.9); }
     to   { opacity: 1; transform: scale(1); }
@@ -133,7 +134,7 @@ function Tag({ children }: { children: React.ReactNode }) {
   );
 }
 
-function TeamAvatars() {
+export function TeamAvatars() {
   const ref = useRef<HTMLDivElement>(null);
   // bounceCount increments every time the avatars enter the viewport; it's part
   // of each avatar's key, so React remounts the element and the CSS animation
@@ -263,7 +264,7 @@ const QUOTES = [
   },
 ];
 
-function PolaroidRow() {
+export function PolaroidRow() {
   return (
     <div style={{ width: '100%', overflow: 'hidden' }}>
       <div
@@ -331,7 +332,9 @@ export function OlySensePage() {
   // Mobile gets a dedicated stacked layout; the scroll-morph machinery below
   // (sticky Process, scroll-driven Final Design rectangle) never mounts there.
   const bp = useBreakpoint();
-  if (bp === 'mobile') return <OlySenseMobile />;
+  // Temporary: show a "view on tablet/desktop" notice on mobile while the mobile
+  // layout is being finished. Swap back to <OlySenseMobile /> to restore it.
+  if (bp === 'mobile') return <MobileNotice />;
   return <OlySensePageDesktop />;
 }
 
@@ -885,7 +888,7 @@ function OlySensePageDesktop() {
 
 type ProcessDropdown = { id: string; title: string; description: string };
 
-const PROCESS_DROPDOWNS: ProcessDropdown[] = [
+export const PROCESS_DROPDOWNS: ProcessDropdown[] = [
   { id: 'discover', title: 'Contribution', description: 'I led the end‑to‑end product design—from translating complex guidelines into UX requirements, to low‑ and high‑fidelity testing with clinicians in multiple hospitals.\n\nThe experience focuses on ESGE‑defined (European Society of Gastrointestinal Endoscopy) metrics like Polyp Detection Rate (PDR), Polyp Retrieval Rate (PRR), morphology description, and appropriate polypectomy technique.' },
   { id: 'define', title: 'Understanding polyps & users', description: 'I started with a discovery report on ESGE polyp quality metrics, then translated it into two personas: endoscopists improving their own performance and endoscopy leads tracking department quality and outliers.\n\nTogether with our UX Researcher, I distilled user needs into three core questions: "Am I compliant with ESGE standards?", "What kinds of polyps am I detecting, resecting, and retrieving?", and "What might be driving high or low scores over time?".' },
   { id: 'design', title: 'Lo-Fi study and key learnings', description: 'I explored multiple Polyps concepts in low-fidelity prototypes — one page vs. two, charts vs. tables, and how much polyp detail to show by default. With our UX Researcher, I ran remote sessions with 10 clinicians across Spain and Germany.\n\nClinicians preferred a single Polyps page that tells the full story of detection, resection, and retrieval. They favored charts for Polyp Location and Size, with tables reserved for deeper analysis. BBPS, procedure count, and cecal intubation rate were key context for PDR; BBPS and procedure volume mattered most for PRR. Polyps by gender was low value and a candidate to remove.' },
@@ -919,7 +922,7 @@ const vennAnim = `
   75%      { transform: translate(-5px, -4px); }
 }
 `;
-function ContributionVenn() {
+export function ContributionVenn() {
   // revealCount-keyed remount: bumps each time the canvas enters the viewport
   // so the CSS animations restart from frame 0. Matches the TeamAvatars pattern.
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1110,7 +1113,7 @@ const polypMorphAnim = `
 }
 `;
 
-function PolypMorphologyCarousel() {
+export function PolypMorphologyCarousel() {
   // 5 cards × 3s per slot = 15s total cycle (~0.45s fade in / 2.1s hold / 0.45s fade out).
   const CYCLE_S = 15;
   return (
@@ -1158,7 +1161,7 @@ function PolypMorphologyCarousel() {
 // On load endo plays after a short delay; when it ends, endo shrinks while
 // endo-lead simultaneously grows and starts playing. When endo-lead ends the
 // cycle restarts, looping forever.
-function EndoLeadDuet() {
+export function EndoLeadDuet() {
   const containerRef = useRef<HTMLDivElement>(null);
   const endoRef = useRef<HTMLVideoElement>(null);
   const leadRef = useRef<HTMLVideoElement>(null);
@@ -1545,7 +1548,7 @@ function hexToRgba(hex: string, alpha: number) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-function PortfolioTimeline() {
+export function PortfolioTimeline() {
   // Same replay-on-entry pattern as TeamAvatars: revealCount increments each
   // time the timeline enters the viewport; it's baked into every pill and
   // avatar's React key, so they remount and the CSS animations restart from
@@ -1833,7 +1836,9 @@ function OlySenseMobile() {
         {/* Hero */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
           <WaveTag text="CASE STUDY" />
-          <h1 style={{ ...mobileH2, fontSize: 40, fontWeight: 300 }}>Polyps Metrics in<br />OlySense Insights</h1>
+          {/* clamp keeps 40px on common phones (≥~380px) and only shrinks on very
+              narrow screens so "OlySense Insights" never clips under overflowX:hidden */}
+          <h1 style={{ ...mobileH2, fontSize: 'clamp(34px, 10.5vw, 40px)', fontWeight: 300 }}>Polyps Metrics in<br />OlySense Insights</h1>
           <p style={{ ...mobileBody, textAlign: 'center' }}>Objective: Helping endoscopists to understand performance across key colonoscopy quality metrics.</p>
         </div>
 

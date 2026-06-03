@@ -35,9 +35,13 @@ export function MeshBackground({ circleRef }: MeshBackgroundProps) {
     const maxSpeed = 0.2;
 
     const resize = () => {
+      // Use layout size (clientWidth/Height), not getBoundingClientRect: the
+      // latter returns transform-scaled dimensions, so inside a CSS-scaled
+      // wrapper (e.g. a slide's fit-to-box scaler that starts at scale 0) it
+      // reads 0 and falls back to the whole window, blowing up the field.
       const rect = canvas.getBoundingClientRect();
-      width = rect.width || window.innerWidth;
-      height = rect.height || window.innerHeight;
+      width = canvas.clientWidth || rect.width || window.innerWidth;
+      height = canvas.clientHeight || rect.height || window.innerHeight;
       const dpr = window.devicePixelRatio || 1;
       canvas.width = width * dpr;
       canvas.height = height * dpr;
