@@ -151,7 +151,7 @@ function ShowcaseSlide({ name, tag, desc, visual, frameW, frameH, bgLayer, nameC
             <div style={{ flexShrink: 0 }}>{visual}</div>
             <div style={{ width: PANEL_W, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 24 }}>
               <p style={{ margin: 0, fontFamily: FONT_TITLE, fontWeight: tagWeight, fontSize: 18, lineHeight: 'normal', color: tagColor, whiteSpace: 'nowrap' }}>{tag}</p>
-              <p style={{ margin: 0, fontFamily: FONT_BODY, fontWeight: 500, fontSize: 20, lineHeight: '34px', color: descColor }}>{desc}</p>
+              <p style={{ margin: 0, fontFamily: FONT_BODY, fontWeight: 500, fontSize: 20, lineHeight: '34px', color: descColor, textWrap: 'pretty' }}>{desc}</p>
             </div>
           </div>
         </FitBox>
@@ -243,7 +243,7 @@ function Bullets({ points, gap = 14, fontSize = 18, lineHeight = '28px' }: { poi
         return (
           <li key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 10, paddingLeft: sub ? 26 : 0, fontFamily: FONT_BODY, fontWeight: 500, fontSize, lineHeight, color: '#1d1d1f' }}>
             {!sub && <span aria-hidden style={{ flexShrink: 0, fontFamily: FONT_TITLE, fontWeight: 900, fontSize: '1.25em', lineHeight: 1, transform: 'translateY(2px)' }}>✜</span>}
-            <span>{sub ? p.replace(/^—\s*/, '') : p}</span>
+            <span style={{ textWrap: 'pretty' }}>{sub ? p.replace(/^—\s*/, '') : p}</span>
           </li>
         );
       })}
@@ -254,7 +254,7 @@ function Bullets({ points, gap = 14, fontSize = 18, lineHeight = '28px' }: { poi
 function StepText({ title, points }: { title: string; points: string[] }) {
   return (
     <>
-      <h2 style={{ margin: 0, fontFamily: FONT_TITLE, fontWeight: 300, fontSize: 44, lineHeight: 1.05, color: '#000000' }}>{title}</h2>
+      <h2 style={{ margin: 0, fontFamily: FONT_TITLE, fontWeight: 300, fontSize: 44, lineHeight: 1.05, color: '#000000', textWrap: 'balance' }}>{title}</h2>
       <Bullets points={points} gap={16} fontSize={19} lineHeight="30px" />
     </>
   );
@@ -346,7 +346,7 @@ const STORY_PARAGRAPHS = [
 // Career — just the places.
 const STORY_HIGHLIGHTS = [
   "University of Washington",
-  "Microsoft · OneDrive",
+  "OneDrive, Microsoft",
   "eero",
   "Olympus",
 ];
@@ -385,7 +385,7 @@ const SLIDES: Slide[] = [
       >
         <div className="slide-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           <h2 style={{ margin: 0, fontFamily: FONT_TITLE, fontWeight: 300, fontSize: 44, lineHeight: 1.05, color: '#000000' }}>My Story</h2>
-          <p style={{ margin: 0, fontFamily: FONT_BODY, fontWeight: 500, fontSize: 18, lineHeight: '28px', color: '#1d1d1f' }}>
+          <p style={{ margin: 0, fontFamily: FONT_BODY, fontWeight: 500, fontSize: 18, lineHeight: '28px', color: '#1d1d1f', textWrap: 'pretty' }}>
             {STORY_PARAGRAPHS[0]}
           </p>
           <Bullets points={STORY_HIGHLIGHTS} />
@@ -453,7 +453,7 @@ const SLIDES: Slide[] = [
             <h1 style={{ margin: 0, fontFamily: FONT_TITLE, fontWeight: 300, fontSize: 72, lineHeight: 'normal', color: '#000000', textAlign: 'center' }}>
               Polyps Metrics in<br />OlySense Insights
             </h1>
-            <p style={{ margin: 0, fontFamily: FONT_BODY, fontWeight: 500, fontSize: 20, lineHeight: '34px', color: '#000000', textAlign: 'center', width: 440 }}>
+            <p style={{ margin: 0, fontFamily: FONT_BODY, fontWeight: 500, fontSize: 20, lineHeight: '34px', color: '#000000', textAlign: 'center', width: 440, textWrap: 'pretty' }}>
               Objective: Helping endoscopists to understand performance across key colonoscopy quality metrics.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, marginTop: 32 }}>
@@ -475,7 +475,7 @@ const SLIDES: Slide[] = [
       <div className="slide-stagger" style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 40, padding: '64px 0', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '0 24px' }}>
           <WaveTag text="PROBLEM" />
-          <p style={{ margin: 0, fontFamily: FONT_TITLE, fontWeight: 300, fontSize: 44, lineHeight: 'normal', color: '#000000', textAlign: 'center', maxWidth: 880 }}>
+          <p style={{ margin: 0, fontFamily: FONT_TITLE, fontWeight: 300, fontSize: 44, lineHeight: 'normal', color: '#000000', textAlign: 'center', maxWidth: 880, textWrap: 'balance' }}>
             Clinicians needed a clearer, more actionable way to understand polyp quality metrics and what was driving their results.
           </p>
         </div>
@@ -501,7 +501,7 @@ const SLIDES: Slide[] = [
     render: () => (
       <div className="slide-stagger" style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '56px 48px', boxSizing: 'border-box', gap: 16 }}>
         <h2 style={{ margin: 0, fontFamily: FONT_TITLE, fontWeight: 300, fontSize: 44, lineHeight: 'normal', color: '#000000' }}>Final Design</h2>
-        <p style={{ margin: 0, fontFamily: FONT_BODY, fontWeight: 500, fontSize: 18, lineHeight: '28px', color: '#000000', textAlign: 'center', maxWidth: 760 }}>
+        <p style={{ margin: 0, fontFamily: FONT_BODY, fontWeight: 500, fontSize: 18, lineHeight: '28px', color: '#000000', textAlign: 'center', maxWidth: 760, textWrap: 'pretty' }}>
           Validated before launch through usability evaluation with target users — participants completed 82% of key tasks successfully.
         </p>
         <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
