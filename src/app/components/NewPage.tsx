@@ -174,7 +174,7 @@ export const ICON_COLORS = ICON_HUES.map(vividHue);
 // revealed through a dot mask, drifting). Exported so /base-test matches.
 const DOT_COLORS = ICON_COLORS.map((c) => darkenHex(c, 0.55)); // darkened so the dots aren't glaring
 export const ICON_GRADIENT = `linear-gradient(120deg, ${[...DOT_COLORS, DOT_COLORS[0]].join(', ')})`;
-const BASE_BG_SURROUND = '4, 10, 32'; // darker bluish "black" outside the rectangle (rgb channels)
+const BASE_BG_SURROUND = '4, 10, 29'; // surround outside the rectangle — a notch darker than BASE_BG_DARK (#060e2a)
 export const BASE_BG_DARK = '#060e2a'; // dark base of the dotted field — slightly lighter bluish black than the surround
 const baseGradDriftAnim = '@keyframes base-grad-drift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }';
 // Shared fragments for the base-view dotted gradient (smooth gradient outside the
@@ -367,7 +367,7 @@ function HomeBgWords({ active, progress }: { active: boolean; progress: number }
 // frame to the first, which reads as a jump. This stacks two copies of the clip
 // and crossfades them near the loop boundary, so the wrap dissolves smoothly.
 // The wrapper carries the flip / mask / scroll-opacity passed via `style`.
-function EndoLoopVideo({ src, fadeSeconds = 0.7, holdSeconds = 2.8, startDelaySeconds = 1, loop = true, playing = true, style, objectPosition }: {
+export function EndoLoopVideo({ src, fadeSeconds = 0.7, holdSeconds = 2.8, startDelaySeconds = 1, loop = true, playing = true, style, objectPosition }: {
   src: string;
   fadeSeconds?: number;
   holdSeconds?: number;
@@ -449,7 +449,7 @@ function EndoLoopVideo({ src, fadeSeconds = 0.7, holdSeconds = 2.8, startDelaySe
   );
 }
 
-function HomeContent({ active }: { active: boolean }) {
+export function HomeContent({ active }: { active: boolean }) {
   // Runs ONCE per home visit: pausedFull -> deleting (avatar2 plays once) -> pausedEmpty ->
   // typing -> pausedFull, then stops (stays on the name; no looping).
   // reveal 0 = name hidden, 1 = name fully shown. Drives a sub-pixel clip wipe.
@@ -631,8 +631,8 @@ function HomeContent({ active }: { active: boolean }) {
   );
 }
 
-const FRAME_H = 792;
-const FRAME_W = 360;
+export const FRAME_H = 792;
+export const FRAME_W = 360;
 const PEEK = 40;
 const LIGHT_BLUE = '#BAE6FD'; // stage 2 frame fill + stroke
 // Line drawn across the middle of the OlySense square (792×792 viewBox; y=0
@@ -740,7 +740,7 @@ const badgeInAnim = `
 `;
 
 // Drifting blobs for the OlySense page background (light blue + red over a light base).
-const olyBgAnim = `
+export const olyBgAnim = `
   @keyframes oly-bg-a {
     0%, 100% { transform: translate(-10%, -8%) scale(1); }
     50%      { transform: translate(12%, 10%) scale(1.2); }
