@@ -174,13 +174,14 @@ export const ICON_COLORS = ICON_HUES.map(vividHue);
 // revealed through a dot mask, drifting). Exported so /base-test matches.
 const DOT_COLORS = ICON_COLORS.map((c) => darkenHex(c, 0.55)); // darkened so the dots aren't glaring
 export const ICON_GRADIENT = `linear-gradient(120deg, ${[...DOT_COLORS, DOT_COLORS[0]].join(', ')})`;
-const BASE_BG_DARK = '#0b0b0d'; // dark base of the continuous dotted field
+const BASE_BG_SURROUND = '4, 10, 32'; // darker bluish "black" outside the rectangle (rgb channels)
+export const BASE_BG_DARK = '#060e2a'; // dark base of the dotted field — slightly lighter bluish black than the surround
 const baseGradDriftAnim = '@keyframes base-grad-drift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }';
 // Shared fragments for the base-view dotted gradient (smooth gradient outside the
 // rectangle; a dark dot-hole mask reveals the same gradient as dots inside it).
 const BASE_GRAD_DRIFT = 'base-grad-drift 24s ease-in-out infinite';
-const BASE_DOT_HOLES = `radial-gradient(circle, transparent 1.2px, ${BASE_BG_DARK} 1.7px)`; // dark fill, transparent dot holes
-const BASE_DOT_SIZE = '18px 18px';
+export const BASE_DOT_HOLES = `radial-gradient(circle, transparent 1.2px, ${BASE_BG_DARK} 1.7px)`; // dark fill, transparent dot holes
+export const BASE_DOT_SIZE = '18px 18px';
 
 // Base view palette — derived from the active icon colour. Layers stay in the
 // same darkness ratio as the original neutral grid (bg 8%, mid-dot 15%,
@@ -1286,9 +1287,9 @@ function NewPageDesktop() {
               position: 'relative',
               // Base view only: darken the area outside the rectangle (respects the rounded
               // corners), leaving the gradient + bright dots inside untouched.
-              // Solid BLACK surround (no blur → no gradient halo → no animation outside;
-              // the dots inside still animate). Crisp rounded corners.
-              boxShadow: `0 0 0 100vmax rgba(0, 0, 0, ${dotFade})`,
+              // Solid bluish-"black" surround (no blur → no gradient halo → no animation
+              // outside; the dots inside still animate). Crisp rounded corners.
+              boxShadow: `0 0 0 100vmax rgba(${BASE_BG_SURROUND}, ${dotFade})`,
             }}>
               <div style={{ width: '100%', height: '100%', opacity: frameContentOpacity }}>
                 <PrivatHomeView
