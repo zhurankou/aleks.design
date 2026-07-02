@@ -990,7 +990,7 @@ function NewPageDesktop() {
 
   // The outer wrapper clips the scaled scroller to the viewport.
   return (
-    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+    <div style={{ width: vw, height: vh, overflow: 'hidden' }}>
     <div
       ref={scrollRef}
       style={{

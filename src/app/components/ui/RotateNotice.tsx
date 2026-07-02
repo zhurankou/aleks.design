@@ -85,7 +85,7 @@ export function RotateNotice() {
           color: "#888",
         }}
       >
-        — Aleks Zhurankou
+        — Aleks
       </div>
     </div>
   );
