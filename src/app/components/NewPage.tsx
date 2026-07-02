@@ -774,11 +774,11 @@ export function NewPage() {
   // Phones: portrait prompts a rotate; landscape serves the full desktop
   // experience scaled to the viewport. (Swap RotateNotice for <NewPageMobile />
   // to bring back the stacked portrait layout.)
-  if (bp === 'mobile') return portrait ? <RotateNotice /> : <NewPageDesktop />;
+  if (bp === 'mobile') return portrait ? <RotateNotice /> : <NewPageDesktop mobile />;
   return <NewPageDesktop />;
 }
 
-function NewPageDesktop() {
+function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const sharedCircleRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
@@ -973,6 +973,15 @@ function NewPageDesktop() {
     : pBgWhite > 0
     ? lerpColor('#000000', '#FBFDFF', pBgWhite) // light blue OlySense page bg
     : lerpColor('#FFFFFF', '#000000', pStage1);
+  // Mirror bg onto the theme-color meta tag so Safari's chrome (status bar /
+  // toolbar tint) tracks the page background live as it scrolls.
+  useEffect(() => {
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg);
+  }, [bg]);
+  // Reset to the default white on unmount so it doesn't leak into other routes.
+  useEffect(() => () => {
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#FFFFFF');
+  }, []);
   // Border: silver #A8AFB6 from home onwards (matches the Privat phone bezel,
   // no stage-1 colour shift); stage 2 → light blue; stage 3 → dark grey.
   const borderColor = pStage3 > 0
@@ -1378,7 +1387,10 @@ function NewPageDesktop() {
               {/* 3×3 grid of spinning 3D icons; once in a while one spins up fast and
                   swaps to a new icon mid-spin. Always mounted so the WebGL canvas warms
                   up + compiles shaders during earlier scenes; the wrapper opacity fade
-                  reveals it with the base title + panel. */}
+                  reveals it with the base title + panel. On mobile, GPU headroom doesn't
+                  cover an always-on frameloop stacked on the OlySense video/canvas layers
+                  (it was crashing Safari mid-scroll), so there the loop stays parked until
+                  the base view is actually visible — same gating <NewPageMobile /> uses. */}
               <div style={{
                 position: 'absolute',
                 inset: 0,
@@ -1392,7 +1404,7 @@ function NewPageDesktop() {
                 transition: pStage4 > 0.01 ? 'none' : baseVisible ? 'opacity 700ms ease-out' : 'opacity 150ms ease-in',
               }}>
                   <div style={{ width: 640, height: 640, pointerEvents: 'auto' }}>
-                    <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={baseShuffle} />
+                    <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={baseShuffle} renderActive={mobile ? baseVisible : true} />
                   </div>
                 </div>
             </div>
