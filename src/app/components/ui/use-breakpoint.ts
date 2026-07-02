@@ -35,8 +35,33 @@ export function useBreakpoint(): Breakpoint {
   return bp;
 }
 
-// Live orientation — phones (<768px) show a rotate-to-landscape prompt in
-// portrait and the scaled desktop experience in landscape.
+// A phone is identified by its SHORT side, so the classification survives
+// rotation: an iPhone is ~390–430px on the short edge in both orientations,
+// whereas the smallest tablet (iPad mini) is 768. Width alone misclassifies a
+// landscape phone (~844px wide) as a tablet, which then wrongly receives the
+// full, GPU-heavy desktop experience and crashes mobile Safari. Tablets and up
+// keep the scaled desktop tree.
+const PHONE_MAX_SHORT_SIDE = 600;
+export function useIsPhone(): boolean {
+  const isPhone = () => Math.min(window.innerWidth, window.innerHeight) <= PHONE_MAX_SHORT_SIDE;
+  const [phone, setPhone] = React.useState(() =>
+    typeof window === "undefined" ? false : isPhone(),
+  );
+  React.useEffect(() => {
+    const onChange = () => setPhone(isPhone());
+    window.addEventListener("resize", onChange);
+    window.addEventListener("orientationchange", onChange);
+    onChange();
+    return () => {
+      window.removeEventListener("resize", onChange);
+      window.removeEventListener("orientationchange", onChange);
+    };
+  }, []);
+  return phone;
+}
+
+// Live orientation — phones show a rotate-to-landscape prompt in portrait and
+// the scaled desktop experience in landscape.
 export function useIsPortrait(): boolean {
   const [portrait, setPortrait] = React.useState(() =>
     typeof window === "undefined" ? false : window.matchMedia("(orientation: portrait)").matches,

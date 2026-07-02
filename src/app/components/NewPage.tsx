@@ -8,7 +8,7 @@ import { OlyCarousel } from './OlyCarousel';
 import { OlyTraceCanvas } from './OlyTraceCanvas';
 import { PolaroidWall } from './PolaroidWall';
 import FigmaLogo from '../../assets/tool-figma.svg?react';
-import { useBreakpoint, useIsPortrait } from './ui/use-breakpoint';
+import { useIsPhone, useIsPortrait } from './ui/use-breakpoint';
 import { FitWidth } from './ui/FitWidth';
 import { useInView } from './ui/use-in-view';
 import { mobileCss } from './ui/mobile-css';
@@ -767,14 +767,15 @@ const SquareGlow = memo(function SquareGlow() {
 });
 
 export function NewPage() {
-  // Mobile gets a dedicated stacked layout; the 4-stage scroll-morph machinery
-  // (scroll listener, rAF easers, scroll-snap) never mounts there.
-  const bp = useBreakpoint();
+  // Phone detection is by SHORT side, not width — a landscape phone is ~844px
+  // wide and would otherwise be classified as a tablet and served the full,
+  // GPU-heavy desktop tree (the mobile mitigations are all gated on this flag,
+  // so misclassifying meant they never applied and Safari kept crashing).
+  const isPhone = useIsPhone();
   const portrait = useIsPortrait();
-  // Phones: portrait prompts a rotate; landscape serves the full desktop
-  // experience scaled to the viewport. (Swap RotateNotice for <NewPageMobile />
-  // to bring back the stacked portrait layout.)
-  if (bp === 'mobile') return portrait ? <RotateNotice /> : <NewPageDesktop mobile />;
+  // Phones: portrait prompts a rotate; landscape serves the desktop experience
+  // scaled to the viewport, with GPU-heavy effects trimmed (mobile prop).
+  if (isPhone) return portrait ? <RotateNotice /> : <NewPageDesktop mobile />;
   return <NewPageDesktop />;
 }
 
@@ -1345,8 +1346,13 @@ function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
                 <OlyTraceCanvas style={{ opacity: olyActive ? 1 : 0, transition: 'opacity 0.35s ease' }} play={olyPhase >= 3} />
               )}
               {/* Focused-center vertical carousel, centred on screen, clearing endo2. */}
+              {/* blurred renders 6 simultaneous backdrop-filter blurs (one per card).
+                  That's the single most GPU-heavy thing in the tree, and inside this
+                  scale(k) transform at a phone's DPR 3 it was crashing mobile Safari's
+                  renderer on the Privat→OlySense transition. Off on mobile — same as the
+                  dedicated stacked layout, which always passed blurred={false}. */}
               {pFrameMorph > 0.01 && pStage3 < 1 && (
-                <OlyCarousel style={{ opacity: olyPhase >= 2 ? 1 : 0, transition: 'opacity 0.35s ease' }} blurred={olyPhase >= 3} playing={olyPhase >= 3} />
+                <OlyCarousel style={{ opacity: olyPhase >= 2 ? 1 : 0, transition: 'opacity 0.35s ease' }} blurred={!mobile && olyPhase >= 3} playing={olyPhase >= 3} />
               )}
               {/* endo2 — inside the square, bottom-left corner; flipped, edges
                   feathered, and loop-crossfaded so the 8s wrap dissolves. */}
