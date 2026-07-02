@@ -34,3 +34,19 @@ export function useBreakpoint(): Breakpoint {
 
   return bp;
 }
+
+// Live orientation — phones (<768px) show a rotate-to-landscape prompt in
+// portrait and the scaled desktop experience in landscape.
+export function useIsPortrait(): boolean {
+  const [portrait, setPortrait] = React.useState(() =>
+    typeof window === "undefined" ? false : window.matchMedia("(orientation: portrait)").matches,
+  );
+  React.useEffect(() => {
+    const mq = window.matchMedia("(orientation: portrait)");
+    const onChange = () => setPortrait(mq.matches);
+    mq.addEventListener("change", onChange);
+    onChange();
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return portrait;
+}

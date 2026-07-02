@@ -6,8 +6,9 @@ import { LoFiPolypsCharts } from './LoFiPolypsCharts';
 import { HiFiCompare } from './HiFiCompare';
 import { HiFiCorrelated } from './HiFiCorrelated';
 import { ScrollFadeIn } from './ui/ScrollFadeIn';
-import { useBreakpoint } from './ui/use-breakpoint';
+import { useBreakpoint, useIsPortrait } from './ui/use-breakpoint';
 import { FitWidth } from './ui/FitWidth';
+import { RotateNotice } from './ui/RotateNotice';
 
 // OlySense case-study page. White canvas with a single scroll-driven transition
 // modelled on the home→Privat frame move in NewPage: as you scroll, the title +
@@ -331,7 +332,10 @@ export function OlySensePage() {
   // Mobile gets a dedicated stacked layout; the scroll-morph machinery below
   // (sticky Process, scroll-driven Final Design rectangle) never mounts there.
   const bp = useBreakpoint();
-  if (bp === 'mobile') return <OlySenseMobile />;
+  const portrait = useIsPortrait();
+  // Phones: rotate prompt in portrait, the full scaled case study in landscape.
+  // (Swap RotateNotice for <OlySenseMobile /> to restore the stacked layout.)
+  if (bp === 'mobile') return portrait ? <RotateNotice /> : <OlySensePageDesktop />;
   return <OlySensePageDesktop />;
 }
 
