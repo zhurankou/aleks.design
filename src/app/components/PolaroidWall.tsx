@@ -43,6 +43,7 @@ function Polaroid({ card, scale }: { card: Card; scale: number }) {
         alt=""
         draggable={false}
         decoding="async"
+        loading="lazy"
         style={{ width: PHOTO_W * scale, height: PHOTO_H * scale, objectFit: 'cover', objectPosition: `${FOCUS_X[card.n] ?? 'center'} 28%`, display: 'block', backgroundColor: '#E8E8EA' }}
       />
     </div>

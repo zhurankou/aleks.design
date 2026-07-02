@@ -8,8 +8,11 @@ import { OlyCarousel } from './OlyCarousel';
 import { OlyTraceCanvas } from './OlyTraceCanvas';
 import { PolaroidWall } from './PolaroidWall';
 import FigmaLogo from '../../assets/tool-figma.svg?react';
-import { useBreakpoint } from './ui/use-breakpoint';
+import { useBreakpoint, useIsPortrait } from './ui/use-breakpoint';
 import { FitWidth } from './ui/FitWidth';
+import { useInView } from './ui/use-in-view';
+import { mobileCss } from './ui/mobile-css';
+import { RotateNotice } from './ui/RotateNotice';
 
 // Module-load timestamp — used as the swing's reference t=0. SVG3D's internal
 // elapsed clock starts when each canvas first renders (close to module load),
@@ -767,7 +770,11 @@ export function NewPage() {
   // Mobile gets a dedicated stacked layout; the 4-stage scroll-morph machinery
   // (scroll listener, rAF easers, scroll-snap) never mounts there.
   const bp = useBreakpoint();
-  if (bp === 'mobile') return <NewPageMobile />;
+  const portrait = useIsPortrait();
+  // Phones: portrait prompts a rotate; landscape serves the full desktop
+  // experience scaled to the viewport. (Swap RotateNotice for <NewPageMobile />
+  // to bring back the stacked portrait layout.)
+  if (bp === 'mobile') return portrait ? <RotateNotice /> : <NewPageDesktop />;
   return <NewPageDesktop />;
 }
 
@@ -1074,10 +1081,6 @@ function NewPageDesktop() {
             <div style={{ position: 'absolute', inset: 0, opacity: s4, pointerEvents: 'none' }}>
               <PolaroidWall />
             </div>
-          )}
-          {/* About-view copyright — 24px from the bottom of the view, fades in with the morph */}
-          {s4 > 0.001 && (
-            <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, textAlign: 'center', fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 16, color: '#888888', opacity: s4, pointerEvents: 'none' }}>© 2026</div>
           )}
           {/* Base-view background — smooth animated gradient (the colours, NO dots) behind
               the frame, so the area outside the rectangle continues the colours of the
@@ -1459,22 +1462,26 @@ function NewPageDesktop() {
                   `}</style>
                   <a href="mailto:hi@aleks.design" className="badge-email" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 20, color: '#333333', pointerEvents: 'auto' }}>hi@aleks.design</a>
                 </div>
-                {/* Social footer — monochrome black marks, 24px from the bottom edge */}
-                <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14, lineHeight: 0, animation: 'badge-item-in 0.7s cubic-bezier(0.22,1,0.36,1) 0.32s both' }}>
+                {/* Social footer + copyright — monochrome black marks stacked over the
+                    copyright line, 24px from the bottom edge */}
+                <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, animation: 'badge-item-in 0.7s cubic-bezier(0.22,1,0.36,1) 0.32s both' }}>
                   <style>{`
                     .badge-social { transition: transform 0.2s ease, filter 0.2s ease; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15)); }
                     .badge-social:hover { transform: scale(1.12); filter: drop-shadow(0 4px 10px rgba(0,0,0,0.35)); }
                   `}</style>
-                  <a href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="badge-social" style={{ display: 'inline-block', pointerEvents: 'auto', borderRadius: 4, overflow: 'hidden' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
-                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z" />
-                    </svg>
-                  </a>
-                  <a href="https://github.com/zhurankou" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="badge-social" style={{ display: 'inline-block', pointerEvents: 'auto', borderRadius: 4, overflow: 'hidden' }}>
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
-                      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-                    </svg>
-                  </a>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14, lineHeight: 0 }}>
+                    <a href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="badge-social" style={{ display: 'inline-block', pointerEvents: 'auto', borderRadius: 4, overflow: 'hidden' }}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
+                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z" />
+                      </svg>
+                    </a>
+                    <a href="https://github.com/zhurankou" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="badge-social" style={{ display: 'inline-block', pointerEvents: 'auto', borderRadius: 4, overflow: 'hidden' }}>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
+                        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+                      </svg>
+                    </a>
+                  </div>
+                  <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 13, color: '#888888' }}>© 2026</div>
                 </div>
               </div>
             )}
@@ -1640,8 +1647,8 @@ function MobileVisitLink({ to, href, color, children }: { to?: string; href?: st
       <path fillRule="evenodd" clipRule="evenodd" d="M12 4.58579L19.4142 12L12 19.4142L10.5858 18L15.5858 13H5V11H15.5858L10.5858 6L12 4.58579Z" fill={color} />
     </svg>
   );
-  if (to) return <Link to={to} style={style}>{children}{arrow}</Link>;
-  return <a href={href} target="_blank" rel="noopener noreferrer" style={style}>{children}{arrow}</a>;
+  if (to) return <Link to={to} className="m-press" style={style}>{children}{arrow}</Link>;
+  return <a href={href} target="_blank" rel="noopener noreferrer" className="m-press" style={style}>{children}{arrow}</a>;
 }
 
 function NewPageMobile() {
@@ -1651,26 +1658,35 @@ function NewPageMobile() {
     margin: 0, fontFamily: "'Stack Sans Notch', sans-serif",
     fontWeight: 300, fontSize: 40, lineHeight: 'normal', color: '#000',
   };
+  // Per-section visibility — only the section on screen plays its videos /
+  // scripted demo / WebGL loop (all of them at once drains phone batteries).
+  const [heroRef, heroIn] = useInView<HTMLDivElement>();
+  const [privatRef, privatIn] = useInView<HTMLDivElement>();
+  const [olyRef, olyIn] = useInView<HTMLDivElement>();
+  const [baseRef, baseIn] = useInView<HTMLDivElement>();
+  const [contactRef, contactIn] = useInView<HTMLDivElement>();
   return (
-    <div style={{ width: '100%', minHeight: '100dvh', backgroundColor: '#E0E0E4', overflowX: 'hidden' }}>
+    <div className="m-root" style={{ width: '100%', minHeight: '100dvh', backgroundColor: '#E0E0E4', overflowX: 'hidden' }}>
       <style>{homeLoadAnim}</style>
       <style>{olyBgAnim}</style>
+      <style>{mobileCss}</style>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '64px 20px 72px', gap: 88, boxSizing: 'border-box' }}>
 
         {/* Hero — compact fluid rendering: real type at readable sizes (the
             desktop hero's 72px name is wider than any phone). */}
-        <div style={{ width: '100%', maxWidth: 440, display: 'flex', justifyContent: 'center' }}>
-          <HomeContent active={true} compact />
+        <div ref={heroRef} style={{ width: '100%', maxWidth: 440, display: 'flex', justifyContent: 'center' }}>
+          <HomeContent active={heroIn} compact />
         </div>
 
         <MobileWaveLabel text="SELECTED WORK" />
 
-        {/* Privat — phone mock auto-playing the scripted Privat demo. */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
+        {/* Privat — phone mock auto-playing the scripted Privat demo (only
+            while on screen). */}
+        <div ref={privatRef} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
           <div style={{ width: 'min(280px, 78vw)' }}>
             <FitWidth designW={FRAME_W} designH={FRAME_H}>
               <div style={{ width: FRAME_W, height: FRAME_H, border: '5px solid #A8AFB6', borderRadius: 40, overflow: 'hidden', boxSizing: 'border-box' }}>
-                <PrivatHomeView active={true} />
+                <PrivatHomeView active={privatIn} />
               </div>
             </FitWidth>
           </div>
@@ -1680,7 +1696,7 @@ function NewPageMobile() {
         </div>
 
         {/* OlySense — white square replicating the desktop square's contents. */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
+        <div ref={olyRef} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
           <FitWidth designW={FRAME_H} designH={FRAME_H} style={{ borderRadius: 32 }}>
             <div style={{ position: 'relative', width: FRAME_H, height: FRAME_H, backgroundColor: '#FBFDFF', overflow: 'hidden' }}>
               {/* Drifting blue/red gradient behind the trace canvas. */}
@@ -1688,12 +1704,12 @@ function NewPageMobile() {
                 <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(-10%, -8%)', background: 'radial-gradient(circle at 32% 34%, rgba(198,221,255,0.7) 0%, rgba(198,221,255,0) 62%)', animation: 'oly-bg-a 16s ease-in-out infinite', willChange: 'transform' }} />
                 <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(10%, 8%) scale(1.15)', background: 'radial-gradient(circle at 70% 66%, rgba(255,206,211,0.62) 0%, rgba(255,206,211,0) 62%)', animation: 'oly-bg-b 21s ease-in-out infinite', willChange: 'transform' }} />
               </div>
-              <OlyTraceCanvas style={{ position: 'absolute', inset: 0 }} play={true} />
-              <OlyCarousel style={{ position: 'absolute', inset: 0 }} blurred={false} playing={true} />
+              <OlyTraceCanvas style={{ position: 'absolute', inset: 0 }} play={olyIn} />
+              <OlyCarousel style={{ position: 'absolute', inset: 0 }} blurred={false} playing={olyIn} />
               <EndoLoopVideo
                 src="/endo2.mp4"
                 loop={false}
-                playing={true}
+                playing={olyIn}
                 style={{
                   position: 'absolute', left: 12, bottom: 40, width: 164.6,
                   aspectRatio: '1080 / 1920', transform: 'scaleX(-1)', pointerEvents: 'none',
@@ -1710,7 +1726,7 @@ function NewPageMobile() {
         </div>
 
         {/* Base — dark dotted grid with the 3D icon canvas. */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
+        <div ref={baseRef} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
           <FitWidth
             designW={640}
             designH={640}
@@ -1726,7 +1742,7 @@ function NewPageMobile() {
             }}
           >
             <div style={{ width: 640, height: 640 }}>
-              <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={0} />
+              <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={0} renderActive={baseIn} />
             </div>
           </FitWidth>
           <MobileWaveLabel text="RESOURCE" color="#000" />
@@ -1749,7 +1765,7 @@ function NewPageMobile() {
 
           {/* Contact — mobile rendering of the desktop stage-4 about badge:
               avatar → name → email → social icons (LinkedIn + GitHub). */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <div ref={contactRef} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
             <EndoLoopVideo
               src="/avatar1.mp4"
               objectPosition="36.5% center"
@@ -1757,7 +1773,7 @@ function NewPageMobile() {
               holdSeconds={0}
               startDelaySeconds={0}
               loop={false}
-              playing
+              playing={contactIn}
               style={{ width: 160, height: 160, borderRadius: '50%', overflow: 'hidden', backgroundColor: '#E0E0E4' }}
             />
             <div style={{ textAlign: 'center', fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 400, fontSize: 40, letterSpacing: '-1.05px', lineHeight: 1.12, color: '#1A1A1A' }}>
@@ -1765,21 +1781,23 @@ function NewPageMobile() {
               <div>Zhurankou</div>
             </div>
             <a href="mailto:hi@aleks.design" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 20, color: '#333333', textDecoration: 'none' }}>hi@aleks.design</a>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14, lineHeight: 0 }}>
-              <a href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" style={{ display: 'inline-block', borderRadius: 4, overflow: 'hidden' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z" />
-                </svg>
-              </a>
-              <a href="https://github.com/zhurankou" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style={{ display: 'inline-block', borderRadius: 4, overflow: 'hidden' }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
-                  <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-                </svg>
-              </a>
+            {/* Social icons + copyright grouped as one footer, tighter gap than the sections above */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14, lineHeight: 0 }}>
+                <a href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" style={{ display: 'inline-block', borderRadius: 4, overflow: 'hidden' }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z" />
+                  </svg>
+                </a>
+                <a href="https://github.com/zhurankou" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style={{ display: 'inline-block', borderRadius: 4, overflow: 'hidden' }}>
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
+                    <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+                  </svg>
+                </a>
+              </div>
+              <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 15, color: '#888' }}>© 2026</div>
             </div>
           </div>
-
-          <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 16, color: '#888' }}>© 2026</div>
         </div>
       </div>
     </div>

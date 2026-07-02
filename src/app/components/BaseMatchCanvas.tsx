@@ -238,7 +238,9 @@ function IconCell({ svg, color, basePos, burst, bumped, spin, wobble, depth, sho
   );
 }
 
-export function BaseMatchCanvas({ pool, color, colors, playing, matching = true, spin = true, wobble = false, depth = ICON_DEPTH, showTile = true, cellFit = CELL_FIT, roundness = ICON_ROUNDNESS, shuffleKey = 0 }: { pool: string[]; color: string; colors?: string[]; playing: boolean; matching?: boolean; spin?: boolean; wobble?: boolean; depth?: number; showTile?: boolean; cellFit?: number; roundness?: number; shuffleKey?: number }) {
+// renderActive=false parks the frameloop on 'demand' (one initial frame, then no
+// per-frame work) — the mobile page uses it to stop the WebGL loop off-screen.
+export function BaseMatchCanvas({ pool, color, colors, playing, matching = true, spin = true, wobble = false, depth = ICON_DEPTH, showTile = true, cellFit = CELL_FIT, roundness = ICON_ROUNDNESS, shuffleKey = 0, renderActive = true }: { pool: string[]; color: string; colors?: string[]; playing: boolean; matching?: boolean; spin?: boolean; wobble?: boolean; depth?: number; showTile?: boolean; cellFit?: number; roundness?: number; shuffleKey?: number; renderActive?: boolean }) {
   // Static board (no swaps) shows 9 distinct icons so none ever match; the live game
   // uses makeBoard (duplicates allowed, no winning line) so matches can emerge.
   const [board, setBoard] = useState<number[]>(() =>
@@ -319,7 +321,7 @@ export function BaseMatchCanvas({ pool, color, colors, playing, matching = true,
   // Safari reports the latter and would size/clip the board wrongly under the
   // page's scale(k) transform.
   return (
-    <Canvas style={{ width: BOARD_PX, height: BOARD_PX }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.25]} resize={{ debounce: 0, offsetSize: true }}>
+    <Canvas style={{ width: BOARD_PX, height: BOARD_PX }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.25]} resize={{ debounce: 0, offsetSize: true }} frameloop={renderActive ? 'always' : 'demand'}>
       <PerspectiveCamera makeDefault position={[0, 0, 40]} fov={24} />
       <Environment files="/hdri/st_fagans_interior_1k.hdr" environmentIntensity={0.7} />
       <ambientLight intensity={0.25} />
