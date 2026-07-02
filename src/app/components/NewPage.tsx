@@ -1314,7 +1314,11 @@ function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
               // corners), leaving the gradient + bright dots inside untouched.
               // Solid bluish-"black" surround (no blur → no gradient halo → no animation
               // outside; the dots inside still animate). Crisp rounded corners.
-              boxShadow: `0 0 0 100vmax rgba(${BASE_BG_SURROUND}, ${dotFade})`,
+              // Spread is capped to the design canvas (not `vmax`, which resolves against
+              // the real, unscaled viewport — inside this scale(k) tree that produced a
+              // spread of tens of thousands of px, animating every scroll frame as dotFade
+              // changes, which was crashing mobile Safari's renderer).
+              boxShadow: `0 0 0 ${Math.max(layoutVw, layoutVh)}px rgba(${BASE_BG_SURROUND}, ${dotFade})`,
             }}>
               <div style={{ width: '100%', height: '100%', opacity: frameContentOpacity }}>
                 <PrivatHomeView
