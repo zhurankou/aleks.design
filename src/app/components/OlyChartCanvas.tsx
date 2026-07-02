@@ -103,6 +103,7 @@ export function OlyChartCanvas() {
       gl={{ antialias: true, alpha: true }}
       dpr={[1, 2]}
       camera={{ position: ISO_CAM, zoom: 52, near: 0.1, far: 200 }}
+      resize={{ offsetSize: true }}
       style={{ width: '100%', height: '100%' }}
     >
       <CameraAim />

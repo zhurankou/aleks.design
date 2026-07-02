@@ -144,6 +144,7 @@ export function PdrPipeCanvas({
       camera={{ zoom: 1, near: 0.1, far: 5000 }}
       gl={{ antialias: true, alpha: true }}
       dpr={[1, 2]}
+      resize={{ offsetSize: true }}
       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
     >
       <CameraAim />

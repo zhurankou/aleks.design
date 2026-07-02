@@ -227,7 +227,7 @@ export function HomeSpiralCanvas({ active, iconSvgs }: HomeSpiralCanvasProps) {
       style={{ width: '100%', height: '100%' }}
       gl={{ antialias: true, alpha: true }}
       dpr={[1, 2]}
-      resize={{ debounce: 0 }}
+      resize={{ debounce: 0, offsetSize: true }}
       frameloop={active ? 'always' : 'never'}
     >
       <PerspectiveCamera makeDefault position={[0, 0, 12]} fov={45} />

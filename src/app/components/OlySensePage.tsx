@@ -8,7 +8,6 @@ import { HiFiCorrelated } from './HiFiCorrelated';
 import { ScrollFadeIn } from './ui/ScrollFadeIn';
 import { useBreakpoint } from './ui/use-breakpoint';
 import { FitWidth } from './ui/FitWidth';
-import { MobileNotice } from './ui/MobileNotice';
 
 // OlySense case-study page. White canvas with a single scroll-driven transition
 // modelled on the home→Privat frame move in NewPage: as you scroll, the title +
@@ -332,9 +331,7 @@ export function OlySensePage() {
   // Mobile gets a dedicated stacked layout; the scroll-morph machinery below
   // (sticky Process, scroll-driven Final Design rectangle) never mounts there.
   const bp = useBreakpoint();
-  // Temporary: show a "view on tablet/desktop" notice on mobile while the mobile
-  // layout is being finished. Swap back to <OlySenseMobile /> to restore it.
-  if (bp === 'mobile') return <MobileNotice />;
+  if (bp === 'mobile') return <OlySenseMobile />;
   return <OlySensePageDesktop />;
 }
 
@@ -357,16 +354,18 @@ function OlySensePageDesktop() {
   const scrollTopRef = useRef(0);
   const pRef = useRef(0);
   const rafRef = useRef(0);
-  // Tablet (768–1023px): render the desktop tree at a fixed reference width and
-  // scale it to fit. All scroll math runs in design space (scrollTop, track
+  // Tablet + desktop: the tree renders in design space and a transform on the
+  // scroller fits it to the real viewport. The scale is height-driven —
+  // k = vh / DESIGN_H — so the case study tracks the screen height, capped by
+  // the width fit (vw / DESIGN_W) so portrait tablets can't overflow
+  // horizontally. All scroll math runs in design space (scrollTop, track
   // heights and layoutVh are unscaled), so the transform on the scroller only
-  // affects pixels on screen. Desktop (≥1024) keeps k=1 — nothing changes.
-  const bpKind = useBreakpoint();
-  const isTablet = bpKind === 'tablet';
+  // affects pixels on screen.
   const DESIGN_W = 1280;
-  const k = isTablet ? vw / DESIGN_W : 1;
-  const layoutVw = isTablet ? DESIGN_W : vw;
-  const layoutVh = isTablet ? vh / k : vh;
+  const DESIGN_H = 832; // authored canvas height — matches the home page's frame + peek
+  const k = Math.min(vw / DESIGN_W, vh / DESIGN_H);
+  const layoutVw = vw / k;
+  const layoutVh = vh / k;
 
   useEffect(() => { vhRef.current = layoutVh; }, [layoutVh]);
   useEffect(() => { dashMaxRef.current = dashMax; }, [dashMax]);
@@ -374,7 +373,16 @@ function OlySensePageDesktop() {
   useEffect(() => {
     const onResize = () => { setVh(window.innerHeight); setVw(window.innerWidth); };
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    window.visualViewport?.addEventListener('resize', onResize);
+    // Safari can miss window.resize on tiling / display changes — observing the
+    // root element catches every real viewport change.
+    const ro = new ResizeObserver(onResize);
+    ro.observe(document.documentElement);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.visualViewport?.removeEventListener('resize', onResize);
+      ro.disconnect();
+    };
   }, []);
 
   // Measure how far the dashboard can scroll inside its frame.
@@ -439,8 +447,11 @@ function OlySensePageDesktop() {
   // p = 0.45.
   const peelTopOpacity = hasScrolled ? Math.max(0, Math.min(1, (0.45 - p) * 3)) : 0;
 
+  // Positioned inside a sticky height-0 anchor at the top of the scroller —
+  // position:fixed would resolve against the scale(k) transform on the scroller
+  // (a transformed ancestor becomes the containing block) and scroll away.
   const peelChrome: React.CSSProperties = {
-    position: 'fixed',
+    position: 'absolute',
     left: '50%',
     zIndex: 50,
     backgroundColor: 'rgba(255, 255, 255, 0.18)',
@@ -560,16 +571,15 @@ function OlySensePageDesktop() {
     </>
   );
 
-  // On desktop the outer wrapper is display:contents (a true no-op); on tablet it
-  // clips the scaled scroller to the viewport.
+  // The outer wrapper clips the scaled scroller to the viewport.
   return (
-    <div style={isTablet ? { width: '100vw', height: '100vh', overflow: 'hidden' } : { display: 'contents' }}>
+    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
     <div
       ref={scrollRef}
       style={{
-        width: isTablet ? layoutVw : '100vw',
-        height: isTablet ? layoutVh : '100vh',
-        transform: isTablet ? `scale(${k})` : undefined,
+        width: layoutVw,
+        height: layoutVh,
+        transform: `scale(${k})`,
         transformOrigin: 'top left',
         overflowY: 'auto',
         overflowX: 'hidden',
@@ -581,16 +591,19 @@ function OlySensePageDesktop() {
 
       {/* Peel — glass pill anchored 24 px from the top of the viewport,
           centred. Fades in once the page begins scrolling and stays visible
-          for the rest of the page. */}
-      <div
-        style={{
-          ...peelChrome,
-          top: 24,
-          opacity: peelTopOpacity,
-          pointerEvents: peelTopOpacity > 0.5 ? 'auto' : 'none',
-        }}
-      >
-        {peelInner}
+          for the rest of the page. The height-0 sticky anchor pins it to the
+          viewport top for the entire scroll. */}
+      <div style={{ position: 'sticky', top: 0, height: 0, zIndex: 50 }}>
+        <div
+          style={{
+            ...peelChrome,
+            top: 24,
+            opacity: peelTopOpacity,
+            pointerEvents: peelTopOpacity > 0.5 ? 'auto' : 'none',
+          }}
+        >
+          {peelInner}
+        </div>
       </div>
 
       {/* Hero — static title + subtext. The rectangle interaction has moved down
@@ -739,7 +752,7 @@ function OlySensePageDesktop() {
       {/* Process scrollytell — sticky-left heading + section list, scrolling-right
           stack of light-grey mock rectangles. Active section swaps as each right-side
           rectangle reaches viewport centre. */}
-      <ProcessScrollytell viewportH={isTablet ? layoutVh : undefined} />
+      <ProcessScrollytell viewportH={layoutVh} />
       {/* Final Design — the rectangle interaction lives here. Same mechanic as
           the old hero: 100vh of scroll scales the rectangle up from 0.75 (with
           its centre on the track's bottom edge) to full size, then the next
@@ -747,7 +760,7 @@ function OlySensePageDesktop() {
           scroll handler computes progress relative to trackRef.offsetTop so the
           mechanic fires from this position instead of the page top. */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div ref={trackRef} style={{ width: '100%', height: isTablet ? layoutVh * 2 + dashMax : `calc(200vh + ${dashMax}px)`, position: 'relative' }}>
+        <div ref={trackRef} style={{ width: '100%', height: layoutVh * 2 + dashMax, position: 'relative' }}>
           {/* Sticky viewport — pinned while scrolling through the track. Holds
               BOTH the Final Design heading (pinned at top:120 inside the sticky
               so it lands at viewport y:120 the moment the sticky engages, same
@@ -755,7 +768,7 @@ function OlySensePageDesktop() {
               bottom-bleeding from translateY(vh/2) at p=0). When the user
               reaches this section they see the heading snap to the top and the
               rectangle simultaneously rise from the bottom. */}
-          <div style={{ position: 'sticky', top: 0, width: '100%', height: isTablet ? layoutVh : '100vh', overflow: 'hidden' }}>
+          <div style={{ position: 'sticky', top: 0, width: '100%', height: layoutVh, overflow: 'hidden' }}>
             {/* Heading + summary — absolutely positioned at top:120 of the sticky.
                 Sits in front of the rectangle (zIndex) so the dashboard never
                 paints over it as the rectangle scales up. Both fade out as the
