@@ -10,7 +10,6 @@ import { PolaroidWall } from './PolaroidWall';
 import FigmaLogo from '../../assets/tool-figma.svg?react';
 import { useBreakpoint } from './ui/use-breakpoint';
 import { FitWidth } from './ui/FitWidth';
-import { MobileNotice } from './ui/MobileNotice';
 
 // Module-load timestamp — used as the swing's reference t=0. SVG3D's internal
 // elapsed clock starts when each canvas first renders (close to module load),
@@ -439,14 +438,19 @@ export function EndoLoopVideo({ src, fadeSeconds = 0.7, holdSeconds = 2.8, start
     objectFit: 'cover', objectPosition, display: 'block',
   };
   return (
-    <div style={style}>
+    // relative by default so the absolute videos fill THIS box — callers that
+    // position the wrapper themselves (position: absolute) still override it.
+    <div style={{ position: 'relative', ...style }}>
       <video ref={aRef} src={src} muted playsInline preload="auto" style={videoBase} />
       <video ref={bRef} src={src} muted playsInline preload="auto" style={{ ...videoBase, opacity: 0 }} />
     </div>
   );
 }
 
-export function HomeContent({ active }: { active: boolean }) {
+// compact — mobile hero: fluid type at readable sizes instead of a scaled-down
+// copy of the desktop hero. The typing machinery is unaffected (the per-character
+// reveal uses width fractions, so it is font-size-independent).
+export function HomeContent({ active, compact = false }: { active: boolean; compact?: boolean }) {
   // Runs ONCE per home visit: pausedFull -> deleting (avatar2 plays once) -> pausedEmpty ->
   // typing -> pausedFull, then stops (stays on the name; no looping).
   // reveal 0 = name hidden, 1 = name fully shown. Drives a sub-pixel clip wipe.
@@ -559,8 +563,8 @@ export function HomeContent({ active }: { active: boolean }) {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, animation: 'home-load 0.45s ease-out both' }}>
       <div style={{
         position: 'relative',
-        width: 180,
-        height: 180,
+        width: compact ? 160 : 180,
+        height: compact ? 160 : 180,
         flexShrink: 0,
         borderRadius: '50%',
         overflow: 'hidden',
@@ -576,8 +580,8 @@ export function HomeContent({ active }: { active: boolean }) {
           style={{
             position: 'absolute',
             inset: 0,
-            width: 180,
-            height: 180,
+            width: '100%',
+            height: '100%',
             objectFit: 'cover',
             objectPosition: '28.5% center',
           }}
@@ -592,8 +596,8 @@ export function HomeContent({ active }: { active: boolean }) {
           style={{
             position: 'absolute',
             inset: 0,
-            width: 180,
-            height: 180,
+            width: '100%',
+            height: '100%',
             objectFit: 'cover',
             objectPosition: '28.5% center',
             opacity: 0,
@@ -601,7 +605,7 @@ export function HomeContent({ active }: { active: boolean }) {
           }}
         />
       </div>
-      <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontSize: 72, fontWeight: 400, lineHeight: 'normal', letterSpacing: '-1.92px', color: '#000000', textAlign: 'left', whiteSpace: 'nowrap', margin: 0, position: 'relative', display: 'inline-block' }}>
+      <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontSize: compact ? 'clamp(34px, 11.3vw, 44px)' : 72, fontWeight: 400, lineHeight: 'normal', letterSpacing: compact ? '-1.2px' : '-1.92px', color: '#000000', textAlign: 'left', whiteSpace: 'nowrap', margin: 0, position: 'relative', display: 'inline-block' }}>
         {/* Hidden copy reserves the full name's width; the visible copy is
             revealed left→right with a sub-pixel clip so letters wipe in
             smoothly instead of popping one character at a time. */}
@@ -621,7 +625,7 @@ export function HomeContent({ active }: { active: boolean }) {
           animation: (phase === 'typing' || phase === 'deleting') ? 'none' : 'cursor-blink 0.75s ease-in-out infinite',
         }} />
       </p>
-      <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 20, fontWeight: 500, lineHeight: '34px', color: '#000000', textAlign: 'center', width: 440, margin: 0 }}>
+      <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: compact ? 17 : 20, fontWeight: 500, lineHeight: compact ? '28px' : '34px', color: '#000000', textAlign: 'center', width: compact ? '100%' : 440, margin: 0 }}>
         I'm a product designer based in Seattle, WA, but living in code. I care deeply about craft, the details, and products with taste.
       </p>
     </div>
@@ -763,9 +767,7 @@ export function NewPage() {
   // Mobile gets a dedicated stacked layout; the 4-stage scroll-morph machinery
   // (scroll listener, rAF easers, scroll-snap) never mounts there.
   const bp = useBreakpoint();
-  // Temporary: show a "view on tablet/desktop" notice on mobile while the mobile
-  // layout is being finished. Swap back to <NewPageMobile /> to restore it.
-  if (bp === 'mobile') return <MobileNotice />;
+  if (bp === 'mobile') return <NewPageMobile />;
   return <NewPageDesktop />;
 }
 
@@ -797,7 +799,17 @@ function NewPageDesktop() {
   useEffect(() => {
     const onResize = () => { setVh(window.innerHeight); setVw(window.innerWidth); };
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    window.visualViewport?.addEventListener('resize', onResize);
+    // Safari can miss window.resize on tiling / display changes — observing the
+    // root element catches every real viewport change (a stale vh here renders
+    // the layout taller than the window and cuts the frame at the bottom).
+    const ro = new ResizeObserver(onResize);
+    ro.observe(document.documentElement);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.visualViewport?.removeEventListener('resize', onResize);
+      ro.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -910,18 +922,23 @@ function NewPageDesktop() {
   // Frame and its contents are rendered 1:1 — no scaling anywhere. Source
   // pixels = display pixels.
   const frameScale = 1;
-  // Tablet (768–1023px): render the desktop tree at a fixed reference width and
-  // scale it to fit. The layout computes in design space (DESIGN_W wide, vh/k
-  // tall); a transform on the scroller fits it to the real viewport. Desktop
-  // (≥1024) keeps k=1 so nothing changes. progress is a scroll ratio, so the
+  // Tablet + desktop: the tree renders in design space and a transform on the
+  // scroller fits it to the real viewport. The scale is height-driven —
+  // k = vh / DESIGN_H — so the experience tracks the screen height (short
+  // laptop windows shrink to fit the 792px frame, tall monitors scale up),
+  // capped by the width fit (vw / DESIGN_W) so narrow viewports (portrait
+  // tablets) can't overflow horizontally. progress is a scroll ratio, so the
   // morph timing is scale-invariant; heights are expressed in design-space px
   // so the snap stops stay aligned under the transform.
-  const bpKind = useBreakpoint();
-  const isTablet = bpKind === 'tablet';
-  const DESIGN_W = 1280;
-  const k = isTablet ? vw / DESIGN_W : 1;
-  const layoutVw = isTablet ? DESIGN_W : vw;
-  const layoutVh = isTablet ? vh / k : vh;
+  // The width must fit the widest stage composition — the OlySense square
+  // (792) with its side title (~270 incl. 40px gap) and side panel (264 + 40px
+  // gap) plus outer margins — so narrow windows scale the whole stage down
+  // instead of clipping the sides.
+  const DESIGN_W = 1456;
+  const DESIGN_H = FRAME_H + PEEK; // 832 — the authored canvas height (frame + home peek)
+  const k = Math.min(vw / DESIGN_W, vh / DESIGN_H);
+  const layoutVw = vw / k;
+  const layoutVh = vh / k;
   // Stage 2 morphs the PWA rectangle into a square (FRAME_H × FRAME_H). Stage 3
   // widens it to display width = vw - 240 (i.e. 120px inset left + right).
   const baseWidthSource = layoutVw - 240;
@@ -964,16 +981,15 @@ function NewPageDesktop() {
   // Home is "active" only at the top snap point — gates the avatar video loop.
   const homeActive = pStage1 < 0.05;
 
-  // On desktop the outer wrapper is display:contents (a true no-op); on tablet it
-  // clips the scaled scroller to the viewport.
+  // The outer wrapper clips the scaled scroller to the viewport.
   return (
-    <div style={isTablet ? { width: '100vw', height: '100vh', overflow: 'hidden' } : { display: 'contents' }}>
+    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
     <div
       ref={scrollRef}
       style={{
-        width: isTablet ? layoutVw : '100vw',
-        height: isTablet ? layoutVh : '100vh',
-        transform: isTablet ? `scale(${k})` : undefined,
+        width: layoutVw,
+        height: layoutVh,
+        transform: `scale(${k})`,
         transformOrigin: 'top left',
         overflowY: 'auto',
         overflowX: 'hidden',
@@ -982,9 +998,9 @@ function NewPageDesktop() {
       }}
     >
       {/* Scroll track — 5 viewport-heights: home→Privat→Olysense→base→hero tile.
-          On tablet, heights are design-space px (layoutVh) so the snap stops stay
-          aligned under the scale transform; desktop keeps the original vh units. */}
-      <div style={{ height: isTablet ? layoutVh * 5 : '500vh', position: 'relative' }}>
+          Heights are design-space px (layoutVh) so the snap stops stay aligned
+          under the scale transform. */}
+      <div style={{ height: layoutVh * 5, position: 'relative' }}>
         {/* Native CSS scroll-snap targets at each viewport height.
             `scroll-snap-stop: always` forces a stop at each — momentum can't skip mid. */}
         {[0, 1, 2, 3, 4].map((i) => (
@@ -992,10 +1008,10 @@ function NewPageDesktop() {
             key={i}
             style={{
               position: 'absolute',
-              top: isTablet ? i * layoutVh : `${i * 100}vh`,
+              top: i * layoutVh,
               left: 0,
               width: 1,
-              height: isTablet ? layoutVh : '100vh',
+              height: layoutVh,
               scrollSnapAlign: 'start',
               scrollSnapStop: 'always',
               pointerEvents: 'none',
@@ -1003,7 +1019,7 @@ function NewPageDesktop() {
           />
         ))}
         {/* Sticky visual layer */}
-        <div style={{ position: 'sticky', top: 0, width: '100%', height: isTablet ? layoutVh : '100vh', overflow: 'hidden', backgroundColor: bg }}>
+        <div style={{ position: 'sticky', top: 0, width: '100%', height: layoutVh, overflow: 'hidden', backgroundColor: bg }}>
           <style>{homeLoadAnim}</style>
           {/* OlySense page background — drifting light-blue + red gradient behind the square. */}
           {pBgWhite > 0.01 && pStage3 < 1 && (
@@ -1559,20 +1575,25 @@ function NewPageDesktop() {
             </a>
           </div>
         </div>
-        {/* Animated cursor — lives outside the frame container so it isn't
-            clipped by overflow:hidden and doesn't inherit frameScale. Position
-            is tracked in screen space via the targets' getBoundingClientRect,
-            so resizing the frame keeps the cursor pinned. */}
-        {pwaActive && (
-          <AnimatedCursor
-            phase={cursorPhase}
-            copyEl={copyEl}
-            startBtnEl={startBtnEl}
-            frameEl={frameElRef.current}
-          />
-        )}
       </div>
     </div>
+    {/* Animated cursor — lives OUTSIDE the scale(k) scroller: its position is
+        tracked in screen space via the targets' getBoundingClientRect, and its
+        position:fixed must resolve against the real viewport (a transformed
+        ancestor would hijack it and double-scale the coordinates). The hand
+        stays at its original 280px and only shrinks with k on small windows —
+        scaling it UP on large screens made it read too big. Proportions are
+        intrinsic (width derives from the image aspect) and the click targets
+        are size-independent (the fingertip anchors to the buttons' rects). */}
+    {pwaActive && (
+      <AnimatedCursor
+        phase={cursorPhase}
+        copyEl={copyEl}
+        startBtnEl={startBtnEl}
+        frameEl={frameElRef.current}
+        size={280 * Math.min(k, 1)}
+      />
+    )}
     </div>
   );
 }
@@ -1636,12 +1657,11 @@ function NewPageMobile() {
       <style>{olyBgAnim}</style>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '64px 20px 72px', gap: 88, boxSizing: 'border-box' }}>
 
-        {/* Hero — scaled to fit so the fixed 440px subtitle never overflows. */}
-        <FitWidth designW={440} designH={480} style={{ overflow: 'visible' }}>
-          <div style={{ width: 440, display: 'flex', justifyContent: 'center' }}>
-            <HomeContent active={true} />
-          </div>
-        </FitWidth>
+        {/* Hero — compact fluid rendering: real type at readable sizes (the
+            desktop hero's 72px name is wider than any phone). */}
+        <div style={{ width: '100%', maxWidth: 440, display: 'flex', justifyContent: 'center' }}>
+          <HomeContent active={true} compact />
+        </div>
 
         <MobileWaveLabel text="SELECTED WORK" />
 
@@ -1706,7 +1726,7 @@ function NewPageMobile() {
             }}
           >
             <div style={{ width: 640, height: 640 }}>
-              <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={baseShuffle} />
+              <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={0} />
             </div>
           </FitWidth>
           <MobileWaveLabel text="RESOURCE" color="#000" />
@@ -1721,7 +1741,11 @@ function NewPageMobile() {
 
         {/* About */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, width: '100%' }}>
-          <div style={{ alignSelf: 'stretch' }}><PolaroidWall /></div>
+          {/* The wall is an absolute background filler (inset: 0) — it needs a
+              positioned, sized box to live in. */}
+          <div style={{ alignSelf: 'stretch', position: 'relative', height: 440, overflow: 'hidden' }}>
+            <PolaroidWall scale={0.55} />
+          </div>
 
           {/* Contact — mobile rendering of the desktop stage-4 about badge:
               avatar → name → email → social icons (LinkedIn + GitHub). */}

@@ -315,8 +315,11 @@ export function BaseMatchCanvas({ pool, color, colors, playing, matching = true,
     return () => { cancelled = true; timers.forEach(clearTimeout); };
   }, [playing, pool.length, matching]);
 
+  // resize.offsetSize: measure layout px, not the transform-scaled visual rect —
+  // Safari reports the latter and would size/clip the board wrongly under the
+  // page's scale(k) transform.
   return (
-    <Canvas style={{ width: BOARD_PX, height: BOARD_PX }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.25]} resize={{ debounce: 0 }}>
+    <Canvas style={{ width: BOARD_PX, height: BOARD_PX }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.25]} resize={{ debounce: 0, offsetSize: true }}>
       <PerspectiveCamera makeDefault position={[0, 0, 40]} fov={24} />
       <Environment files="/hdri/st_fagans_interior_1k.hdr" environmentIntensity={0.7} />
       <ambientLight intensity={0.25} />

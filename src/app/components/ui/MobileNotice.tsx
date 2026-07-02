@@ -1,9 +1,7 @@
 import * as React from "react";
 
-// Temporary stand-in for the mobile breakpoint (<768px) while the real mobile
-// layout is being finished. Rendered in place of NewPageMobile / OlySenseMobile.
-// To restore the mobile layouts, swap the `<MobileNotice />` returns back to the
-// page's own mobile component.
+// "Best viewed on a larger screen" notice for the mobile breakpoint (<768px).
+// Only used by pages without a dedicated mobile layout (currently /slides).
 export function MobileNotice() {
   return (
     <div
