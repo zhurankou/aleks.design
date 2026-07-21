@@ -1345,12 +1345,8 @@ function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
                 <OlyTraceCanvas style={{ opacity: olyActive ? 1 : 0, transition: 'opacity 0.35s ease' }} play={olyPhase >= 3} />
               )}
               {/* Focused-center vertical carousel, centred on screen, clearing endo2. */}
-              {/* blurred renders 6 simultaneous backdrop-filter blurs (one per card).
-                  That's the single most GPU-heavy thing in the tree, and inside this
-                  scale(k) transform at a phone's DPR 3 it was crashing mobile Safari's
-                  renderer on the Privat→OlySense transition. Off on mobile. */}
               {pFrameMorph > 0.01 && pStage3 < 1 && (
-                <OlyCarousel style={{ opacity: olyPhase >= 2 ? 1 : 0, transition: 'opacity 0.35s ease' }} blurred={!mobile && olyPhase >= 3} playing={olyPhase >= 3} />
+                <OlyCarousel style={{ opacity: olyPhase >= 2 ? 1 : 0, transition: 'opacity 0.35s ease' }} blurred={olyPhase >= 3} playing={olyPhase >= 3} />
               )}
               {/* endo2 — inside the square, bottom-left corner; flipped, edges
                   feathered, and loop-crossfaded so the 8s wrap dissolves. */}
