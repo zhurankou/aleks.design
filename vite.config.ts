@@ -3,6 +3,7 @@ import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import svgr from 'vite-plugin-svgr'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 
 // Custom plugin to resolve figma:asset/ imports to src/assets/
 function figmaAssetPlugin() {
@@ -28,6 +29,9 @@ export default defineConfig({
     // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
+    // HTTPS=true npm run dev -- --host: self-signed cert for testing on a
+    // phone whose Safari has HTTPS-Only Mode enabled (blocks plain HTTP).
+    ...(process.env.HTTPS ? [basicSsl()] : []),
   ],
   resolve: {
     alias: {
