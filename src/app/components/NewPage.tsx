@@ -771,14 +771,14 @@ export function NewPage() {
   // landscape phone is ~844px wide and would otherwise read as a tablet).
   const isPhone = useIsPhone();
   const portrait = useIsPortrait();
-  // Portrait phones prompt a rotate. Everything else — landscape phones,
-  // tablets, and desktop — renders the identical scaled desktop tree: a phone
-  // in landscape gets exactly the tablet experience, no phone-specific branch.
+  // Portrait phones prompt a rotate. Landscape phones render the same scaled
+  // desktop tree as tablets/desktop, minus a couple of GPU-heavy effects that
+  // were crashing mobile Safari mid-scroll (mobile prop below).
   if (isPhone && portrait) return <RotateNotice />;
-  return <NewPageDesktop />;
+  return <NewPageDesktop mobile={isPhone} />;
 }
 
-function NewPageDesktop() {
+function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const sharedCircleRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
@@ -1345,14 +1345,12 @@ function NewPageDesktop() {
                 <OlyTraceCanvas style={{ opacity: olyActive ? 1 : 0, transition: 'opacity 0.35s ease' }} play={olyPhase >= 3} />
               )}
               {/* Focused-center vertical carousel, centred on screen, clearing endo2. */}
-              {/* blurred renders 6 simultaneous backdrop-filter blurs (one per card),
-                  the single most GPU-heavy thing in the tree. Previously gated off on
-                  phones — inside this scale(k) transform at a phone's DPR 3 it was
-                  crashing mobile Safari's renderer on the Privat→OlySense transition —
-                  now always on, since landscape phones render the same unmodified tree
-                  as tablets/desktop. */}
+              {/* blurred renders 6 simultaneous backdrop-filter blurs (one per card).
+                  That's the single most GPU-heavy thing in the tree, and inside this
+                  scale(k) transform at a phone's DPR 3 it was crashing mobile Safari's
+                  renderer on the Privat→OlySense transition. Off on mobile. */}
               {pFrameMorph > 0.01 && pStage3 < 1 && (
-                <OlyCarousel style={{ opacity: olyPhase >= 2 ? 1 : 0, transition: 'opacity 0.35s ease' }} blurred={olyPhase >= 3} playing={olyPhase >= 3} />
+                <OlyCarousel style={{ opacity: olyPhase >= 2 ? 1 : 0, transition: 'opacity 0.35s ease' }} blurred={!mobile && olyPhase >= 3} playing={olyPhase >= 3} />
               )}
               {/* endo2 — inside the square, bottom-left corner; flipped, edges
                   feathered, and loop-crossfaded so the 8s wrap dissolves. */}
@@ -1397,10 +1395,10 @@ function NewPageDesktop() {
               {/* 3×3 grid of spinning 3D icons; once in a while one spins up fast and
                   swaps to a new icon mid-spin. Always mounted so the WebGL canvas warms
                   up + compiles shaders during earlier scenes; the wrapper opacity fade
-                  reveals it with the base title + panel. Frameloop always runs — previously
-                  parked until visible on phones, where the always-on loop stacked on the
-                  OlySense video/canvas layers was crashing Safari mid-scroll, but landscape
-                  phones now render the same unmodified tree as tablets/desktop. */}
+                  reveals it with the base title + panel. On mobile, GPU headroom doesn't
+                  cover an always-on frameloop stacked on the OlySense video/canvas layers
+                  (it was crashing Safari mid-scroll), so there the loop stays parked until
+                  the base view is actually visible. */}
               <div style={{
                 position: 'absolute',
                 inset: 0,
@@ -1414,7 +1412,7 @@ function NewPageDesktop() {
                 transition: pStage4 > 0.01 ? 'none' : baseVisible ? 'opacity 700ms ease-out' : 'opacity 150ms ease-in',
               }}>
                   <div style={{ width: 640, height: 640, pointerEvents: 'auto' }}>
-                    <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={baseShuffle} />
+                    <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={baseShuffle} renderActive={mobile ? baseVisible : true} />
                   </div>
                 </div>
             </div>
