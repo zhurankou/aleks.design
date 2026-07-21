@@ -822,12 +822,24 @@ function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    // rAF-throttled: raw 'scroll' events can fire far faster than the screen repaints
+    // (60-100+/sec on iOS momentum scroll), and progress drives nearly the whole tree
+    // (every video/canvas/blur layer), so updating on every event forces re-render +
+    // recomposite of that GPU-heavy tree faster than it can keep up — ballooned memory
+    // until Safari's WebContent process hit its ceiling and got killed (Jetsam highwater).
+    let raf = 0;
+    let ticking = false;
     const onScroll = () => {
-      const max = el.scrollHeight - el.clientHeight;
-      setProgress(max > 0 ? Math.min(1, el.scrollTop / max) : 0);
+      if (ticking) return;
+      ticking = true;
+      raf = requestAnimationFrame(() => {
+        ticking = false;
+        const max = el.scrollHeight - el.clientHeight;
+        setProgress(max > 0 ? Math.min(1, el.scrollTop / max) : 0);
+      });
     };
     el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
+    return () => { el.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf); };
   }, []);
 
   // Four-stage scroll: 0→¼ home → Privat, ¼→½ Privat → Olysense, ½→¾ Olysense → base,
