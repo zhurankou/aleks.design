@@ -59,7 +59,13 @@ export function OlyCarousel({ style, blurred = true, playing = true }: { style?:
         // z-order isn't animated — switch it instantly based on the current focus.
         let r = (i - active + COUNT) % COUNT;
         if (r > COUNT / 2) r -= COUNT;
+        const ar = Math.abs(r);
         const Card = CARDS[i];
+        // Only the focused card + its immediate neighbours blur — 6 simultaneous
+        // backdrop-filter blurs was the single most GPU-heavy thing in the tree
+        // and crashed mobile Safari. The far cards are already small/dim, so
+        // dropping their blur is barely visible while cutting that cost in half.
+        const cardBlurred = blurred && ar <= 1;
         return (
           <animated.div
             key={i}
@@ -74,15 +80,15 @@ export function OlyCarousel({ style, blurred = true, playing = true }: { style?:
               background:
                 'linear-gradient(135deg, rgba(240,245,252,0.60) 0%, rgba(226,234,247,0.44) 100%)',
               // saturate+brightness keep the blurred backdrop lively instead of grey mud.
-              backdropFilter: blurred ? 'blur(14px) saturate(1.6) brightness(1.05)' : 'none',
-              WebkitBackdropFilter: blurred ? 'blur(14px) saturate(1.6) brightness(1.05)' : 'none',
+              backdropFilter: cardBlurred ? 'blur(14px) saturate(1.6) brightness(1.05)' : 'none',
+              WebkitBackdropFilter: cardBlurred ? 'blur(14px) saturate(1.6) brightness(1.05)' : 'none',
               boxSizing: 'border-box',
               // Inner bezel: bright top rim, soft inner blue glow.
               // The perimeter edge-catch is the gradient ring overlay below.
               boxShadow:
                 'inset 0 1px 1px rgba(255,255,255,0.9), inset 0 0 26px rgba(212,222,242,0.40)',
               overflow: 'hidden',
-              zIndex: COUNT - Math.abs(r),
+              zIndex: COUNT - ar,
               opacity: sp.opacity,
               transform: to([sp.y, sp.scale], (y, s) => `translate(-50%, -50%) translateY(${y}px) scale(${s})`),
             }}
