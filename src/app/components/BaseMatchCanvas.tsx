@@ -131,7 +131,7 @@ function resolveIcons(bd: number[], line: number[], n: number): number[] {
   return pickDistinct(n, 3);
 }
 
-function IconCell({ svg, color, basePos, burst, bumped, spin, wobble, depth, showTile, cellFit, roundness }: { svg: string; color: string; basePos: [number, number, number]; burst: number; bumped: boolean; spin: boolean; wobble: boolean; depth: number; showTile: boolean; cellFit: number; roundness: number }) {
+function IconCell({ svg, color, basePos, burst, bumped, spin, wobble, depth, showTile, cellFit, roundness, cheapMaterial }: { svg: string; color: string; basePos: [number, number, number]; burst: number; bumped: boolean; spin: boolean; wobble: boolean; depth: number; showTile: boolean; cellFit: number; roundness: number; cheapMaterial: boolean }) {
   const containerRef = useRef<THREE.Group>(null);
   const groupRef = useRef<THREE.Group>(null);
   const burstSeen = useRef(burst);
@@ -219,15 +219,17 @@ function IconCell({ svg, color, basePos, burst, bumped, spin, wobble, depth, sho
             loop above layers iridescence, envMap, emissive glow + the rim shader on top. */}
         <group position={[0, 0, showTile ? TILE_DEPTH / 2 : 0]} scale={ICON_IN_TILE}>
           <ExtrudedIcon svgString={svg} depth={depth} smoothness={ICON_SMOOTHNESS} roundness={roundness} groupRef={groupRef}>
+            {/* transmission (glass see-through) forces a per-frame render-to-texture pass —
+                the single most expensive PBR feature here. Off on mobile: opaque glyph instead. */}
             <meshPhysicalMaterial
               color={color}
               metalness={GLYPH_METALNESS}
               roughness={GLYPH_ROUGHNESS}
               ior={GLYPH_IOR}
-              transmission={GLYPH_TRANSMISSION}
+              transmission={cheapMaterial ? 0 : GLYPH_TRANSMISSION}
               thickness={GLYPH_THICKNESS}
               attenuationDistance={GLYPH_ATTEN_DISTANCE}
-              clearcoat={GLYPH_CLEARCOAT}
+              clearcoat={cheapMaterial ? 0 : GLYPH_CLEARCOAT}
               clearcoatRoughness={GLYPH_CLEARCOAT_ROUGHNESS}
               side={THREE.DoubleSide}
             />
@@ -240,7 +242,7 @@ function IconCell({ svg, color, basePos, burst, bumped, spin, wobble, depth, sho
 
 // renderActive=false parks the frameloop on 'demand' (one initial frame, then no
 // per-frame work) — the mobile page uses it to stop the WebGL loop off-screen.
-export function BaseMatchCanvas({ pool, color, colors, playing, matching = true, spin = true, wobble = false, depth = ICON_DEPTH, showTile = true, cellFit = CELL_FIT, roundness = ICON_ROUNDNESS, shuffleKey = 0, renderActive = true }: { pool: string[]; color: string; colors?: string[]; playing: boolean; matching?: boolean; spin?: boolean; wobble?: boolean; depth?: number; showTile?: boolean; cellFit?: number; roundness?: number; shuffleKey?: number; renderActive?: boolean }) {
+export function BaseMatchCanvas({ pool, color, colors, playing, matching = true, spin = true, wobble = false, depth = ICON_DEPTH, showTile = true, cellFit = CELL_FIT, roundness = ICON_ROUNDNESS, shuffleKey = 0, renderActive = true, cheapMaterial = false }: { pool: string[]; color: string; colors?: string[]; playing: boolean; matching?: boolean; spin?: boolean; wobble?: boolean; depth?: number; showTile?: boolean; cellFit?: number; roundness?: number; shuffleKey?: number; renderActive?: boolean; cheapMaterial?: boolean }) {
   // Static board (no swaps) shows 9 distinct icons so none ever match; the live game
   // uses makeBoard (duplicates allowed, no winning line) so matches can emerge.
   const [board, setBoard] = useState<number[]>(() =>
@@ -328,7 +330,7 @@ export function BaseMatchCanvas({ pool, color, colors, playing, matching = true,
       {board.map((p, i) => {
         const col = i % 3;
         const row = Math.floor(i / 3);
-        return <IconCell key={i} svg={pool[p]} color={colors ? colors[i % colors.length] : color} basePos={[(col - 1) * CELL_GAP, (1 - row) * CELL_GAP, 0]} burst={bursts[i]} bumped={bumped[i]} spin={spin} wobble={wobble} depth={depth} showTile={showTile} cellFit={cellFit} roundness={roundness} />;
+        return <IconCell key={i} svg={pool[p]} color={colors ? colors[i % colors.length] : color} basePos={[(col - 1) * CELL_GAP, (1 - row) * CELL_GAP, 0]} burst={bursts[i]} bumped={bumped[i]} spin={spin} wobble={wobble} depth={depth} showTile={showTile} cellFit={cellFit} roundness={roundness} cheapMaterial={cheapMaterial} />;
       })}
     </Canvas>
   );

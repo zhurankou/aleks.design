@@ -902,6 +902,12 @@ function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
   // Stage 3 sub-phases — Olysense → base.
   const baseVisible = pStage3 >= 0.85;             // base title + description appear once the square is essentially grown
   const baseFade = 1 - s4;                          // stage 4 fades the base content out as the hero tile forms
+  // baseVisible latches true for the rest of the scroll once pStage3 hits 1 (it never
+  // drops back below 0.85 again past that point), so gating the WebGL frameloop on it
+  // alone parks it on the way in but never re-parks it once the hero tile has fully
+  // formed — the 9-icon transmission/iridescence scene would render every frame
+  // indefinitely for the rest of the page. Fade back out once baseFade bottoms out.
+  const baseGridActive = baseVisible && baseFade > 0.02;
   // The dotted background fades in/out faster than the rest of the base content — a
   // steeper ramp on both ends (scroll-in via pStage3, scroll-out via baseFade).
   const dotFade = smoothstep(Math.min(1, Math.max(0, (pStage3 - 0.6) / 0.22)))
@@ -1426,7 +1432,7 @@ function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
                 transition: pStage4 > 0.01 ? 'none' : baseVisible ? 'opacity 700ms ease-out' : 'opacity 150ms ease-in',
               }}>
                   <div style={{ width: 640, height: 640, pointerEvents: 'auto' }}>
-                    <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={baseShuffle} renderActive={mobile ? baseVisible : true} />
+                    <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={baseShuffle} renderActive={mobile ? baseGridActive : true} cheapMaterial={mobile} />
                   </div>
                 </div>
             </div>
