@@ -399,9 +399,11 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef, on
         </div>
       </div>
 
-      {/* Video2 — fades in to fill the full frame as Video1 shrinks to PIP. Plays once, then fades to black. */}
+      {/* Video2 — fades in to fill the full frame as Video1 shrinks to PIP. Plays once, then fades to black.
+          No loopKey-keyed remount: a changing key forces WebKit to fully tear down and recreate the video
+          decoder every ~6-7s loop, and iOS is slow to release that — compounds into a large memory leak
+          the longer this view stays active. Reused element + ref-driven currentTime/play reset instead. */}
       <video
-        key={`v2-${loopKey}`}
         ref={video2Ref}
         src="/video2.mp4?v=2"
         muted
@@ -423,7 +425,6 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef, on
       {/* Video — full-frame after Start session click, animates to PIP circle 2s later.
           Plays once (no loop) so its natural end can drive the fadeOut timing. */}
       <video
-        key={`v1-${loopKey}`}
         ref={video1Ref}
         src="/video1.mp4?v=2"
         muted
