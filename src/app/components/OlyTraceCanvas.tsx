@@ -23,7 +23,7 @@ const ARROW_SIZE = 14;
 const ROT: Record<Dir, number> = { up: 0, right: Math.PI / 2, down: Math.PI, left: -Math.PI / 2 };
 
 const SPEED = 80; // px/s
-const MAX_DOTS = 9;
+const MAX_DOTS = 5; // was 9 — each dot does several canvas compositing ops (stamps + gradient stroke) per frame
 const GRID = 80; // grid cell size (px)
 const SURFACE = '#FDFEFF'; // near-white square surface that the grid is cut out of
 const GRID_LINE = '#000'; // opaque — used only as a cut mask, the colour is irrelevant
@@ -50,7 +50,7 @@ type Dot = {
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
-export function OlyTraceCanvas({ style, play = true }: { style?: React.CSSProperties; play?: boolean }) {
+export function OlyTraceCanvas({ style, play = true, maxDpr = 2 }: { style?: React.CSSProperties; play?: boolean; maxDpr?: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const playRef = useRef(play);
   playRef.current = play;
@@ -60,7 +60,7 @@ export function OlyTraceCanvas({ style, play = true }: { style?: React.CSSProper
     const ctx = canvas?.getContext('2d');
     if (!canvas || !parent || !ctx) return;
 
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(maxDpr, window.devicePixelRatio || 1);
     const grid = document.createElement('canvas');
     const gctx = grid.getContext('2d')!;
     const mask = document.createElement('canvas');
@@ -333,7 +333,7 @@ export function OlyTraceCanvas({ style, play = true }: { style?: React.CSSProper
       clearTimeout(resizeT);
       ro.disconnect();
     };
-  }, []);
+  }, [maxDpr]);
 
   return <canvas ref={ref} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', ...style }} />;
 }

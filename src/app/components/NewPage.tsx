@@ -8,11 +8,11 @@ import { OlyCarousel } from './OlyCarousel';
 import { OlyTraceCanvas } from './OlyTraceCanvas';
 import { PolaroidWall } from './PolaroidWall';
 import FigmaLogo from '../../assets/tool-figma.svg?react';
-import { useIsPhone, useIsPortrait } from './ui/use-breakpoint';
+import { useIsPhone } from './ui/use-breakpoint';
 import { FitWidth } from './ui/FitWidth';
 import { useInView } from './ui/use-in-view';
 import { mobileCss } from './ui/mobile-css';
-import { RotateNotice } from './ui/RotateNotice';
+import { WaveLabel } from './ui/WaveLabel';
 
 // Module-load timestamp — used as the swing's reference t=0. SVG3D's internal
 // elapsed clock starts when each canvas first renders (close to module load),
@@ -366,13 +366,16 @@ function HomeBgWords({ active, progress }: { active: boolean; progress: number }
 // frame to the first, which reads as a jump. This stacks two copies of the clip
 // and crossfades them near the loop boundary, so the wrap dissolves smoothly.
 // The wrapper carries the flip / mask / scroll-opacity passed via `style`.
-export function EndoLoopVideo({ src, fadeSeconds = 0.7, holdSeconds = 2.8, startDelaySeconds = 1, loop = true, playing = true, style, objectPosition }: {
+export function EndoLoopVideo({ src, fadeSeconds = 0.7, holdSeconds = 2.8, startDelaySeconds = 1, loop = true, playing = true, smoothLoop = true, preload = 'auto', poster, style, objectPosition }: {
   src: string;
   fadeSeconds?: number;
   holdSeconds?: number;
   startDelaySeconds?: number;
   loop?: boolean;
   playing?: boolean;
+  smoothLoop?: boolean;
+  preload?: 'none' | 'metadata' | 'auto';
+  poster?: string;
   style: React.CSSProperties;
   objectPosition?: string;
 }) {
@@ -381,8 +384,25 @@ export function EndoLoopVideo({ src, fadeSeconds = 0.7, holdSeconds = 2.8, start
 
   useEffect(() => {
     const a = aRef.current;
+    if (!a) return;
+    if (!smoothLoop) {
+      let timer = 0;
+      if (!playing) {
+        a.pause();
+        return;
+      }
+      a.loop = loop;
+      a.currentTime = 0;
+      const start = () => a.play().catch(() => {});
+      if (startDelaySeconds > 0) timer = window.setTimeout(start, startDelaySeconds * 1000);
+      else start();
+      return () => {
+        if (timer) window.clearTimeout(timer);
+        a.pause();
+      };
+    }
     const b = bRef.current;
-    if (!a || !b) return;
+    if (!b) return;
     // Only play once OlySense is reached; paused/idle during scroll-in.
     if (!playing) { a.pause(); b.pause(); return; }
     let active = a;
@@ -434,7 +454,7 @@ export function EndoLoopVideo({ src, fadeSeconds = 0.7, holdSeconds = 2.8, start
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [fadeSeconds, holdSeconds, startDelaySeconds, loop, playing]);
+  }, [fadeSeconds, holdSeconds, startDelaySeconds, loop, playing, smoothLoop]);
 
   const videoBase: React.CSSProperties = {
     position: 'absolute', inset: 0, width: '100%', height: '100%',
@@ -444,8 +464,8 @@ export function EndoLoopVideo({ src, fadeSeconds = 0.7, holdSeconds = 2.8, start
     // relative by default so the absolute videos fill THIS box — callers that
     // position the wrapper themselves (position: absolute) still override it.
     <div style={{ position: 'relative', ...style }}>
-      <video ref={aRef} src={src} muted playsInline preload="auto" style={videoBase} />
-      <video ref={bRef} src={src} muted playsInline preload="auto" style={{ ...videoBase, opacity: 0 }} />
+      <video ref={aRef} src={src} muted playsInline preload={preload} poster={poster} style={videoBase} />
+      {smoothLoop && <video ref={bRef} src={src} muted playsInline preload={preload} poster={poster} style={{ ...videoBase, opacity: 0 }} />}
     </div>
   );
 }
@@ -769,16 +789,19 @@ const SquareGlow = memo(function SquareGlow() {
 export function NewPage() {
   // Phone detection is by SHORT side, not width, so it survives rotation (a
   // landscape phone is ~844px wide and would otherwise read as a tablet).
+  // Phones get a genuinely separate, GPU-lite stacked layout (NewPageMobile) —
+  // not the desktop scroll-morph tree scaled down. That tree could have video
+  // decode + a WebGL canvas + 2D canvas compositing + backdrop-filter blur all
+  // simultaneously resident under one shared CSS transform, which was crashing
+  // mobile Safari and proved resistant to per-effect mitigation. Portrait works
+  // natively here (no rotate prompt needed) since the stacked layout doesn't
+  // need landscape width the way the scaled desktop tree did.
   const isPhone = useIsPhone();
-  const portrait = useIsPortrait();
-  // Portrait phones prompt a rotate. Landscape phones render the same scaled
-  // desktop tree as tablets/desktop, minus a couple of GPU-heavy effects that
-  // were crashing mobile Safari mid-scroll (mobile prop below).
-  if (isPhone && portrait) return <RotateNotice />;
-  return <NewPageDesktop mobile={isPhone} />;
+  if (isPhone) return <NewPageMobile />;
+  return <NewPageDesktop />;
 }
 
-function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
+function NewPageDesktop() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const sharedCircleRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
@@ -891,7 +914,12 @@ function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
     const timers = [
       window.setTimeout(() => setOlyPhase((p) => Math.max(p, 1)), 100),  // name + description
       window.setTimeout(() => setOlyPhase((p) => Math.max(p, 2)), 250),  // carousel + endo2
-      window.setTimeout(() => setOlyPhase((p) => Math.max(p, 3)), 450),  // carousel + bg-arrow animations
+      window.setTimeout(() => setOlyPhase((p) => Math.max(p, 3)), 450),  // carousel blur + active-cycling
+      // Split from phase 3: trace-canvas trail rendering (many per-frame canvas
+      // compositing ops) + the two bg-gradient CSS animations are the next-heaviest
+      // things in the tree. Firing them in the same tick as the carousel turning on
+      // its blur + active cycling stacked five GPU-heavy things into one instant.
+      window.setTimeout(() => setOlyPhase((p) => Math.max(p, 4)), 650),  // bg-arrow trace + bg animations
     ];
     return () => timers.forEach(clearTimeout);
   }, [olyReady]);
@@ -902,12 +930,6 @@ function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
   // Stage 3 sub-phases — Olysense → base.
   const baseVisible = pStage3 >= 0.85;             // base title + description appear once the square is essentially grown
   const baseFade = 1 - s4;                          // stage 4 fades the base content out as the hero tile forms
-  // baseVisible latches true for the rest of the scroll once pStage3 hits 1 (it never
-  // drops back below 0.85 again past that point), so gating the WebGL frameloop on it
-  // alone parks it on the way in but never re-parks it once the hero tile has fully
-  // formed — the 9-icon transmission/iridescence scene would render every frame
-  // indefinitely for the rest of the page. Fade back out once baseFade bottoms out.
-  const baseGridActive = baseVisible && baseFade > 0.02;
   // The dotted background fades in/out faster than the rest of the base content — a
   // steeper ramp on both ends (scroll-in via pStage3, scroll-out via baseFade).
   const dotFade = smoothstep(Math.min(1, Math.max(0, (pStage3 - 0.6) / 0.22)))
@@ -1353,14 +1375,14 @@ function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
               {pFrameMorph > 0.01 && pStage3 < 1 && (
                 <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', backgroundColor: '#FBFDFF', opacity: olyActive ? 1 : 0, transition: 'opacity 0.35s ease', pointerEvents: 'none' }}>
                   <style>{olyBgAnim}</style>
-                  <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(-10%, -8%) scale(1)', background: 'radial-gradient(circle at 32% 34%, rgba(198,221,255,0.7) 0%, rgba(198,221,255,0) 62%)', animation: olyPhase >= 3 ? 'oly-bg-a 16s ease-in-out infinite' : 'none', willChange: 'transform' }} />
-                  <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(10%, 8%) scale(1.15)', background: 'radial-gradient(circle at 70% 66%, rgba(255,206,211,0.62) 0%, rgba(255,206,211,0) 62%)', animation: olyPhase >= 3 ? 'oly-bg-b 21s ease-in-out infinite' : 'none', willChange: 'transform' }} />
+                  <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(-10%, -8%) scale(1)', background: 'radial-gradient(circle at 32% 34%, rgba(198,221,255,0.7) 0%, rgba(198,221,255,0) 62%)', animation: olyPhase >= 4 ? 'oly-bg-a 16s ease-in-out infinite' : 'none', willChange: 'transform' }} />
+                  <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(10%, 8%) scale(1.15)', background: 'radial-gradient(circle at 70% 66%, rgba(255,206,211,0.62) 0%, rgba(255,206,211,0) 62%)', animation: olyPhase >= 4 ? 'oly-bg-b 21s ease-in-out infinite' : 'none', willChange: 'transform' }} />
                 </div>
               )}
               {/* Background trace animation — pulsing green dot leaving a dashed
                   trail, behind the carousel cards and around the endo2 video. */}
               {pFrameMorph > 0.01 && pStage3 < 1 && (
-                <OlyTraceCanvas style={{ opacity: olyActive ? 1 : 0, transition: 'opacity 0.35s ease' }} play={olyPhase >= 3} />
+                <OlyTraceCanvas style={{ opacity: olyActive ? 1 : 0, transition: 'opacity 0.35s ease' }} play={olyPhase >= 4} />
               )}
               {/* Focused-center vertical carousel, centred on screen, clearing endo2. */}
               {/* blurred renders 6 simultaneous backdrop-filter blurs (one per card) — without
@@ -1415,10 +1437,8 @@ function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
               {/* 3×3 grid of spinning 3D icons; once in a while one spins up fast and
                   swaps to a new icon mid-spin. Always mounted so the WebGL canvas warms
                   up + compiles shaders during earlier scenes; the wrapper opacity fade
-                  reveals it with the base title + panel. On mobile, GPU headroom doesn't
-                  cover an always-on frameloop stacked on the OlySense video/canvas layers
-                  (it was crashing Safari mid-scroll), so there the loop stays parked until
-                  the base view is actually visible. */}
+                  reveals it with the base title + panel. Desktop/tablet only — phones
+                  get their own separate, GPU-lite tree (NewPageMobile). */}
               <div style={{
                 position: 'absolute',
                 inset: 0,
@@ -1432,7 +1452,7 @@ function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
                 transition: pStage4 > 0.01 ? 'none' : baseVisible ? 'opacity 700ms ease-out' : 'opacity 150ms ease-in',
               }}>
                   <div style={{ width: 640, height: 640, pointerEvents: 'auto' }}>
-                    <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={baseShuffle} renderActive={mobile ? baseGridActive : true} cheapMaterial={mobile} />
+                    <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={baseShuffle} />
                   </div>
                 </div>
             </div>
@@ -1649,29 +1669,15 @@ function NewPageDesktop({ mobile = false }: { mobile?: boolean } = {}) {
 // Dedicated stacked layout. The 4-stage scroll-morph is replaced by a vertical
 // document that reuses the same sub-components (HomeContent, PrivatHomeView, the
 // OlySense square's carousel/trace/video, BaseMatchCanvas, PolaroidWall). Fixed
-// desktop sizes are shrunk to the column width via FitWidth.
+// desktop sizes are shrunk to the column width via FitWidth. Heavy children
+// (video/WebGL/canvas) are mounted only while their section is on screen via
+// useInView, not just paused off-screen — never more than one section's worth
+// of that resident in the DOM at once.
 
-const mobileTag: React.CSSProperties = {
-  margin: 0, fontFamily: "'Stack Sans Notch', sans-serif",
-  fontWeight: 600, fontSize: 18, lineHeight: '28px', whiteSpace: 'nowrap', textAlign: 'center',
-};
 const mobileDesc: React.CSSProperties = {
   margin: 0, fontFamily: "'Manrope', sans-serif",
   fontWeight: 500, fontSize: 17, lineHeight: '28px',
 };
-
-// Per-character colour-wave label (matches the desktop SELECTED WORK tag).
-function MobileWaveLabel({ text, color = '#A8AFB6' }: { text: string; color?: string }) {
-  return (
-    <p style={{ ...mobileTag, color }}>
-      {Array.from(text).map((ch, i) => (
-        <span key={i} style={{ display: 'inline-block', whiteSpace: 'pre', animation: 'selected-wave 2s ease-in-out infinite', animationDelay: `${i * 0.12}s` }}>
-          {ch}
-        </span>
-      ))}
-    </p>
-  );
-}
 
 // Static "Visit" pill — internal (Link) or external (anchor). No hover wiring on
 // touch; just a tappable bordered pill matching the desktop visit buttons.
@@ -1698,145 +1704,238 @@ function NewPageMobile() {
     margin: 0, fontFamily: "'Stack Sans Notch', sans-serif",
     fontWeight: 300, fontSize: 40, lineHeight: 'normal', color: '#000',
   };
-  // Per-section visibility — only the section on screen plays its videos /
-  // scripted demo / WebGL loop (all of them at once drains phone batteries).
+  const mobileView: React.CSSProperties = {
+    width: '100%',
+    minHeight: '100dvh',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxSizing: 'border-box',
+    scrollSnapAlign: 'start',
+    scrollSnapStop: 'always',
+  };
+  const mobileMeta: React.CSSProperties = {
+    width: 'min(100%, 380px)',
+    marginTop: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 14,
+    textAlign: 'center',
+  };
+  const mobileDescription: React.CSSProperties = {
+    ...mobileDesc,
+    width: '100%',
+    minHeight: 84,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+  // Per-section visibility — heavy children (video/WebGL/canvas) are only
+  // mounted while their section is on screen, not just paused off-screen.
+  // Never more than one section's worth of that resident in the DOM at once.
   const [heroRef, heroIn] = useInView<HTMLDivElement>();
   const [privatRef, privatIn] = useInView<HTMLDivElement>();
   const [olyRef, olyIn] = useInView<HTMLDivElement>();
   const [baseRef, baseIn] = useInView<HTMLDivElement>();
   const [contactRef, contactIn] = useInView<HTMLDivElement>();
   return (
-    <div className="m-root" style={{ width: '100%', minHeight: '100dvh', backgroundColor: '#E0E0E4', overflowX: 'hidden' }}>
+    <div
+      className="m-root"
+      style={{
+        width: '100%',
+        height: '100dvh',
+        overflowX: 'hidden',
+        overflowY: 'auto',
+        overscrollBehaviorY: 'none',
+        scrollSnapType: 'y mandatory',
+        WebkitOverflowScrolling: 'touch',
+      }}
+    >
       <style>{homeLoadAnim}</style>
       <style>{olyBgAnim}</style>
       <style>{mobileCss}</style>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '64px 20px 72px', gap: 88, boxSizing: 'border-box' }}>
 
-        {/* Hero — compact fluid rendering: real type at readable sizes (the
-            desktop hero's 72px name is wider than any phone). */}
-        <div ref={heroRef} style={{ width: '100%', maxWidth: 440, display: 'flex', justifyContent: 'center' }}>
-          <HomeContent active={heroIn} compact />
+      {/* Hero — white, matching desktop's Home phase. "SELECTED WORK" sits in
+          this same section, like the label sitting just above the frame peek
+          on desktop. */}
+      <div ref={heroRef} style={{ ...mobileView, position: 'relative', backgroundColor: '#FFFFFF', gap: 56, padding: '64px 20px 88px' }}>
+        <div style={{ width: '100%', maxWidth: 500, display: 'flex', justifyContent: 'center' }}>
+          {heroIn && <HomeContent active compact />}
         </div>
+        <WaveLabel
+          text="SELECTED WORK"
+          onClick={() => privatRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          style={{
+            position: 'absolute',
+            left: 20,
+            right: 20,
+            bottom: 24,
+            cursor: 'pointer',
+            touchAction: 'manipulation',
+          }}
+        />
+      </div>
 
-        <MobileWaveLabel text="SELECTED WORK" />
-
-        {/* Privat — phone mock auto-playing the scripted Privat demo (only
-            while on screen). */}
-        <div ref={privatRef} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
-          <div style={{ width: 'min(280px, 78vw)' }}>
-            <FitWidth designW={FRAME_W} designH={FRAME_H}>
-              <div style={{ width: FRAME_W, height: FRAME_H, border: '5px solid #A8AFB6', borderRadius: 40, overflow: 'hidden', boxSizing: 'border-box' }}>
-                <PrivatHomeView active={privatIn} />
-              </div>
-            </FitWidth>
-          </div>
-          <p style={{ ...cardLabel, textAlign: 'center' }}>Privat</p>
-          <p style={{ ...mobileDesc, color: '#5b5b5b', textAlign: 'center' }}>Designing and building Privat, an application for instant 1:1 video sessions.</p>
-          <MobileVisitLink href="https://goprivat.com" color="#000">Visit goprivat.com</MobileVisitLink>
-        </div>
-
-        {/* OlySense — white square replicating the desktop square's contents. */}
-        <div ref={olyRef} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
-          <FitWidth designW={FRAME_H} designH={FRAME_H} style={{ borderRadius: 32 }}>
-            <div style={{ position: 'relative', width: FRAME_H, height: FRAME_H, backgroundColor: '#FBFDFF', overflow: 'hidden' }}>
-              {/* Drifting blue/red gradient behind the trace canvas. */}
-              <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-                <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(-10%, -8%)', background: 'radial-gradient(circle at 32% 34%, rgba(198,221,255,0.7) 0%, rgba(198,221,255,0) 62%)', animation: 'oly-bg-a 16s ease-in-out infinite', willChange: 'transform' }} />
-                <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(10%, 8%) scale(1.15)', background: 'radial-gradient(circle at 70% 66%, rgba(255,206,211,0.62) 0%, rgba(255,206,211,0) 62%)', animation: 'oly-bg-b 21s ease-in-out infinite', willChange: 'transform' }} />
-              </div>
-              <OlyTraceCanvas style={{ position: 'absolute', inset: 0 }} play={olyIn} />
-              <OlyCarousel style={{ position: 'absolute', inset: 0 }} blurred={false} playing={olyIn} />
-              <EndoLoopVideo
-                src="/endo2.mp4"
-                loop={false}
-                playing={olyIn}
-                style={{
-                  position: 'absolute', left: 12, bottom: 40, width: 164.6,
-                  aspectRatio: '1080 / 1920', transform: 'scaleX(-1)', pointerEvents: 'none',
-                  WebkitMaskImage: 'linear-gradient(to right, transparent, #000 16%, #000 84%, transparent), linear-gradient(to bottom, transparent, #000 16%, #000 100%)',
-                  maskImage: 'linear-gradient(to right, transparent, #000 16%, #000 84%, transparent), linear-gradient(to bottom, transparent, #000 16%, #000 100%)',
-                  WebkitMaskComposite: 'source-in', maskComposite: 'intersect',
-                }}
-              />
+      {/* Privat — black, matching desktop's Privat phase. Light text on dark,
+          same palette as desktop's Privat side panel (#fcfcfc / #959595). */}
+      <div ref={privatRef} style={{ ...mobileView, backgroundColor: '#000000', gap: 18, padding: '32px 20px' }}>
+        <div style={{ width: 'min(280px, 76vw, calc((100dvh - 240px) * 0.4545))' }}>
+          <FitWidth designW={FRAME_W} designH={FRAME_H}>
+            <div style={{ width: FRAME_W, height: FRAME_H, border: '5px solid #A8AFB6', borderRadius: 40, overflow: 'hidden', boxSizing: 'border-box' }}>
+              {privatIn && <PrivatHomeView active />}
             </div>
           </FitWidth>
-          <p style={{ ...cardLabel, textAlign: 'center' }}>OlySense</p>
-          <p style={{ ...mobileDesc, color: '#000', textAlign: 'center' }}>Led 0→1 research and design for OlySense, an endoscopy KPI dashboard.</p>
+        </div>
+        <div style={mobileMeta}>
+          <p style={{ ...cardLabel, color: '#fcfcfc' }}>Privat</p>
+          <p style={{ ...mobileDescription, color: '#959595' }}>Designing and building Privat, an application for instant 1:1 video sessions.</p>
+          <MobileVisitLink href="https://goprivat.com" color="#fcfcfc">Visit goprivat.com</MobileVisitLink>
+        </div>
+      </div>
+
+      {/* OlySense — light blue-white, matching desktop's OlySense phase (same
+          colour the square itself already uses). */}
+      <div ref={olyRef} style={{ ...mobileView, backgroundColor: '#FBFDFF', gap: 18, padding: '32px 20px' }}>
+        <div style={{ width: 'min(460px, 100%, calc(100dvh - 280px))', minWidth: 0, marginTop: 'auto' }}>
+        <FitWidth designW={FRAME_H} designH={FRAME_H} style={{ borderRadius: 32 }}>
+          <div style={{ position: 'relative', width: FRAME_H, height: FRAME_H, backgroundColor: '#FBFDFF', overflow: 'hidden' }}>
+            {/* Drifting blue/red gradient behind the trace canvas. */}
+            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+              <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(-10%, -8%)', background: 'radial-gradient(circle at 32% 34%, rgba(198,221,255,0.7) 0%, rgba(198,221,255,0) 62%)', animation: 'oly-bg-a 16s ease-in-out infinite', willChange: 'transform' }} />
+              <div style={{ position: 'absolute', inset: '-25%', transform: 'translate(10%, 8%) scale(1.15)', background: 'radial-gradient(circle at 70% 66%, rgba(255,206,211,0.62) 0%, rgba(255,206,211,0) 62%)', animation: 'oly-bg-b 21s ease-in-out infinite', willChange: 'transform' }} />
+            </div>
+            {/* Mounted only while the card is on screen — never keep a WebGL canvas
+                + 2D canvas + video simultaneously resident off-screen. */}
+            {olyIn && (
+              <>
+                <OlyTraceCanvas style={{ position: 'absolute', inset: 0 }} play maxDpr={1.25} />
+                <OlyCarousel style={{ position: 'absolute', inset: 0 }} blurred playing />
+                <EndoLoopVideo
+                  src="/endo2.mp4"
+                  loop={false}
+                  playing
+                  smoothLoop={false}
+                  preload="metadata"
+                  style={{
+                    position: 'absolute', left: 12, bottom: 40, width: 164.6,
+                    aspectRatio: '1080 / 1920', transform: 'scaleX(-1)', pointerEvents: 'none',
+                    WebkitMaskImage: 'linear-gradient(to right, transparent, #000 16%, #000 84%, transparent), linear-gradient(to bottom, transparent, #000 16%, #000 100%)',
+                    maskImage: 'linear-gradient(to right, transparent, #000 16%, #000 84%, transparent), linear-gradient(to bottom, transparent, #000 16%, #000 100%)',
+                    WebkitMaskComposite: 'source-in', maskComposite: 'intersect',
+                  }}
+                />
+              </>
+            )}
+          </div>
+        </FitWidth>
+        </div>
+        <div style={mobileMeta}>
+          <p style={{ ...cardLabel }}>OlySense</p>
+          <p style={{ ...mobileDescription, color: '#000' }}>Led 0→1 research and design for OlySense, an endoscopy KPI dashboard.</p>
           <MobileVisitLink to="/olysense" color="#000">Visit case study</MobileVisitLink>
         </div>
+      </div>
 
-        {/* Base — dark dotted grid with the 3D icon canvas. */}
-        <div ref={baseRef} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
-          <FitWidth
-            designW={640}
-            designH={640}
-            style={{
-              borderRadius: 32,
-              // Dark fill with vivid-coloured dots: a dark layer with transparent dot
-              // holes (top) over the vivid gradient (bottom) → the gradient shows only
-              // through the holes. Static on mobile.
-              backgroundColor: BASE_BG_DARK,
-              backgroundImage: `${BASE_DOT_HOLES}, ${ICON_GRADIENT}`,
-              backgroundSize: `${BASE_DOT_SIZE}, auto`,
-              backgroundPosition: 'center',
-            }}
-          >
-            <div style={{ width: 640, height: 640 }}>
-              <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={0} renderActive={baseIn} />
-            </div>
-          </FitWidth>
-          <MobileWaveLabel text="RESOURCE" color="#000" />
-          <p style={{ ...cardLabel, textAlign: 'center' }}>base.24</p>
-          <p style={{ ...mobileDesc, color: '#5b5b5b', textAlign: 'center' }}>Created base.24, an open source icon set for Figma Design Community.</p>
-          <MobileVisitLink href="https://www.figma.com/community/file/1641498563291641806" color="#000">
+      {/* base.24 — dark navy (palette.pageBg), matching desktop's base phase.
+          Light text on dark, same palette as desktop's base panel. */}
+      <div ref={baseRef} style={{ ...mobileView, backgroundColor: palette.pageBg, gap: 18, padding: '32px 20px' }}>
+        <div style={{ width: 'min(460px, 100%, calc(100dvh - 280px))', minWidth: 0, marginTop: 'auto' }}>
+        <FitWidth
+          designW={640}
+          designH={640}
+          style={{
+            borderRadius: 32,
+            // Dark fill with vivid-coloured dots: a dark layer with transparent dot
+            // holes (top) over the vivid gradient (bottom) → the gradient shows only
+            // through the holes. Static on mobile.
+            backgroundColor: BASE_BG_DARK,
+            backgroundImage: `${BASE_DOT_HOLES}, ${ICON_GRADIENT}`,
+            backgroundSize: `${BASE_DOT_SIZE}, auto`,
+            backgroundPosition: 'center',
+          }}
+        >
+          <div style={{ width: 640, height: 640 }}>
+            {baseIn && (
+              <BaseMatchCanvas pool={BASE_ICON_POOL} color={palette.icon} colors={ICON_COLORS} playing={false} spin={false} wobble showTile={false} depth={1.5} cellFit={0.85} roundness={1} shuffleKey={0} renderActive={baseIn} cheapMaterial />
+            )}
+          </div>
+        </FitWidth>
+        </div>
+        <div style={mobileMeta}>
+          <p style={{ ...cardLabel, color: '#A8A8A8' }}>base.24</p>
+          <p style={{ ...mobileDescription, color: '#A8A8A8' }}>Created base.24, an open source icon set for Figma Design Community.</p>
+          <MobileVisitLink href="https://www.figma.com/community/file/1641498563291641806" color="#fcfcfc">
             View on
             <FigmaLogo style={{ width: 12, height: 18, display: 'inline-block', verticalAlign: 'middle' }} />
             Community
           </MobileVisitLink>
         </div>
+      </div>
 
-        {/* About */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, width: '100%' }}>
-          {/* The wall is an absolute background filler (inset: 0) — it needs a
-              positioned, sized box to live in. */}
-          <div style={{ alignSelf: 'stretch', position: 'relative', height: 440, overflow: 'hidden' }}>
-            <PolaroidWall scale={0.55} />
+      {/* About — light grey, matching desktop's final stage. */}
+      <div style={{ ...mobileView, position: 'relative', backgroundColor: '#FAFAFC', padding: '48px 20px', overflow: 'hidden' }}>
+        <PolaroidWall scale={0.94} />
+
+        {/* Contact — mirrors the desktop frosted badge, layered over the photo wall. */}
+        <div
+          ref={contactRef}
+          style={{
+            position: 'relative',
+            zIndex: 1,
+            width: 'min(300px, 84vw)',
+            height: 'min(560px, 84dvh)',
+            borderRadius: 28,
+            overflow: 'hidden',
+            backgroundColor: 'rgba(255,255,255,0.18)',
+            backdropFilter: 'blur(24px) saturate(1.6)',
+            WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
+            border: '1px solid rgba(255,255,255,0.5)',
+            boxShadow: '0 24px 64px rgba(20,24,40,0.14), inset 0 1px 1px rgba(255,255,255,0.6)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '36px 22px 28px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div style={{ width: 'min(180px, 52vw, 28dvh)', height: 'min(180px, 52vw, 28dvh)', borderRadius: '50%', overflow: 'hidden', backgroundColor: '#E0E0E4', flexShrink: 0 }}>
+            {contactIn && (
+              <EndoLoopVideo
+                src="/avatar1.mp4"
+                objectPosition="36.5% center"
+                fadeSeconds={0.6}
+                holdSeconds={0}
+                startDelaySeconds={0}
+                loop={false}
+                playing
+                smoothLoop={false}
+                preload="metadata"
+                style={{ width: '100%', height: '100%' }}
+              />
+            )}
           </div>
-
-          {/* Contact — mobile rendering of the desktop stage-4 about badge:
-              avatar → name → email → social icons (LinkedIn + GitHub). */}
-          <div ref={contactRef} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-            <EndoLoopVideo
-              src="/avatar1.mp4"
-              objectPosition="36.5% center"
-              fadeSeconds={0.6}
-              holdSeconds={0}
-              startDelaySeconds={0}
-              loop={false}
-              playing={contactIn}
-              style={{ width: 160, height: 160, borderRadius: '50%', overflow: 'hidden', backgroundColor: '#E0E0E4' }}
-            />
-            <div style={{ textAlign: 'center', fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 400, fontSize: 40, letterSpacing: '-1.05px', lineHeight: 1.12, color: '#1A1A1A' }}>
-              <div>Aleks</div>
-              <div>Zhurankou</div>
+          <div style={{ marginTop: 28, textAlign: 'center', fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 400, fontSize: 'clamp(34px, 10vw, 44px)', letterSpacing: '-1.05px', lineHeight: 1.12, color: '#1A1A1A' }}>
+            <div>Aleks</div>
+            <div>Zhurankou</div>
+          </div>
+          <a href="mailto:hi@aleks.design" style={{ marginTop: 26, fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 20, color: '#333333', textDecoration: 'none' }}>hi@aleks.design</a>
+          {/* Social icons + copyright grouped as one footer, tighter gap than the sections above */}
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14, lineHeight: 0 }}>
+              <a href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" style={{ display: 'inline-block', borderRadius: 4, overflow: 'hidden' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z" />
+                </svg>
+              </a>
+              <a href="https://github.com/zhurankou" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style={{ display: 'inline-block', borderRadius: 4, overflow: 'hidden' }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
+                  <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+                </svg>
+              </a>
             </div>
-            <a href="mailto:hi@aleks.design" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 20, color: '#333333', textDecoration: 'none' }}>hi@aleks.design</a>
-            {/* Social icons + copyright grouped as one footer, tighter gap than the sections above */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14, lineHeight: 0 }}>
-                <a href="https://www.linkedin.com/in/zhurankou/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" style={{ display: 'inline-block', borderRadius: 4, overflow: 'hidden' }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z" />
-                  </svg>
-                </a>
-                <a href="https://github.com/zhurankou" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style={{ display: 'inline-block', borderRadius: 4, overflow: 'hidden' }}>
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" style={{ borderRadius: 4 }}>
-                    <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-                  </svg>
-                </a>
-              </div>
-              <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 15, color: '#888' }}>© 2026</div>
-            </div>
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 15, color: '#888' }}>© 2026</div>
           </div>
         </div>
       </div>

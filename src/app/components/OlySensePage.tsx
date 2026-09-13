@@ -6,9 +6,11 @@ import { LoFiPolypsCharts } from './LoFiPolypsCharts';
 import { HiFiCompare } from './HiFiCompare';
 import { HiFiCorrelated } from './HiFiCorrelated';
 import { ScrollFadeIn } from './ui/ScrollFadeIn';
-import { useBreakpoint, useIsPortrait } from './ui/use-breakpoint';
+import { useIsPhone } from './ui/use-breakpoint';
 import { FitWidth } from './ui/FitWidth';
-import { RotateNotice } from './ui/RotateNotice';
+import { useInView } from './ui/use-in-view';
+import { mobileCss } from './ui/mobile-css';
+import { WaveLabel } from './ui/WaveLabel';
 
 // OlySense case-study page. White canvas with a single scroll-driven transition
 // modelled on the home→Privat frame move in NewPage: as you scroll, the title +
@@ -329,13 +331,13 @@ export function PolaroidRow() {
 }
 
 export function OlySensePage() {
-  // Mobile gets a dedicated stacked layout; the scroll-morph machinery below
-  // (sticky Process, scroll-driven Final Design rectangle) never mounts there.
-  const bp = useBreakpoint();
-  const portrait = useIsPortrait();
-  // Phones: rotate prompt in portrait, the full scaled case study in landscape.
-  // (Swap RotateNotice for <OlySenseMobile /> to restore the stacked layout.)
-  if (bp === 'mobile') return portrait ? <RotateNotice /> : <OlySensePageDesktop />;
+  // Mobile gets a dedicated, GPU-lite stacked layout (OlySenseMobile) — the
+  // scroll-morph machinery below (sticky Process, scroll-driven Final Design
+  // rectangle) never mounts there. Phone detection is by SHORT side, not
+  // width, so it survives rotation. Portrait works natively (no rotate
+  // prompt) since the stacked layout doesn't need landscape width.
+  const isPhone = useIsPhone();
+  if (isPhone) return <OlySenseMobile />;
   return <OlySensePageDesktop />;
 }
 
@@ -1333,7 +1335,7 @@ export function EndoLeadDuet() {
             poster="/endo-lead-poster.jpg"
             muted
             playsInline
-            preload="auto"
+            preload="metadata"
             onEnded={handleEndoEnded}
             onTimeUpdate={handleTimeUpdate('endo')}
             style={{ ...videoStyle, objectPosition: '30% center' }}
@@ -1353,7 +1355,7 @@ export function EndoLeadDuet() {
             poster="/endo-poster.jpg"
             muted
             playsInline
-            preload="auto"
+            preload="metadata"
             onEnded={handleLeadEnded}
             onTimeUpdate={handleTimeUpdate('lead')}
             style={videoStyle}
@@ -1809,20 +1811,6 @@ function DropdownRow({ dropdown, active, isFirst }: { dropdown: ProcessDropdown;
 // Fixed-size content (the 935px timeline, the 696px process squares, the
 // 1200×792 dashboard) is shrunk to the column width via FitWidth.
 
-// Per-character colour-wave label (CASE STUDY / PROBLEM / THANK YOU!), matching
-// the desktop tags.
-function WaveTag({ text }: { text: string }) {
-  return (
-    <p style={{ margin: 0, fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 600, fontSize: 16, lineHeight: '28px', color: '#A8AFB6', textAlign: 'center', whiteSpace: 'nowrap' }}>
-      {Array.from(text).map((ch, i) => (
-        <span key={i} style={{ display: 'inline-block', whiteSpace: 'pre', animation: 'selected-wave 2s ease-in-out infinite', animationDelay: `${i * 0.12}s` }}>
-          {ch}
-        </span>
-      ))}
-    </p>
-  );
-}
-
 const mobileH2: React.CSSProperties = {
   margin: 0, fontFamily: "'Stack Sans Notch', sans-serif",
   fontWeight: 300, fontSize: 34, lineHeight: 'normal', color: '#000000', textAlign: 'center',
@@ -1832,14 +1820,34 @@ const mobileBody: React.CSSProperties = {
   fontWeight: 500, fontSize: 17, lineHeight: '28px', color: '#000000',
 };
 
-function OlySenseMobile() {
+// One Process square, mounted only while it's near-viewport — EndoLeadDuet
+// (square3) owns two always-decoding <video preload="auto">s, the one clear
+// video-concurrency risk in this page; gated uniformly for every square (the
+// rest are cheap/static) so the idiom stays the same everywhere.
+function ProcessSquareGated({ square }: { square: { content?: React.ReactNode; fullBleed?: boolean } }) {
+  const [ref, inView] = useInView<HTMLDivElement>();
   return (
-    <div style={{ width: '100%', minHeight: '100dvh', backgroundColor: '#FFFFFF', overflowX: 'hidden' }}>
-      <style>{loadAnim}</style>
+    <div ref={ref}>
+      <FitWidth designW={696} designH={696} style={{ borderRadius: 24, backgroundColor: '#f5f5f7' }}>
+        <div style={{ width: 696, height: 696, ...(square.fullBleed ? {} : { padding: 40, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center' }) }}>
+          {inView && square.content}
+        </div>
+      </FitWidth>
+    </div>
+  );
+}
 
-      {/* Back-home pill — fixed, glass. */}
-      <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 50, backgroundColor: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(16px) saturate(1.6)', WebkitBackdropFilter: 'blur(16px) saturate(1.6)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 4px 16px rgba(20,24,40,0.1)', borderRadius: 999, padding: 4 }}>
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 4, border: '2px solid #000', borderRadius: 32, padding: '5px 14px', textDecoration: 'none' }}>
+function OlySenseMobile() {
+  const [finalRef, finalIn] = useInView<HTMLDivElement>();
+  return (
+    <div className="m-root" style={{ width: '100%', minHeight: '100dvh', backgroundColor: '#FFFFFF', overflowX: 'hidden' }}>
+      <style>{loadAnim}</style>
+      <style>{mobileCss}</style>
+
+      {/* Back-home pill — fixed for the whole session, so it stays flat/opaque
+          rather than backdrop-filter glass (no blur running continuously). */}
+      <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 50, backgroundColor: 'rgba(255,255,255,0.92)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 4px 16px rgba(20,24,40,0.1)', borderRadius: 999, padding: 4 }}>
+        <Link to="/" className="m-press" style={{ display: 'flex', alignItems: 'center', gap: 4, border: '2px solid #000', borderRadius: 32, padding: '5px 14px', textDecoration: 'none' }}>
           <svg viewBox="0 0 24 24" fill="none" style={{ width: 18, height: 18, transform: 'scaleX(-1)' }}>
             <path fillRule="evenodd" clipRule="evenodd" d="M12 4.58579L19.4142 12L12 19.4142L10.5858 18L15.5858 13H5V11H15.5858L10.5858 6L12 4.58579Z" fill="#000" />
           </svg>
@@ -1852,7 +1860,7 @@ function OlySenseMobile() {
 
         {/* Hero */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
-          <WaveTag text="CASE STUDY" />
+          <WaveLabel text="CASE STUDY" fontSize={16} />
           {/* clamp keeps 40px on common phones (≥~380px) and only shrinks on very
               narrow screens so "OlySense Insights" never clips under overflowX:hidden */}
           <h1 style={{ ...mobileH2, fontSize: 'clamp(34px, 10.5vw, 40px)', fontWeight: 300 }}>Polyps Metrics in<br />OlySense Insights</h1>
@@ -1875,7 +1883,7 @@ function OlySenseMobile() {
 
         {/* Problem */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
-          <WaveTag text="PROBLEM" />
+          <WaveLabel text="PROBLEM" fontSize={16} />
           <ScrollFadeIn><p style={{ ...mobileH2, maxWidth: 520 }}>Clinicians needed a clearer, more actionable way to understand polyp quality metrics and what was driving their results.</p></ScrollFadeIn>
           <div style={{ alignSelf: 'stretch', marginTop: 8 }}><PolaroidRow /></div>
         </div>
@@ -1889,32 +1897,27 @@ function OlySenseMobile() {
               {d.description.split('\n\n').map((para, pi) => (
                 <p key={pi} style={{ ...mobileBody, fontWeight: 400, fontSize: 16 }}>{para}</p>
               ))}
-              {PROCESS_SQUARES.map((s, si) => s.dropdownIdx === di ? (
-                <FitWidth key={si} designW={696} designH={696} style={{ borderRadius: 24, backgroundColor: '#f5f5f7' }}>
-                  <div style={{ width: 696, height: 696, ...(s.fullBleed ? {} : { padding: 40, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center' }) }}>
-                    {s.content}
-                  </div>
-                </FitWidth>
-              ) : null)}
+              {PROCESS_SQUARES.map((s, si) => s.dropdownIdx === di ? <ProcessSquareGated key={si} square={s} /> : null)}
             </div>
           ))}
         </div>
 
         {/* Final Design — static scaled dashboard preview + interactive-prototype tag */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
+        <div ref={finalRef} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, width: '100%' }}>
           <ScrollFadeIn><h2 style={mobileH2}>Final Design</h2></ScrollFadeIn>
           <p style={{ ...mobileBody, textAlign: 'center' }}>OlySense workflows were validated before launch through usability evaluation with target users, where participants completed 82% of key tasks successfully.</p>
           <div style={{ position: 'relative', width: '100%', marginTop: 8, pointerEvents: 'none' }}>
             <FitWidth designW={BASE_W} designH={BASE_H}>
-              <BrowserFrame expand={1}>
-                <PolypsDashboard selfScroll={false} />
-              </BrowserFrame>
+              {finalIn && (
+                <BrowserFrame expand={1}>
+                  <PolypsDashboard selfScroll={false} />
+                </BrowserFrame>
+              )}
             </FitWidth>
           </div>
-          <WaveTag text="THANK YOU!" />
+          <WaveLabel text="THANK YOU!" fontSize={16} />
         </div>
       </div>
     </div>
   );
 }
-
