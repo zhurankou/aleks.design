@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { Link } from 'react-router';
 import imgProfile from "figma:asset/f700c10be8e928d2c825e536435c89724d9f3fa1.png";
-import { PrivatHomeView } from './privat/PrivatHomeView';
-import { AnimatedCursor, type CursorPhase } from './privat/AnimatedCursor';
+import { AssemblyDemo, IPhoneBody } from './assembly/AssemblyDemo';
+import { ChalkCanvas } from './assembly/ChalkCanvas';
 import { BaseMatchCanvas } from './BaseMatchCanvas';
 import { OlyCarousel } from './OlyCarousel';
 import { OlyTraceCanvas } from './OlyTraceCanvas';
@@ -742,14 +742,6 @@ export const baseDotsAnim = `
 
 // "+$5" floats up the base rectangle on each match: fades in near the bottom,
 // holds, then fades out at the top.
-// Metallic-silver shine: a diagonal highlight sweeps across the frame surface, looped slowly.
-const frameShineAnim = `
-  @keyframes frame-shine {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -100% 0; }
-  }
-`;
-
 // "About" badge entrance — avatar, name, email and year cascade up as the badge
 // mounts on entering stage 4. The avatar keeps its translateX(-50%) centring.
 const badgeInAnim = `
@@ -803,21 +795,12 @@ export function NewPage() {
 
 function NewPageDesktop() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const sharedCircleRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
   const [vh, setVh] = useState(() => window.innerHeight);
   const [vw, setVw] = useState(() => window.innerWidth);
   const [s4, setS4] = useState(0);   // eased copy of pStage4 — drives the base→hero morph as one smooth motion
   const s4Ref = useRef(0);
   const s4TargetRef = useRef(0);
-  // Cursor wiring — phase is bubbled up from PrivatHomeView; copyEl/startBtnEl
-  // are live DOM nodes the animated cursor targets via getBoundingClientRect.
-  // frameElRef points at the outer PWA-frame container so a ResizeObserver can
-  // reposition the cursor on every frame size change.
-  const [cursorPhase, setCursorPhase] = useState<CursorPhase>('enter');
-  const [copyEl, setCopyEl] = useState<HTMLElement | null>(null);
-  const [startBtnEl, setStartBtnEl] = useState<HTMLElement | null>(null);
-  const frameElRef = useRef<HTMLDivElement | null>(null);
   const [visitHovered, setVisitHovered] = useState(false);
   const [olyVisitHovered, setOlyVisitHovered] = useState(false);
   const [baseVisitHovered, setBaseVisitHovered] = useState(false);
@@ -865,7 +848,7 @@ function NewPageDesktop() {
     return () => { el.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf); };
   }, []);
 
-  // Four-stage scroll: 0→¼ home → Privat, ¼→½ Privat → Olysense, ½→¾ Olysense → base,
+  // Four-stage scroll: 0→¼ home → Assembly, ¼→½ Assembly → Olysense, ½→¾ Olysense → base,
   // ¾→1 base → hero tile. Each pStage is still a 0→1 transition, just over a quarter of scroll.
   const pStage1 = smoothstep(Math.min(1, progress * 4));
   const pStage2 = smoothstep(Math.min(1, Math.max(0, (progress - 1 / 4) * 4)));
@@ -995,7 +978,7 @@ function NewPageDesktop() {
   // Stage 2 fades the border out; stage 3 keeps it at 0 (base view has no stroke).
   const frameBorderWidth = lerp(5, 0, pFrameMorph);
   // Home start position is shifted 38px lower (less peek visible) than the raw
-  // PEEK; the lerp still ends at centred on Privat.
+  // PEEK; the lerp still ends at centred on Assembly.
   const frameTop = lerp(layoutVh - PEEK, (layoutVh - frameHeight) / 2, pStage1);
   // Panels fade in like the home-load intro (opacity 0→1, scale 0.9→1, 700ms)
   // when the showcase is reached, and fade back out when scrolling away or into stage 2.
@@ -1022,13 +1005,13 @@ function NewPageDesktop() {
   useEffect(() => () => {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#FFFFFF');
   }, []);
-  // Border: silver #A8AFB6 from home onwards (matches the Privat phone bezel,
-  // no stage-1 colour shift); stage 2 → light blue; stage 3 → dark grey.
+  // Border: the iPhone's black bezel from home onwards (no stage-1 colour shift);
+  // stage 2 → light blue; stage 3 → dark grey.
   const borderColor = pStage3 > 0
     ? lerpColor(LIGHT_BLUE, '#333333', pStage3)
     : pFrameMorph > 0
-    ? lerpColor('#A8AFB6', LIGHT_BLUE, pFrameMorph)
-    : '#A8AFB6';
+    ? lerpColor('#000000', LIGHT_BLUE, pFrameMorph)
+    : '#000000';
   const contentOpacity = 1 - pStage1;
   // OlySense label appears once the square is essentially formed.
   const olySenseVisible = pFrameMorph >= 0.9;
@@ -1053,7 +1036,7 @@ function NewPageDesktop() {
         scrollSnapType: 'y mandatory',
       }}
     >
-      {/* Scroll track — 5 viewport-heights: home→Privat→Olysense→base→hero tile.
+      {/* Scroll track — 5 viewport-heights: home→Assembly→Olysense→base→hero tile.
           Heights are design-space px (layoutVh) so the snap stops stay aligned
           under the scale transform. */}
       <div style={{ height: layoutVh * 5, position: 'relative' }}>
@@ -1083,6 +1066,12 @@ function NewPageDesktop() {
               <style>{olyBgAnim}</style>
               <div style={{ position: 'absolute', inset: '-25%', background: 'radial-gradient(circle at 32% 34%, rgba(198,221,255,0.7) 0%, rgba(198,221,255,0) 62%)', animation: 'oly-bg-a 16s ease-in-out infinite', willChange: 'transform' }} />
               <div style={{ position: 'absolute', inset: '-25%', background: 'radial-gradient(circle at 70% 66%, rgba(255,206,211,0.62) 0%, rgba(255,206,211,0) 62%)', animation: 'oly-bg-b 21s ease-in-out infinite', willChange: 'transform' }} />
+            </div>
+          )}
+          {/* Assembly background — fades in with the black, out before the page turns light. */}
+          {pStage1 > 0.01 && pPanelFade < 1 && (
+            <div style={{ position: 'absolute', inset: 0, opacity: pStage1 * (1 - pPanelFade), pointerEvents: 'none' }}>
+              <ChalkCanvas active={pwaActive} />
             </div>
           )}
           {/* Background typography layer — outlined ticker. On scroll-away,
@@ -1149,7 +1138,7 @@ function NewPageDesktop() {
             </div>
           )}
           {/* PWA frame + label */}
-          <div ref={frameElRef} style={{
+          <div style={{
             position: 'absolute',
             top: frameTop,
             left: '50%',
@@ -1161,7 +1150,7 @@ function NewPageDesktop() {
           }}>
             {/* Base-view background is a viewport-sized animated gradient layer rendered
                 at the sticky-container level (see below), so it never tiles/seams. */}
-            {/* Privat label — project name, styled like the Olysense label */}
+            {/* Assembly label — project name, styled like the Olysense label */}
             <div style={{
               position: 'absolute',
               right: 'calc(100% + 40px)',
@@ -1182,7 +1171,7 @@ function NewPageDesktop() {
                 margin: 0,
                 whiteSpace: 'nowrap',
               }}>
-                Privat
+                Assembly
               </p>
             </div>
             {/* OlySense label — appears on the left of the final blue square */}
@@ -1229,10 +1218,10 @@ function NewPageDesktop() {
                 WIP PROJECT
               </p>
               <p style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: 20, lineHeight: '34px', color: '#959595', margin: 0 }}>
-                Designing and building <span style={{ color: '#959595' }}>Privat</span>, an application for instant 1:1 video sessions.
+                Designing and building <span style={{ color: '#959595' }}>Assembly</span>, an iPhone app that translates group conversations in real time.
               </p>
               <a
-                href="https://goprivat.com"
+                href="https://testflight.apple.com/join/TvTRpymm"
                 target="_blank"
                 rel="noopener noreferrer"
                 onMouseEnter={() => setVisitHovered(true)}
@@ -1253,8 +1242,8 @@ function NewPageDesktop() {
                   transition: 'background-size 0.4s ease-out',
                 }}>
                 <p style={{ fontFamily: "'Stack Sans Notch', sans-serif", fontWeight: 300, fontSize: 16, letterSpacing: '0.14px', textAlign: 'center', whiteSpace: 'nowrap', margin: 0, flexShrink: 0, paddingLeft: 4 }}>
-                  {'Visit goprivat.com'.split('').map((char, i) => {
-                    const total = 'Visit goprivat.com'.length;
+                  {'Join the TestFlight'.split('').map((char, i) => {
+                    const total = 'Join the TestFlight'.length;
                     const delay = visitHovered ? i * 22 : (total - 1 - i) * 22;
                     return (
                       <span
@@ -1341,15 +1330,17 @@ function NewPageDesktop() {
                 </div>
               </Link>
             </div>
+            {/* iPhone body — gone by the time the frame has morphed into the square. */}
+            {pFrameMorph < 1 && <IPhoneBody opacity={1 - Math.min(1, pFrameMorph * 3)} />}
             {/* Frame */}
             <div style={{
+              position: 'relative',
               width: '100%',
               height: '100%',
               border: `${frameBorderWidth}px solid ${borderColor}`,
-              borderRadius: 40,
+              borderRadius: lerp(54, 40, pFrameMorph),
               overflow: 'hidden',
               boxSizing: 'border-box',
-              position: 'relative',
               // Base view only: darken the area outside the rectangle (respects the rounded
               // corners), leaving the gradient + bright dots inside untouched.
               // Solid bluish-"black" surround (no blur → no gradient halo → no animation
@@ -1361,13 +1352,7 @@ function NewPageDesktop() {
               boxShadow: `0 0 0 ${Math.max(layoutVw, layoutVh)}px rgba(${BASE_BG_SURROUND}, ${dotFade})`,
             }}>
               <div style={{ width: '100%', height: '100%', opacity: frameContentOpacity }}>
-                <PrivatHomeView
-                  active={pwaActive}
-                  circleRef={sharedCircleRef}
-                  onPhaseChange={setCursorPhase}
-                  copyRef={setCopyEl}
-                  startBtnRef={setStartBtnEl}
-                />
+                <AssemblyDemo active={pwaActive} />
               </div>
               {/* OlySense bg — the drifting blue/red gradient, sitting behind the trace
                   canvas. The canvas paints the white square surface on top and cuts the
@@ -1456,30 +1441,6 @@ function NewPageDesktop() {
                   </div>
                 </div>
             </div>
-            {/* Stroke shine — a bright highlight sweeps along the silver bezel
-                ring on home + stage 1. The CSS mask-composite trick clips the
-                moving gradient to just the border ring (between border-box
-                and content-box). Fades out before stage 2 so the existing
-                surface shine takes over once the morph starts. */}
-            {(1 - Math.min(1, pFrameMorph * 4)) > 0.001 && (
-              <>
-                <style>{frameShineAnim}</style>
-                <div style={{
-                  position: 'absolute',
-                  inset: 0,
-                  borderRadius: 40,
-                  padding: frameBorderWidth,
-                  background: 'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.35) 44%, rgba(255,255,255,1) 50%, rgba(255,255,255,0.35) 56%, transparent 70%)',
-                  backgroundSize: '280% 100%',
-                  animation: 'frame-shine 10s ease-in-out infinite',
-                  WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
-                  WebkitMaskComposite: 'xor',
-                  maskComposite: 'exclude',
-                  opacity: 1 - Math.min(1, pFrameMorph * 4),
-                  pointerEvents: 'none',
-                }} />
-              </>
-            )}
             {/* Stage 4 — the base rectangle becomes the "about" badge: a white rounded card that
                 fades in as the base content clears, ending at 240×480 and tilted slightly CCW. */}
             {s4 > 0.001 && (
@@ -1644,30 +1605,13 @@ function NewPageDesktop() {
         </div>
       </div>
     </div>
-    {/* Animated cursor — lives OUTSIDE the scale(k) scroller: its position is
-        tracked in screen space via the targets' getBoundingClientRect, and its
-        position:fixed must resolve against the real viewport (a transformed
-        ancestor would hijack it and double-scale the coordinates). The hand
-        stays at its original 280px and only shrinks with k on small windows —
-        scaling it UP on large screens made it read too big. Proportions are
-        intrinsic (width derives from the image aspect) and the click targets
-        are size-independent (the fingertip anchors to the buttons' rects). */}
-    {pwaActive && (
-      <AnimatedCursor
-        phase={cursorPhase}
-        copyEl={copyEl}
-        startBtnEl={startBtnEl}
-        frameEl={frameElRef.current}
-        size={280 * Math.min(k, 1)}
-      />
-    )}
     </div>
   );
 }
 
 // ── Mobile (<768px) ─────────────────────────────────────────────────────────
 // Dedicated stacked layout. The 4-stage scroll-morph is replaced by a vertical
-// document that reuses the same sub-components (HomeContent, PrivatHomeView, the
+// document that reuses the same sub-components (HomeContent, AssemblyDemo, the
 // OlySense square's carousel/trace/video, BaseMatchCanvas, PolaroidWall). Fixed
 // desktop sizes are shrunk to the column width via FitWidth. Heavy children
 // (video/WebGL/canvas) are mounted only while their section is on screen via
@@ -1736,7 +1680,7 @@ function NewPageMobile() {
   // mounted while their section is on screen, not just paused off-screen.
   // Never more than one section's worth of that resident in the DOM at once.
   const [heroRef, heroIn] = useInView<HTMLDivElement>();
-  const [privatRef, privatIn] = useInView<HTMLDivElement>();
+  const [assemblyRef, assemblyIn] = useInView<HTMLDivElement>();
   const [olyRef, olyIn] = useInView<HTMLDivElement>();
   const [baseRef, baseIn] = useInView<HTMLDivElement>();
   const [contactRef, contactIn] = useInView<HTMLDivElement>();
@@ -1766,7 +1710,7 @@ function NewPageMobile() {
         </div>
         <WaveLabel
           text="SELECTED WORK"
-          onClick={() => privatRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          onClick={() => assemblyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
           style={{
             position: 'absolute',
             left: 20,
@@ -1778,20 +1722,24 @@ function NewPageMobile() {
         />
       </div>
 
-      {/* Privat — black, matching desktop's Privat phase. Light text on dark,
-          same palette as desktop's Privat side panel (#fcfcfc / #959595). */}
-      <div ref={privatRef} style={{ ...mobileView, backgroundColor: '#000000', gap: 18, padding: '32px 20px' }}>
-        <div style={{ width: 'min(280px, 76vw, calc((100dvh - 240px) * 0.4545))' }}>
-          <FitWidth designW={FRAME_W} designH={FRAME_H}>
-            <div style={{ width: FRAME_W, height: FRAME_H, border: '5px solid #A8AFB6', borderRadius: 40, overflow: 'hidden', boxSizing: 'border-box' }}>
-              {privatIn && <PrivatHomeView active />}
+      {/* Assembly — black, matching desktop's Assembly phase. Light text on dark,
+          same palette as desktop's Assembly side panel (#fcfcfc / #959595). */}
+      <div ref={assemblyRef} style={{ ...mobileView, position: 'relative', backgroundColor: '#000000', gap: 18, padding: '32px 20px' }}>
+        {assemblyIn && <ChalkCanvas active />}
+        <div style={{ position: 'relative', width: 'min(280px, 76vw, calc((100dvh - 240px) * 0.4545))' }}>
+          <FitWidth designW={FRAME_W} designH={FRAME_H} style={{ overflow: 'visible' }}>
+            <div style={{ position: 'relative', width: FRAME_W, height: FRAME_H }}>
+              <IPhoneBody />
+              <div style={{ position: 'relative', width: '100%', height: '100%', border: '5px solid #000000', borderRadius: 54, overflow: 'hidden', boxSizing: 'border-box' }}>
+                {assemblyIn && <AssemblyDemo active />}
+              </div>
             </div>
           </FitWidth>
         </div>
-        <div style={mobileMeta}>
-          <p style={{ ...cardLabel, color: '#fcfcfc' }}>Privat</p>
-          <p style={{ ...mobileDescription, color: '#959595' }}>Designing and building Privat, an application for instant 1:1 video sessions.</p>
-          <MobileVisitLink href="https://goprivat.com" color="#fcfcfc">Visit goprivat.com</MobileVisitLink>
+        <div style={{ ...mobileMeta, position: 'relative' }}>
+          <p style={{ ...cardLabel, color: '#fcfcfc' }}>Assembly</p>
+          <p style={{ ...mobileDescription, color: '#959595' }}>Designing and building Assembly, an iPhone app that translates group conversations in real time.</p>
+          <MobileVisitLink href="https://testflight.apple.com/join/TvTRpymm" color="#fcfcfc">Join the TestFlight</MobileVisitLink>
         </div>
       </div>
 
