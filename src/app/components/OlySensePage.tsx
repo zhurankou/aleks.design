@@ -361,15 +361,14 @@ function OlySensePageDesktop() {
   const pRef = useRef(0);
   const rafRef = useRef(0);
   // Tablet + desktop: the tree renders in design space and a transform on the
-  // scroller fits it to the real viewport. The scale is height-driven —
-  // k = vh / DESIGN_H — so the case study tracks the screen height, capped by
-  // the width fit (vw / DESIGN_W) so portrait tablets can't overflow
+  // scroller fits it to the real viewport. Same fit as the home page and
+  // /slides: a 792px frame keeps 64px above and below and never scales past 1,
+  // capped by the width fit (vw / DESIGN_W) so portrait tablets can't overflow
   // horizontally. All scroll math runs in design space (scrollTop, track
   // heights and layoutVh are unscaled), so the transform on the scroller only
   // affects pixels on screen.
   const DESIGN_W = 1280;
-  const DESIGN_H = 832; // authored canvas height — matches the home page's frame + peek
-  const k = Math.min(vw / DESIGN_W, vh / DESIGN_H);
+  const k = Math.min(1, vw / DESIGN_W, (vh - 128) / 792);
   const layoutVw = vw / k;
   const layoutVh = vh / k;
 

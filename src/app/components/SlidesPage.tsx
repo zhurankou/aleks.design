@@ -27,6 +27,8 @@ import { HiFiCompare } from './HiFiCompare';
 import { HiFiCorrelated } from './HiFiCorrelated';
 import { PolypsDashboard } from './polyps/PolypsDashboard';
 import { BrowserFrame } from './BrowserFrame';
+import { AssemblyDemo, IPhoneBody } from './assembly/AssemblyDemo';
+import { ChalkCanvas } from './assembly/ChalkCanvas';
 import { PrivatHomeView } from './privat/PrivatHomeView';
 import { AnimatedCursor, type CursorPhase } from './privat/AnimatedCursor';
 import { BaseMatchCanvas } from './BaseMatchCanvas';
@@ -514,6 +516,32 @@ const SLIDES: Slide[] = [
           </FitBox>
         </div>
       </div>
+    ),
+  },
+  // Assembly (the /new desktop view: iPhone frame over the chalk background)
+  {
+    bg: '#000000',
+    dark: true,
+    render: () => (
+      <ShowcaseSlide
+        name="Assembly"
+        tag="WIP PROJECT"
+        frameW={FRAME_W}
+        frameH={FRAME_H}
+        desc="Designing and building Assembly, an iPhone app that translates group conversations in real time."
+        nameColor="#FFFFFF"
+        tagColor="#FCFCFC"
+        descColor="#959595"
+        bgLayer={<ChalkCanvas active />}
+        visual={
+          <div style={{ position: 'relative', width: FRAME_W, height: FRAME_H }}>
+            <IPhoneBody />
+            <div style={{ position: 'relative', width: '100%', height: '100%', border: '5px solid #000000', borderRadius: 54, overflow: 'hidden', boxSizing: 'border-box' }}>
+              <AssemblyDemo active />
+            </div>
+          </div>
+        }
+      />
     ),
   },
   // 4 — Privat (the /new desktop view, with the scripted hand cursor)

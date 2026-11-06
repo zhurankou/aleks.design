@@ -51,8 +51,8 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef, on
   useEffect(() => { onPhaseChange?.(cursorPhase); }, [cursorPhase, onPhaseChange]);
 
   // Fade begins a moment before video1 finishes (in PIP). When video1 nears its end,
-  // trigger fadeOut AND schedule the loop bump — we can't wait for onEnded because the
-  // 'fadeOut' phase pauses video1 before it would naturally end.
+  // trigger fadeOut AND schedule the loop bump, so the screen is black by the time
+  // video1 would naturally end.
   const scheduleLoopReset = () => {
     if (loopScheduledRef.current) return;
     loopScheduledRef.current = true;
@@ -104,8 +104,9 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef, on
         video2Ref.current?.play().catch(() => {});
       }, 400);
     }
-    if (cursorPhase === 'fadeOut') {
+    if (cursorPhase === 'enter') {
       // Pause both videos and rewind so they're parked at frame 0 for the next loop.
+      // Not before this: the rewind would show as a jump during the fade to black.
       if (video1Ref.current) { video1Ref.current.pause(); video1Ref.current.currentTime = 0; }
       if (video2Ref.current) { video2Ref.current.pause(); video2Ref.current.currentTime = 0; }
     }
@@ -415,10 +416,12 @@ export function PrivatHomeView({ active = true, circleRef: externalCircleRef, on
           height: '100%',
           objectFit: 'cover',
           zIndex: 24,
-          opacity: cursorPhase === 'videoPip' ? 1 : 0,
+          opacity: (cursorPhase === 'videoPip' || cursorPhase === 'fadeOut') ? 1 : 0,
           pointerEvents: 'none',
           // Hold on the black backdrop while video1 shrinks to PIP, then fade video2 in.
-          transition: 'opacity 2000ms ease-in-out 900ms',
+          // Fade in only: it must vanish at once on 'enter', hidden by the black overlay,
+          // or its rewound frame lingers over the home view (the element is reused).
+          transition: cursorPhase === 'videoPip' ? 'opacity 2000ms ease-in-out 900ms' : 'none',
         }}
       />
 

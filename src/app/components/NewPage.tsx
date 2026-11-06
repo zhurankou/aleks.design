@@ -953,11 +953,11 @@ function NewPageDesktop() {
   // pixels = display pixels.
   const frameScale = 1;
   // Tablet + desktop: the tree renders in design space and a transform on the
-  // scroller fits it to the real viewport. The scale is height-driven —
-  // k = vh / DESIGN_H — so the experience tracks the screen height (short
-  // laptop windows shrink to fit the 792px frame, tall monitors scale up),
-  // capped by the width fit (vw / DESIGN_W) so narrow viewports (portrait
-  // tablets) can't overflow horizontally. progress is a scroll ratio, so the
+  // scroller fits it to the real viewport. Same fit as /slides: the 792px frame
+  // keeps 64px above and below (short laptop windows shrink to fit) and never
+  // scales past 1 (tall monitors stay 1:1), capped by the width fit
+  // (vw / DESIGN_W) so narrow viewports (portrait tablets) can't overflow
+  // horizontally. progress is a scroll ratio, so the
   // morph timing is scale-invariant; heights are expressed in design-space px
   // so the snap stops stay aligned under the transform.
   // The width must fit the widest stage composition — the OlySense square
@@ -965,8 +965,7 @@ function NewPageDesktop() {
   // gap) plus outer margins — so narrow windows scale the whole stage down
   // instead of clipping the sides.
   const DESIGN_W = 1456;
-  const DESIGN_H = FRAME_H + PEEK; // 832 — the authored canvas height (frame + home peek)
-  const k = Math.min(vw / DESIGN_W, vh / DESIGN_H);
+  const k = Math.min(1, vw / DESIGN_W, (vh - 128) / FRAME_H);
   const layoutVw = vw / k;
   const layoutVh = vh / k;
   // Stage 2 morphs the PWA rectangle into a square (FRAME_H × FRAME_H). Stage 3
@@ -1650,7 +1649,9 @@ function NewPageMobile() {
   };
   const mobileView: React.CSSProperties = {
     width: '100%',
-    minHeight: '100dvh',
+    // Use the large viewport so section backgrounds continue beneath Safari's
+    // collapsing/overlay browser controls when viewport-fit=cover is active.
+    minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -1684,12 +1685,28 @@ function NewPageMobile() {
   const [olyRef, olyIn] = useInView<HTMLDivElement>();
   const [baseRef, baseIn] = useInView<HTMLDivElement>();
   const [contactRef, contactIn] = useInView<HTMLDivElement>();
+
+  // Keep browser chrome in step with the section currently under the viewport.
+  // With viewport-fit=cover this also supplies the colour Safari composites
+  // beneath its translucent toolbar while the Assembly card is visible.
+  useEffect(() => {
+    const color = assemblyIn ? '#000000'
+      : olyIn ? '#FBFDFF'
+      : baseIn ? palette.pageBg
+      : '#FFFFFF';
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
+    return () => {
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#FFFFFF');
+    };
+  }, [assemblyIn, olyIn, baseIn, palette.pageBg]);
   return (
     <div
       className="m-root"
       style={{
         width: '100%',
-        height: '100dvh',
+        // Keep the scroll surface at the large viewport height; on iOS this
+        // allows the page colour/content to paint behind the browser toolbar.
+        height: '100vh',
         overflowX: 'hidden',
         overflowY: 'auto',
         overscrollBehaviorY: 'none',

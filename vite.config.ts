@@ -39,6 +39,12 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    // Allow trycloudflare.com quick-tunnel hostnames through Vite's DNS-rebinding
+    // guard, for testing on a phone via a temporary public tunnel instead of a
+    // production deploy.
+    allowedHosts: ['.trycloudflare.com'],
+  },
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],

@@ -1,3 +1,21 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+/* Let the page paint into the browser's safe areas (including the bottom
+   toolbar area on iOS Safari). Individual views provide their own colours. */
+html,
+body,
+#root {
+  min-height: 100%;
+  width: 100%;
+}
+
+html {
+  background: #000;
+}
+
+body {
+  margin: 0;
+  background: #000;
+}
