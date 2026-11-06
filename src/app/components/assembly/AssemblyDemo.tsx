@@ -1,30 +1,45 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
 // A scripted web recreation of the Assembly iPhone app's conversation, looping
-// through a few language pairs. Copy, sizes and colours come from the app's
-// SwiftUI (HomeView's DemoScript, ConversationView, ConversationViews,
-// SpeakerPalette), dark mode.
+// through a few language pairs, half in dark mode and half in light. Copy, sizes
+// and colours come from the app's SwiftUI (HomeView's DemoScript, ConversationView,
+// ConversationViews, SpeakerPalette).
 
 const FONT = "ui-rounded, 'SF Pro Rounded', 'Manrope', sans-serif";
-const LABEL = '#FFFFFF';
-const SECONDARY = 'rgba(235,235,245,0.6)';
-const ACCENT = '#0A84FF';
-const GLASS = 'rgba(255,255,255,0.12)';
 
-// SpeakerPalette's dark-mode colours, as r,g,b.
-const SPEAKERS = ['64,219,224', '196,163,255', '255,184,102', '255,143,179'];
-const NEUTRAL = '255,255,255';
-const ACCENT_RGB = '10,132,255';
+// `speakers` is SpeakerPalette, `neutral` the primary label, as r,g,b.
+const DARK = {
+  background: '#000000',
+  label: '#FFFFFF',
+  secondary: 'rgba(235,235,245,0.6)',
+  accent: '#0A84FF',
+  accentRgb: '10,132,255',
+  glass: 'rgba(255,255,255,0.12)',
+  speakers: ['64,219,224', '196,163,255', '255,184,102', '255,143,179'],
+  neutral: '255,255,255',
+  bubbleFill: 0.06,
+};
+const LIGHT: typeof DARK = {
+  background: '#FFFFFF',
+  label: '#000000',
+  secondary: 'rgba(60,60,67,0.6)',
+  accent: '#007AFF',
+  accentRgb: '0,122,255',
+  glass: 'rgba(118,118,128,0.12)',
+  speakers: ['0,99,107', '110,64,173', '153,79,18', '173,36,92'],
+  neutral: '0,0,0',
+  bubbleFill: 0.035,
+};
 
 type LangCode = 'en' | 'es' | 'fr' | 'ja' | 'ko' | 'de' | 'zh';
 const LANGUAGE_NAMES: Record<LangCode, string> = {
   en: 'English', es: 'Spanish', fr: 'French', ja: 'Japanese', ko: 'Korean', de: 'German', zh: 'Chinese',
 };
-const PAIRS: { spoken: LangCode; target: LangCode }[] = [
-  { spoken: 'en', target: 'es' },
-  { spoken: 'fr', target: 'ja' },
-  { spoken: 'ko', target: 'en' },
-  { spoken: 'de', target: 'zh' },
+const PAIRS: { spoken: LangCode; target: LangCode; theme: typeof DARK }[] = [
+  { spoken: 'en', target: 'es', theme: DARK },
+  { spoken: 'fr', target: 'ja', theme: LIGHT },
+  { spoken: 'ko', target: 'en', theme: DARK },
+  { spoken: 'de', target: 'zh', theme: LIGHT },
 ];
 
 // DemoScript from HomeView.swift.
@@ -140,6 +155,8 @@ interface BubbleProps {
   original: string;
   text: string;
   rgb: string;
+  secondary: string;
+  fillOpacity: number;
   isReply: boolean;
   name?: string;
   nameWorking?: boolean;
@@ -162,7 +179,7 @@ const CONTENT_STYLE: CSSProperties = {
 const ORIGINAL_STYLE: CSSProperties = { fontSize: 17, lineHeight: '22px', fontWeight: 400 };
 const TEXT_STYLE: CSSProperties = { fontSize: 22, lineHeight: '28px', fontWeight: 600 };
 
-function ConversationBubble({ original, text, rgb, isReply, name, nameWorking, originalWorking, textWorking, isProvisional, finalTexts }: BubbleProps) {
+function ConversationBubble({ original, text, rgb, secondary, fillOpacity, isReply, name, nameWorking, originalWorking, textWorking, isProvisional, finalTexts }: BubbleProps) {
   const rowRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLDivElement>(null);
   const sizerRef = useRef<HTMLDivElement>(null);
@@ -235,7 +252,7 @@ function ConversationBubble({ original, text, rgb, isReply, name, nameWorking, o
           transform: isReply ? 'scaleX(-1)' : undefined,
         }}>
           <path ref={pathRef} style={{
-            fill: `rgba(${rgb},0.06)`,
+            fill: `rgba(${rgb},${fillOpacity})`,
             stroke: `rgba(${rgb},0.25)`,
             strokeWidth: 1,
             transition: 'fill 500ms ease, stroke 500ms ease',
@@ -244,7 +261,7 @@ function ConversationBubble({ original, text, rgb, isReply, name, nameWorking, o
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
           <div ref={contentRef} style={{ ...CONTENT_STYLE, position: 'absolute', top: 0, left: 0 }}>
             <span style={ORIGINAL_STYLE}>
-              <WorkingText text={original} working={!!originalWorking} color={SECONDARY} />
+              <WorkingText text={original} working={!!originalWorking} color={secondary} />
             </span>
             {/* Remounts when the translation lands, so it fades in over the dots. */}
             <span key={textWorking ? 'waiting' : 'translated'} style={{
@@ -268,13 +285,13 @@ function ConversationBubble({ original, text, rgb, isReply, name, nameWorking, o
   );
 }
 
-function GlassCircle({ children }: { children: ReactNode }) {
+function GlassCircle({ background, children }: { background: string; children: ReactNode }) {
   return (
     <div style={{
       width: 38,
       height: 38,
       borderRadius: '50%',
-      backgroundColor: GLASS,
+      backgroundColor: background,
       boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.3)',
       display: 'flex',
       alignItems: 'center',
@@ -359,13 +376,13 @@ function StatusBar() {
       </div>
       <svg width="68" height="13" viewBox="0 0 68 13" style={{ position: 'absolute', right: 28, top: 21 }}>
         {[[0, 8, 4], [5, 6, 6], [10, 3.5, 8.5], [15, 1, 11]].map(([x, y, h]) => (
-          <rect key={x} x={x} y={y} width="3.2" height={h} rx="0.8" fill={LABEL} />
+          <rect key={x} x={x} y={y} width="3.2" height={h} rx="0.8" fill="currentColor" />
         ))}
-        <path d="M24 4.6a8.6 8.6 0 0 1 12 0M26.3 7a5.3 5.3 0 0 1 7.4 0" stroke={LABEL} strokeWidth="1.8" strokeLinecap="round" fill="none" />
-        <circle cx="30" cy="10" r="1.6" fill={LABEL} />
-        <rect x="42.5" y="1" width="22" height="11" rx="3.4" stroke="rgba(255,255,255,0.4)" fill="none" />
-        <rect x="44" y="2.5" width="19" height="8" rx="2.2" fill={LABEL} />
-        <path d="M66 4.5v4a2 2 0 0 0 0-4Z" fill="rgba(255,255,255,0.4)" />
+        <path d="M24 4.6a8.6 8.6 0 0 1 12 0M26.3 7a5.3 5.3 0 0 1 7.4 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+        <circle cx="30" cy="10" r="1.6" fill="currentColor" />
+        <rect x="42.5" y="1" width="22" height="11" rx="3.4" stroke="currentColor" strokeOpacity="0.4" fill="none" />
+        <rect x="44" y="2.5" width="19" height="8" rx="2.2" fill="currentColor" />
+        <path d="M66 4.5v4a2 2 0 0 0 0-4Z" fill="currentColor" fillOpacity="0.4" />
       </svg>
     </div>
   );
@@ -416,6 +433,7 @@ export function AssemblyDemo({ active = true }: { active?: boolean }) {
   const listRef = useRef<HTMLDivElement>(null);
 
   const pair = PAIRS[pairIndex];
+  const theme = pair.theme;
 
   useEffect(() => {
     setConvo({ line: -1, stage: 0 });
@@ -472,10 +490,12 @@ export function AssemblyDemo({ active = true }: { active?: boolean }) {
       position: 'relative',
       width: '100%',
       height: '100%',
-      backgroundColor: '#000000',
+      backgroundColor: theme.background,
       overflow: 'hidden',
       fontFamily: FONT,
-      color: LABEL,
+      color: theme.label,
+      // While the conversation is faded out between loops.
+      transition: 'background-color 350ms ease-in-out, color 350ms ease-in-out',
       userSelect: 'none',
       WebkitFontSmoothing: 'antialiased',
     }}>
@@ -495,7 +515,7 @@ export function AssemblyDemo({ active = true }: { active?: boolean }) {
         height: 5,
         marginLeft: -67,
         borderRadius: 3,
-        backgroundColor: LABEL,
+        backgroundColor: 'currentColor',
         zIndex: 2,
       }} />
 
@@ -519,13 +539,15 @@ export function AssemblyDemo({ active = true }: { active?: boolean }) {
             const texts = textsFor(i, pair);
             const translated = stage >= STAGE_TRANSLATED;
             const settled = stage === STAGE_SETTLED;
-            const speakerRgb = step.isReply ? ACCENT_RGB : settled ? SPEAKERS[step.speaker ?? 0] : NEUTRAL;
+            const speakerRgb = step.isReply ? theme.accentRgb : settled ? theme.speakers[step.speaker ?? 0] : theme.neutral;
             return (
               <div key={i} style={{ animation: 'as-line-in 500ms cubic-bezier(0.22, 1, 0.36, 1)' }}>
                 <ConversationBubble
                   original={translated ? texts.original : revealed(texts.original, (stage + 1) / REVEAL_STEPS)}
                   text={translated ? texts.text : ''}
                   rgb={speakerRgb}
+                  secondary={theme.secondary}
+                  fillOpacity={theme.bubbleFill}
                   isReply={step.isReply}
                   name={step.isReply || settled ? step.name : undefined}
                   nameWorking={!step.isReply && !settled}
@@ -550,19 +572,19 @@ export function AssemblyDemo({ active = true }: { active?: boolean }) {
           display: 'flex',
           alignItems: 'flex-start',
           justifyContent: 'space-between',
-          background: 'linear-gradient(to bottom, #000000 70%, transparent)',
+          background: `linear-gradient(to bottom, ${theme.background} 70%, transparent)`,
         }}>
-          <GlassCircle>
+          <GlassCircle background={theme.glass}>
             <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden>
-              <path d="M2 2l12 12M14 2L2 14" stroke={LABEL} strokeWidth="2" strokeLinecap="round" />
+              <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </GlassCircle>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, paddingTop: 3 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <span style={{ fontSize: 17, lineHeight: '22px', fontWeight: 600 }}>Translating</span>
-              <Waveform color={SECONDARY} height={11} />
+              <Waveform color={theme.secondary} height={11} />
             </div>
-            <span style={{ fontSize: 12, lineHeight: '16px', color: SECONDARY }}>{LANGUAGE_NAMES[pair.spoken]} → {LANGUAGE_NAMES[pair.target]}</span>
+            <span style={{ fontSize: 12, lineHeight: '16px', color: theme.secondary }}>{LANGUAGE_NAMES[pair.spoken]} → {LANGUAGE_NAMES[pair.target]}</span>
           </div>
           <div style={{ width: 38 }} />
         </div>
@@ -575,18 +597,18 @@ export function AssemblyDemo({ active = true }: { active?: boolean }) {
           display: 'flex',
           gap: 12,
           padding: '18px 24px 30px',
-          background: 'linear-gradient(to top, #000000 80%, transparent)',
+          background: `linear-gradient(to top, ${theme.background} 80%, transparent)`,
         }}>
-          <PillButton background={GLASS}>
+          <PillButton background={theme.glass}>
             <svg width="10" height="12" viewBox="0 0 12 14" aria-hidden>
-              <rect x="0" width="4" height="14" rx="1" fill={LABEL} />
-              <rect x="8" width="4" height="14" rx="1" fill={LABEL} />
+              <rect x="0" width="4" height="14" rx="1" fill="currentColor" />
+              <rect x="8" width="4" height="14" rx="1" fill="currentColor" />
             </svg>
             Pause
           </PillButton>
-          <PillButton background={replying ? ACCENT : GLASS}>
-            {replying ? <Waveform color={LABEL} height={14} /> : <MicIcon color={ACCENT} />}
-            <span style={{ color: replying ? LABEL : ACCENT, transition: 'color 300ms ease' }}>{replying ? 'Replying' : 'Reply'}</span>
+          <PillButton background={replying ? theme.accent : theme.glass}>
+            {replying ? <Waveform color="#FFFFFF" height={14} /> : <MicIcon color={theme.accent} />}
+            <span style={{ color: replying ? '#FFFFFF' : theme.accent, transition: 'color 300ms ease' }}>{replying ? 'Replying' : 'Reply'}</span>
           </PillButton>
         </div>
       </div>
