@@ -108,9 +108,6 @@ function ResearchBars() {
         ))}
       </div>
 
-      <p style={{ margin: '26px 0 0', fontFamily: BODY, fontSize: 17, lineHeight: '26px', fontWeight: 500 }}>
-        OneDrive had the highest task completion, but the lowest satisfaction of the three services.
-      </p>
     </div>
   );
 }
