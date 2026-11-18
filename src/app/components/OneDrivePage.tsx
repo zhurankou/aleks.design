@@ -286,22 +286,37 @@ export function OneDrivePage() {
                   body: <>Hi! I love Google too. I love how students can share docs for projects. The other day I was <b>sharing</b> my notes to my group members on our project. I think <mark>Google products are better than Windows One Drive.</mark> I feel Windows products are way too slow.</>,
                 },
               ].map((tweet) => (
-                <div key={tweet.name} style={{ background: '#fff', border: '1px solid #E1E8ED', borderRadius: 18, padding: 20, minHeight: 210, boxSizing: 'border-box', boxShadow: '0 10px 26px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#D9DEE4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: BODY, fontWeight: 700, fontSize: 12 }}>{tweet.initials}</div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontFamily: BODY, fontWeight: 700, fontSize: 15, lineHeight: '19px' }}>{tweet.name}</div>
-                      <div style={{ fontFamily: BODY, fontSize: 13, color: '#657786', lineHeight: '18px' }}>{tweet.meta}</div>
+                <div key={tweet.name} style={{ background: '#fff', border: '1px solid #EFF3F4', borderRadius: 14, padding: '18px 20px 16px', minHeight: 205, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                    <div style={{ width: 42, height: 42, borderRadius: '50%', background: '#D8DEE4', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', fontFamily: BODY, fontWeight: 700, fontSize: 12, color: '#0F1419' }}>{tweet.initials}</div>
+
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 6, rowGap: 2 }}>
+                        <span style={{ fontFamily: BODY, fontWeight: 700, fontSize: 15, lineHeight: '20px', color: '#0F1419' }}>{tweet.name}</span>
+                        <span style={{ fontFamily: BODY, fontSize: 14, lineHeight: '20px', color: '#536471' }}>{tweet.meta}</span>
+                      </div>
                     </div>
-                    <div style={{ marginLeft: 'auto', color: '#657786', fontFamily: BODY, fontSize: 18 }}>•••</div>
+
+                    <div style={{ marginLeft: 8, color: '#536471', fontFamily: BODY, fontSize: 16, lineHeight: '18px', letterSpacing: '2px' }}>•••</div>
                   </div>
 
-                  <p style={{ margin: '16px 0 18px', fontFamily: BODY, fontSize: 15, lineHeight: '22px', flex: 1 }}>
+                  <p style={{ margin: '15px 0 20px 54px', fontFamily: BODY, fontSize: 15, lineHeight: '22px', color: '#0F1419', flex: 1 }}>
                     {tweet.body}
                   </p>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#657786', fontFamily: BODY, fontSize: 14, paddingRight: 8 }}>
-                    <span>◯</span><span>↻</span><span>♡</span><span>↗</span>
+                  <div style={{ marginLeft: 54, width: 'calc(100% - 62px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#536471' }}>
+                    <span aria-label="Reply" style={{ display: 'inline-flex', width: 18, height: 18 }}>
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M20 15a4 4 0 0 1-4 4H8l-4 3V7a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4z"/></svg>
+                    </span>
+                    <span aria-label="Retweet" style={{ display: 'inline-flex', width: 18, height: 18 }}>
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M7 7h9l-2.5-2.5M17 17H8l2.5 2.5M16 4.5 18.5 7 16 9.5M8 14.5 5.5 17 8 19.5"/></svg>
+                    </span>
+                    <span aria-label="Like" style={{ display: 'inline-flex', width: 18, height: 18 }}>
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 20.5S4 16 4 9.5A4.5 4.5 0 0 1 12 6a4.5 4.5 0 0 1 8 3.5C20 16 12 20.5 12 20.5z"/></svg>
+                    </span>
+                    <span aria-label="Share" style={{ display: 'inline-flex', width: 18, height: 18 }}>
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 12v7h14v-7"/></svg>
+                    </span>
                   </div>
                 </div>
               ))}
@@ -384,7 +399,7 @@ export function OneDrivePage() {
       </section>
 
       <style>{`
-        mark{background:#F2E8A2;padding:0 .08em;color:inherit}
+        mark{background:linear-gradient(transparent 20%,#F4E6A6 20%,#F4E6A6 92%,transparent 92%);padding:0 .03em;color:inherit}
         @media (max-width: 900px) {          .od-tweets { grid-template-columns: 1fr !important; }
           .od-copy-test, .od-delivery, .od-extension { grid-template-columns: 1fr !important; }
           .od-intro { grid-template-columns: 1fr !important; gap: 36px !important; }
