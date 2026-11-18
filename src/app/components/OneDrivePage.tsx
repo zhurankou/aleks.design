@@ -149,7 +149,7 @@ function ResearchSummary() {
         </ScrollFadeIn>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18 }}>
           {studies.map(([title, body], i) => (
-            <ScrollFadeIn key={title} delay={i * 90}>
+            <ScrollFadeIn key={title}>
               <div style={{ minHeight: 230, borderRadius: 32, background: SURFACE, padding: 30, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <span style={{ fontFamily: BODY, fontSize: 13, color: GREY }}>0{i + 1}</span>
                 <div><h3 style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 30 }}>{title}</h3><p style={{ margin: '14px 0 0', fontFamily: BODY, fontSize: 15, lineHeight: '23px' }}>{body}</p></div>
@@ -195,7 +195,7 @@ export function OneDrivePage() {
               <p style={{ margin: 0, fontFamily: BODY, fontSize: 18, lineHeight: '29px' }}>I led the redesign across OneDrive web and mobile, partnering with Office designers, Product, UX Research, and Engineering. The sharing experience appeared across more than 40 product entry points, so every decision had to work at scale.</p>
             </div>
           </ScrollFadeIn>
-          <ScrollFadeIn delay={100}><ResearchBars /></ScrollFadeIn>
+          <ScrollFadeIn><ResearchBars /></ScrollFadeIn>
         </div>
       </section>
 
@@ -221,7 +221,7 @@ export function OneDrivePage() {
 
         <div style={{ borderRadius: 40, background: SURFACE, padding: 52, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }} className="od-metrics">
           {[['+34%','Completed sharing actions'],['+3.9%','Permission changes'],['+27%','Copy Link setting changes'],['+64%','Manage Access engagement']].map(([value,label],i)=>(
-            <ScrollFadeIn key={label} delay={i*80}><div style={{ minHeight: 170, borderRadius: 28, background: '#fff', padding: 28, boxSizing: 'border-box' }}><div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 48, lineHeight: 1, color: BLUE }}>{value}</div><p style={{ margin: '18px 0 0', fontFamily: BODY, fontSize: 15, lineHeight: '22px' }}>{label}</p></div></ScrollFadeIn>
+            <ScrollFadeIn key={label}><div style={{ minHeight: 170, borderRadius: 28, background: '#fff', padding: 28, boxSizing: 'border-box' }}><div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 48, lineHeight: 1, color: BLUE }}>{value}</div><p style={{ margin: '18px 0 0', fontFamily: BODY, fontSize: 15, lineHeight: '22px' }}>{label}</p></div></ScrollFadeIn>
           ))}
         </div>
       </section>
