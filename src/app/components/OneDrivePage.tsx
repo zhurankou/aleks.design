@@ -54,60 +54,46 @@ const process = [
 
 function ResearchBars() {
   const rows = [
-    { name: 'OneDrive', completion: 89, satisfaction: 73 },
-    { name: 'Google Drive', completion: 81, satisfaction: 80 },
-    { name: 'Box', completion: 74, satisfaction: 79 },
+    { name: 'OneDrive', completion: 89, satisfaction: 73, primary: true },
+    { name: 'Google Drive', completion: 81, satisfaction: 80, primary: false },
+    { name: 'Box', completion: 74, satisfaction: 79, primary: false },
   ];
 
   return (
-    <div style={{ width: 696, minHeight: 580, borderRadius: 40, background: SURFACE, padding: 50, boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 20 }}>
-        <div>
-          <p style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 38, lineHeight: 1 }}>Benchmark</p>
-          <p style={{ margin: '10px 0 0', fontFamily: BODY, fontSize: 14, lineHeight: '21px', color: '#6E6E73' }}>
-            Task completion vs. experience satisfaction
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 16, fontFamily: BODY, fontSize: 12, color: '#6E6E73', whiteSpace: 'nowrap' }}>
-          <span><b style={{ color: '#58A96B' }}>●</b> Completion</span>
-          <span><b style={{ color: '#D46A66' }}>●</b> Satisfaction</span>
-        </div>
-      </div>
+    <div style={{ width: 696, borderRadius: 40, background: SURFACE, padding: 48, boxSizing: 'border-box' }}>
+      <p style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 38, lineHeight: 1 }}>Benchmark</p>
 
-      <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ marginTop: 34 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px', gap: 18, padding: '0 8px 12px', borderBottom: '1px solid #D9DCE1' }}>
+          <div />
+          <div style={{ fontFamily: BODY, fontSize: 12, color: '#8E8E93', textAlign: 'right' }}>Completion</div>
+          <div style={{ fontFamily: BODY, fontSize: 12, color: '#8E8E93', textAlign: 'right' }}>Satisfaction</div>
+        </div>
+
         {rows.map((row) => (
           <div
             key={row.name}
             style={{
-              borderRadius: 24,
-              background: '#FFFFFF',
-              border: '1px solid #E7E8EB',
-              padding: '18px 20px',
-              minHeight: 118,
-              boxSizing: 'border-box',
               display: 'grid',
-              gridTemplateColumns: '1fr 124px 124px',
-              gap: 14,
+              gridTemplateColumns: '1fr 120px 120px',
+              gap: 18,
               alignItems: 'center',
+              padding: '22px 8px',
+              borderBottom: row.name === 'Box' ? 'none' : '1px solid #E5E7EB',
             }}
           >
-            <div style={{ fontFamily: BODY, fontSize: 17, fontWeight: 650 }}>
+            <div style={{ fontFamily: BODY, fontSize: 17, fontWeight: row.primary ? 700 : 600 }}>
               {row.name}
             </div>
-
-            <div style={{ borderRadius: 18, background: 'rgba(52,199,89,.12)', padding: '14px 12px', textAlign: 'center' }}>
-              <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 36, lineHeight: 1, color: '#58A96B' }}>{row.completion}%</div>
-              <div style={{ marginTop: 5, fontFamily: BODY, fontSize: 10, color: '#6E6E73' }}>completion</div>
+            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: row.primary ? 36 : 30, lineHeight: 1, textAlign: 'right', color: '#111' }}>
+              {row.completion}%
             </div>
-
-            <div style={{ borderRadius: 18, background: 'rgba(255,59,48,.10)', padding: '14px 12px', textAlign: 'center' }}>
-              <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 36, lineHeight: 1, color: '#D46A66' }}>{row.satisfaction}%</div>
-              <div style={{ marginTop: 5, fontFamily: BODY, fontSize: 10, color: '#6E6E73' }}>satisfaction</div>
+            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: row.primary ? 36 : 30, lineHeight: 1, textAlign: 'right', color: '#111' }}>
+              {row.satisfaction}%
             </div>
           </div>
         ))}
       </div>
-
     </div>
   );
 }
