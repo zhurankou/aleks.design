@@ -135,26 +135,27 @@ function ProcessSection() {
 
 function ResearchSummary() {
   const studies = [
-    ['Share dialog', 'Users discovered Share, understood Email link, and completed the tested tasks.'],
-    ['Link settings', 'External sharing was easy; “People with access” and hidden descriptions needed refinement.'],
-    ['Shared with', 'Participants understood the face-piles and valued seeing who already had access.'],
+    ['Share dialog', 'Users discovered Share, understood Email link, and completed the tested tasks.', 'rgba(255, 45, 85, 0.16)', '#FF2D55'],
+    ['Link settings', 'External sharing was easy; “People with access” and hidden descriptions needed refinement.', 'rgba(48, 176, 199, 0.16)', '#30B0C7'],
+    ['Shared with', 'Participants understood the face-piles and valued seeing who already had access.', 'rgba(175, 82, 222, 0.16)', '#AF52DE'],
   ];
   return (
-    <section style={{ padding: '150px 0 0' }}>
+    <section style={{ padding: '210px 0 0' }}>
       <div style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '0 auto' }}>
         <ScrollFadeIn>
-          <div style={{ textAlign: 'center', maxWidth: 780, margin: '0 auto 54px' }}>
+          <div style={{ textAlign: 'center', maxWidth: 840, margin: '0 auto 64px' }}>
             <WaveLabel text="RESEARCH" fontSize={16} />
             <h2 style={{ margin: '18px 0 20px', fontFamily: TITLE, fontWeight: 300, fontSize: 56, lineHeight: 1 }}>Research shaped what we removed, not just what we added</h2>
             <p style={{ margin: 0, fontFamily: BODY, fontSize: 19, lineHeight: '30px' }}>Each round narrowed the experience: simplify the flow, clarify the language, and expose the access information people needed at the moment of sharing.</p>
           </div>
         </ScrollFadeIn>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18 }}>
-          {studies.map(([title, body], i) => (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 18 }}>
+          {studies.map(([title, body, background, accent], i) => (
             <ScrollFadeIn key={title}>
-              <div style={{ minHeight: 230, borderRadius: 32, background: SURFACE, padding: 30, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: BODY, fontSize: 13, color: GREY }}>0{i + 1}</span>
-                <div><h3 style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 30 }}>{title}</h3><p style={{ margin: '14px 0 0', fontFamily: BODY, fontSize: 15, lineHeight: '23px' }}>{body}</p></div>
+              <div style={{ minHeight: 260, borderRadius: 32, background, padding: 32, boxSizing: 'border-box', display: 'grid', gridTemplateRows: '24px 56px 1fr', rowGap: 18 }}>
+                <span style={{ fontFamily: BODY, fontSize: 13, fontWeight: 600, color: accent }}>0{i + 1}</span>
+                <h3 style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 30, lineHeight: '34px', alignSelf: 'end' }}>{title}</h3>
+                <p style={{ margin: 0, fontFamily: BODY, fontSize: 15, lineHeight: '23px', alignSelf: 'start' }}>{body}</p>
               </div>
             </ScrollFadeIn>
           ))}
