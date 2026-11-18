@@ -11,116 +11,45 @@ const SURFACE = '#F5F5F7';
 
 const process = [
   {
-    id: 'explorations',
-    title: 'Explorations',
-    body: 'We compared unified and separated sharing actions to find a simpler, flexible model across OneDrive and Office.',
-    visual: '/onedrive/exploration.svg',
-    alt: 'Unified and separated sharing model explorations',
+    id: 'sharing-model',
+    title: 'Simplifying the sharing model',
+    body: 'We started by aligning OneDrive and Office around how sharing should work. We compared a unified dialog with a separated model, then moved toward a progressive flow that asked people to make one decision at a time. The trade-off was an extra step, but each step became easier to understand and the pattern could flex across different Microsoft 365 entry points.',
+    visuals: [
+      { src: '/onedrive/exploration.svg', alt: 'Unified and separated sharing model explorations', nativeWidth: 1018 },
+      { src: '/onedrive/flow.svg', alt: 'Progressive OneDrive sharing flow', nativeWidth: 1038 },
+      { src: '/onedrive/direction.svg', alt: 'OneDrive final sharing direction', nativeWidth: 528 },
+    ],
   },
   {
-    id: 'simplified-flow',
-    title: 'Simplified flow',
-    body: 'We broke sharing into progressive steps so people could focus on one decision at a time.',
-    visual: '/onedrive/flow.svg',
-    alt: 'Progressive OneDrive sharing flow',
+    id: 'sharing-settings',
+    title: 'Clarifying sharing settings',
+    body: 'The next problem was permissions. Link Settings combined audience scope, editing rights, and security controls, and customers struggled to understand the differences between options. We simplified names, surfaced descriptions instead of hiding them behind tooltips, and made roles and permissions more consistent. Research helped us decide which explanations needed to stay visible, even when that meant showing slightly more information.',
+    visuals: [
+      { src: '/onedrive/permissions.svg', alt: 'OneDrive audience and permission redesign', nativeWidth: 968 },
+      { src: '/onedrive/settings-refinement.svg', alt: 'Refined OneDrive sharing settings', nativeWidth: 528 },
+    ],
   },
   {
-    id: 'testing',
-    title: 'Testing',
-    body: 'We tested whether people could find sharing options and complete common tasks using the new flow.',
-    visual: '/onedrive/testing.svg',
-    alt: 'OneDrive sharing flow usability testing',
-  },
-  {
-    id: 'design-direction',
-    title: 'Design direction',
-    body: 'The direction combined a progressive flow, clearer permissions, and a more consistent pattern across products.',
-    visual: '/onedrive/direction.svg',
-    alt: 'OneDrive sharing design direction',
-  },
-  {
-    id: 'confusing-settings',
-    title: 'Confusing settings',
-    body: 'Customers struggled to understand audience options and permissions in the existing Link Settings experience.',
-    visual: '/onedrive/permissions.svg',
-    alt: 'Existing and redesigned OneDrive sharing settings',
-  },
-  {
-    id: 'clarifying-permissions',
-    title: 'Clarifying permissions',
-    body: 'We simplified names, added clearer descriptions, and made permission controls more consistent.',
-    visual: '/onedrive/permissions.svg',
-    alt: 'Clarified OneDrive sharing permissions',
-  },
-  {
-    id: 'refinements',
-    title: 'Refinements',
-    body: 'Research led us to surface descriptions, clarify labels, and make existing access easier to understand.',
-    visual: '/onedrive/settings-refinement.svg',
-    alt: 'Refined OneDrive sharing settings',
-  },
-  {
-    id: 'discoverability',
-    title: 'Discoverability',
-    body: 'Manage Access was buried in the overflow menu and details pane, making an important task difficult to find.',
-    visual: '/onedrive/manage-directions.svg',
-    alt: 'OneDrive Manage Access discoverability explorations',
-  },
-  {
-    id: 'constraints',
-    title: 'Constraints',
-    body: 'We explored showing existing access directly in Share, but live face-piles in the menu were not technically feasible.',
-    visual: '/onedrive/access-constraints.svg',
-    alt: 'Manage Access face-pile exploration constrained by engineering feasibility',
-  },
-  {
-    id: 'design-directions',
-    title: 'Design directions',
-    body: 'We narrowed the solution to Manage Access in the Share menu and Shared with inside the dialog.',
-    visual: '/onedrive/manage-directions.svg',
-    alt: 'Manage Access design directions',
-  },
-  {
-    id: 'clear-entry-point',
-    title: 'Clear entry point',
-    body: 'Manage Access became easier to find directly from Share without adding another complex management surface.',
-    visual: '/onedrive/access-solution.svg',
-    alt: 'Final Manage Access entry point',
-  },
-  {
-    id: 'incremental-rollout',
-    title: 'Incremental rollout',
-    body: 'We released the redesign in stages and used telemetry to evaluate behavior and reduce risk.',
-    visual: '/onedrive/rollout.svg',
-    alt: 'Incremental OneDrive sharing rollout',
-  },
-  {
-    id: 'accessibility',
-    title: 'Accessibility',
-    body: 'I documented keyboard, screen-reader, zoom, and high-contrast requirements for the sharing experience.',
-    visual: '/onedrive/accessibility.svg',
-    alt: 'OneDrive accessibility specifications',
-  },
-  {
-    id: 'mobile',
-    title: 'Mobile',
-    body: 'I created iOS and Android specifications so the sharing experience stayed consistent across platforms.',
-    visual: '/onedrive/mobile.svg',
-    alt: 'OneDrive mobile sharing specifications',
+    id: 'manage-access',
+    title: 'Making access easier to find',
+    body: 'Manage Access was buried in overflow menus and the details pane. We explored a richer approach that showed existing access directly in Share, similar to patterns people already knew from other cloud products. Engineering ruled out live face-piles in the menu, so we preserved the user need while simplifying the implementation: a clear Manage Access entry point in Share and a Shared with section inside the dialog.',
+    visuals: [
+      { src: '/onedrive/manage-directions.svg', alt: 'Manage Access design directions', nativeWidth: 528 },
+      { src: '/onedrive/access-constraints.svg', alt: 'Face-pile exploration constrained by engineering feasibility', nativeWidth: 843 },
+      { src: '/onedrive/access-solution.svg', alt: 'Final Manage Access entry point', nativeWidth: 1100 },
+    ],
   },
   {
     id: 'scaling',
-    title: 'Scaling the experience',
-    body: 'Validated patterns became reusable components and guidelines for Microsoft 365 partner teams.',
-    visual: '/onedrive/design-system.svg',
-    alt: 'OneDrive sharing design system assets',
-  },
-  {
-    id: 'illustrations',
-    title: 'Illustrations',
-    body: 'I also created first-run visuals for family and group sharing.',
-    visual: '/onedrive/illustrations.svg',
-    alt: 'OneDrive family and group sharing illustrations',
+    title: 'Shipping and scaling the experience',
+    body: 'Because sharing is a high-traffic Microsoft 365 experience, we released the redesign incrementally and monitored telemetry rather than shipping everything at once. I also documented accessibility requirements, created mobile specifications, and helped turn validated patterns into reusable components and guidelines for partner teams. The work extended beyond the core dialog into first-run visual experiences for family and group sharing.',
+    visuals: [
+      { src: '/onedrive/rollout.svg', alt: 'Incremental OneDrive sharing rollout', nativeWidth: 908 },
+      { src: '/onedrive/accessibility.svg', alt: 'OneDrive accessibility specifications', nativeWidth: 1042 },
+      { src: '/onedrive/mobile.svg', alt: 'OneDrive mobile sharing specifications', nativeWidth: 946 },
+      { src: '/onedrive/design-system.svg', alt: 'Reusable OneDrive sharing design system assets', nativeWidth: 1168 },
+      { src: '/onedrive/illustrations.svg', alt: 'OneDrive family and group sharing illustrations', nativeWidth: 998 },
+    ],
   },
 ];
 
@@ -153,7 +82,7 @@ function ProcessSection() {
       if (!el) return null;
       const io = new IntersectionObserver(
         ([entry]) => { if (entry.isIntersecting) setActive(index); },
-        { rootMargin: '-28% 0px -28% 0px', threshold: 0.05 },
+        { rootMargin: '-30% 0px -30% 0px', threshold: 0.05 },
       );
       io.observe(el);
       return io;
@@ -162,27 +91,41 @@ function ProcessSection() {
   }, []);
 
   return (
-    <section style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '0 auto', padding: '220px 0 40px', display: 'grid', gridTemplateColumns: '360px minmax(0, 1fr)', gap: 64, alignItems: 'start', overflow: 'visible' }} className="od-process">
+    <section style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '0 auto', padding: '180px 0 40px', display: 'grid', gridTemplateColumns: '360px minmax(0, 1fr)', gap: 64, alignItems: 'start', overflow: 'visible' }} className="od-process">
       <div style={{ position: 'relative', alignSelf: 'stretch', minHeight: '100%' }}>
-        <div style={{ position: 'sticky', top: 96, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <ScrollFadeIn><h2 style={{ margin: '0 0 20px', fontFamily: TITLE, fontWeight: 300, fontSize: 42, lineHeight: 1 }}>Process</h2></ScrollFadeIn>
-        {process.map((item, i) => (
-          <div key={item.id} style={{ borderTop: i === 0 ? 'none' : '1px solid #E5E7EB', padding: '9px 0' }}>
-            <div style={{ fontFamily: BODY, fontWeight: active === i ? 650 : 500, fontSize: 16, color: active === i ? '#000' : GREY, transition: 'color .35s ease' }}>{item.title}</div>
-            <div style={{ display: 'grid', gridTemplateRows: active === i ? '1fr' : '0fr', transition: 'grid-template-rows .45s ease' }}>
-              <div style={{ overflow: 'hidden', minHeight: 0 }}>
-                <p style={{ margin: active === i ? '7px 12px 2px 0' : '0 12px 0 0', opacity: active === i ? 1 : 0, transition: 'opacity .3s ease, margin .45s ease', fontFamily: BODY, fontSize: 13, lineHeight: '19px' }}>{item.body}</p>
+        <div style={{ position: 'sticky', top: 88 }}>
+          <ScrollFadeIn><h2 style={{ margin: '0 0 30px', fontFamily: TITLE, fontWeight: 300, fontSize: 48, lineHeight: 1 }}>Process</h2></ScrollFadeIn>
+          {process.map((item, i) => (
+            <div key={item.id} style={{ borderTop: i === 0 ? 'none' : '1px solid #E5E7EB', padding: '17px 0' }}>
+              <div style={{ fontFamily: BODY, fontWeight: active === i ? 650 : 500, fontSize: 19, color: active === i ? '#000' : GREY, transition: 'color .35s ease' }}>{item.title}</div>
+              <div style={{ display: 'grid', gridTemplateRows: active === i ? '1fr' : '0fr', transition: 'grid-template-rows .4s ease' }}>
+                <div style={{ overflow: 'hidden', minHeight: 0 }}>
+                  <p style={{ margin: active === i ? '11px 14px 2px 0' : '0 14px 0 0', opacity: active === i ? 1 : 0, transition: 'opacity .3s ease, margin .4s ease', fontFamily: BODY, fontSize: 15, lineHeight: '23px' }}>{item.body}</p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 80 }}>
         {process.map((item, i) => (
-          <div key={item.id} ref={(el) => { refs.current[i] = el; }} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 40, background: SURFACE, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxSizing: 'border-box', padding: i === 4 ? 34 : 42 }}>
-            <img src={item.visual} alt={item.alt} style={{ display: 'block', maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+          <div key={item.id} ref={(el) => { refs.current[i] = el; }} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {item.visuals.map((visual) => (
+              <div key={visual.src} style={{ width: '100%', height: 540, borderRadius: 40, background: SURFACE, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxSizing: 'border-box', padding: 34 }}>
+                <img
+                  src={visual.src}
+                  alt={visual.alt}
+                  style={{
+                    display: 'block',
+                    width: `min(100%, ${visual.nativeWidth}px)`,
+                    height: 'auto',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                  }}
+                />
+              </div>
+            ))}
           </div>
         ))}
       </div>
@@ -232,8 +175,9 @@ export function OneDrivePage() {
           .od-process > div:first-child > div { position: static !important; transform: none !important; }
           .od-process > div:first-child > div > div { display: none; }
           .od-process > div:first-child h2 { margin-bottom: 0 !important; text-align:center; }
-          .od-process > div:last-child { gap: 18px !important; }
-          .od-process > div:last-child > div { border-radius: 28px !important; padding: 22px !important; }
+          .od-process > div:last-child { gap: 56px !important; }
+          .od-process > div:last-child > div { gap: 14px !important; }
+          .od-process > div:last-child > div > div { height: 360px !important; border-radius: 28px !important; padding: 20px !important; }
         }
       `}</style>
 
