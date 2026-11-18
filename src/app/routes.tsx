@@ -4,7 +4,6 @@ import { MainApp } from "./components/MainApp";
 import { LandingPage } from "./components/LandingPage";
 import { NewPage } from "./components/NewPage";
 import { OlySensePage } from "./components/OlySensePage";
-import { OneDrivePage } from "./components/OneDrivePage";
 import { SlidesPage } from "./components/SlidesPage";
 import { PolypsDashboard } from "./components/polyps/PolypsDashboard";
 
@@ -24,10 +23,6 @@ export const router = createBrowserRouter([
   {
     path: "/olysense",
     element: <OlySensePage />,
-  },
-  {
-    path: "/onedrive",
-    element: <OneDrivePage />,
   },
   {
     path: "/slides",
