@@ -48,37 +48,64 @@ const process = [
 ];
 
 function ResearchBars() {
-  const rows = [
-    { name: 'OneDrive', completion: 89, satisfaction: 73 },
-    { name: 'Google Drive', completion: 81, satisfaction: 80 },
-    { name: 'Box', completion: 74, satisfaction: 79 },
-  ];
   return (
-    <div style={{ width: 696, height: 696, borderRadius: 40, background: SURFACE, padding: 56, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 36 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
-        <p style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 42, lineHeight: 1.05 }}>Research signal</p>
-        <div style={{ display: 'flex', gap: 18, fontFamily: BODY, fontSize: 12, color: '#666' }}>
-          <span>■ Completion</span><span style={{ color: BLUE }}>■ Satisfaction</span>
-        </div>
+    <div style={{ width: 696, height: 696, borderRadius: 40, background: SURFACE, padding: 54, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <p style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 38, lineHeight: 1 }}>Research signal</p>
+        <span style={{ fontFamily: BODY, fontSize: 13, color: GREY }}>2019 benchmark</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 34 }}>
-        {rows.map((r) => (
-          <div key={r.name}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontFamily: BODY, fontSize: 16, fontWeight: 600 }}>
-              <span>{r.name}</span><span>{r.completion}% / {r.satisfaction}%</span>
-            </div>
-            <div style={{ height: 18, background: '#E2E4E8', borderRadius: 999, overflow: 'hidden', marginBottom: 8 }}>
-              <div style={{ width: `${r.completion}%`, height: '100%', background: '#000', borderRadius: 999 }} />
-            </div>
-            <div style={{ height: 18, background: '#E2E4E8', borderRadius: 999, overflow: 'hidden' }}>
-              <div style={{ width: `${r.satisfaction}%`, height: '100%', background: BLUE, borderRadius: 999 }} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginTop: 46 }}>
+        <div style={{ borderRadius: 30, background: '#FFFFFF', padding: '28px 30px 26px', minHeight: 220, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <p style={{ margin: 0, fontFamily: BODY, fontWeight: 600, fontSize: 15, color: '#6E6E73' }}>Task completion</p>
+          <div>
+            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 88, lineHeight: .86, letterSpacing: '-.05em' }}>89%</div>
+            <div style={{ marginTop: 20, height: 8, borderRadius: 999, background: '#E5E7EB', overflow: 'hidden' }}>
+              <div style={{ width: '89%', height: '100%', background: '#000', borderRadius: 999 }} />
             </div>
           </div>
-        ))}
+        </div>
+
+        <div style={{ borderRadius: 30, background: 'rgba(0,120,212,.10)', padding: '28px 30px 26px', minHeight: 220, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <p style={{ margin: 0, fontFamily: BODY, fontWeight: 600, fontSize: 15, color: BLUE }}>Satisfaction</p>
+          <div>
+            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 88, lineHeight: .86, letterSpacing: '-.05em', color: BLUE }}>73%</div>
+            <div style={{ marginTop: 20, height: 8, borderRadius: 999, background: 'rgba(0,120,212,.16)', overflow: 'hidden' }}>
+              <div style={{ width: '73%', height: '100%', background: BLUE, borderRadius: 999 }} />
+            </div>
+          </div>
+        </div>
       </div>
-      <p style={{ margin: 0, fontFamily: BODY, fontWeight: 500, fontSize: 18, lineHeight: '28px' }}>
-        Users could complete sharing tasks, but satisfaction with the experience was low.
+
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginTop: 34 }}>
+        <span style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 56, lineHeight: 1 }}>16 pts</span>
+        <span style={{ fontFamily: BODY, fontSize: 15, color: '#6E6E73' }}>gap between completion and satisfaction</span>
+      </div>
+
+      <p style={{ margin: '14px 0 0', fontFamily: BODY, fontWeight: 500, fontSize: 19, lineHeight: '29px', maxWidth: 520 }}>
+        People could get through sharing, but the experience still felt difficult.
       </p>
+
+      <div style={{ marginTop: 'auto', paddingTop: 30, borderTop: '1px solid #E0E2E6', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div>
+          <p style={{ margin: 0, fontFamily: BODY, fontSize: 13, color: GREY }}>Google Drive</p>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'baseline', marginTop: 5 }}>
+            <span style={{ fontFamily: TITLE, fontSize: 30, fontWeight: 300 }}>81%</span>
+            <span style={{ fontFamily: BODY, fontSize: 14, color: '#6E6E73' }}>completion</span>
+            <span style={{ fontFamily: TITLE, fontSize: 30, fontWeight: 300, color: BLUE }}>80%</span>
+            <span style={{ fontFamily: BODY, fontSize: 14, color: '#6E6E73' }}>satisfaction</span>
+          </div>
+        </div>
+        <div>
+          <p style={{ margin: 0, fontFamily: BODY, fontSize: 13, color: GREY }}>Box</p>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'baseline', marginTop: 5 }}>
+            <span style={{ fontFamily: TITLE, fontSize: 30, fontWeight: 300 }}>74%</span>
+            <span style={{ fontFamily: BODY, fontSize: 14, color: '#6E6E73' }}>completion</span>
+            <span style={{ fontFamily: TITLE, fontSize: 30, fontWeight: 300, color: BLUE }}>79%</span>
+            <span style={{ fontFamily: BODY, fontSize: 14, color: '#6E6E73' }}>satisfaction</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -195,8 +222,8 @@ export function OneDrivePage() {
           <ScrollFadeIn>
             <div>
               <WaveLabel text="MY CONTRIBUTION" fontSize={15} />
-              <h2 style={{ margin: '18px 0 22px', fontFamily: TITLE, fontWeight: 300, fontSize: 50, lineHeight: 1 }}>Designing a core Microsoft 365 journey</h2>
-              <p style={{ margin: 0, fontFamily: BODY, fontSize: 18, lineHeight: '29px' }}>I led the redesign across OneDrive web and mobile, partnering with Office designers, Product, UX Research, and Engineering. The sharing experience appeared across more than 40 product entry points, so every decision had to work at scale.</p>
+              <h2 style={{ margin: '18px 0 22px', fontFamily: TITLE, fontWeight: 300, fontSize: 50, lineHeight: 1 }}>Leading the sharing redesign</h2>
+              <p style={{ margin: 0, fontFamily: BODY, fontSize: 18, lineHeight: '29px' }}>I led the redesign across OneDrive web and mobile, partnering with Office, Product, UX Research, and Engineering. The experience appeared across 40+ Microsoft 365 entry points.</p>
             </div>
           </ScrollFadeIn>
           <ScrollFadeIn><ResearchBars /></ScrollFadeIn>
