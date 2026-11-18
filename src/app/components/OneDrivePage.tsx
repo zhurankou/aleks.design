@@ -11,72 +11,135 @@ const SURFACE = '#F5F5F7';
 
 const process = [
   {
-    id: 'model',
-    title: 'Simplifying the sharing model',
-    body: 'We compared unified and separated sharing models across OneDrive and Office. The trade-off was adding a step while making each decision easier: first choose how to share, then set permissions only when needed.',
+    id: 'explorations',
+    title: 'Explorations',
+    body: 'We compared unified and separated sharing actions to find a simpler, flexible model across OneDrive and Office.',
     visual: '/onedrive/exploration.svg',
-    alt: 'OneDrive unified and separated sharing model explorations',
+    alt: 'Unified and separated sharing model explorations',
   },
   {
-    id: 'flow',
-    title: 'Testing a progressive flow',
-    body: 'We broke sharing into smaller decisions and tested whether people could discover Share, choose a method, and complete common tasks. Participants understood Email link and Copy link and successfully completed the tested flow.',
+    id: 'simplified-flow',
+    title: 'Simplified flow',
+    body: 'We broke sharing into progressive steps so people could focus on one decision at a time.',
     visual: '/onedrive/flow.svg',
     alt: 'Progressive OneDrive sharing flow',
   },
   {
-    id: 'permissions',
-    title: 'Clarifying audience and permissions',
-    body: 'Link Settings mixed audience, editing rights, and security controls. We simplified labels, surfaced descriptions, and made permissions more consistent. Research showed that useful explanations needed to be visible, not hidden behind tooltips.',
+    id: 'testing',
+    title: 'Testing',
+    body: 'We tested whether people could find sharing options and complete common tasks using the new flow.',
+    visual: '/onedrive/testing.svg',
+    alt: 'OneDrive sharing flow usability testing',
+  },
+  {
+    id: 'design-direction',
+    title: 'Design direction',
+    body: 'The direction combined a progressive flow, clearer permissions, and a more consistent pattern across products.',
+    visual: '/onedrive/direction.svg',
+    alt: 'OneDrive sharing design direction',
+  },
+  {
+    id: 'confusing-settings',
+    title: 'Confusing settings',
+    body: 'Customers struggled to understand audience options and permissions in the existing Link Settings experience.',
     visual: '/onedrive/permissions.svg',
-    alt: 'OneDrive redesigned sharing settings and permission controls',
+    alt: 'Existing and redesigned OneDrive sharing settings',
+  },
+  {
+    id: 'clarifying-permissions',
+    title: 'Clarifying permissions',
+    body: 'We simplified names, added clearer descriptions, and made permission controls more consistent.',
+    visual: '/onedrive/permissions.svg',
+    alt: 'Clarified OneDrive sharing permissions',
+  },
+  {
+    id: 'refinements',
+    title: 'Refinements',
+    body: 'Research led us to surface descriptions, clarify labels, and make existing access easier to understand.',
+    visual: '/onedrive/settings-refinement.svg',
+    alt: 'Refined OneDrive sharing settings',
+  },
+  {
+    id: 'discoverability',
+    title: 'Discoverability',
+    body: 'Manage Access was buried in the overflow menu and details pane, making an important task difficult to find.',
+    visual: '/onedrive/manage-directions.svg',
+    alt: 'OneDrive Manage Access discoverability explorations',
   },
   {
     id: 'constraints',
-    title: 'Designing within constraints',
-    body: 'Manage Access was difficult to discover. We explored showing existing access directly in Share, but live face-piles in the menu were not technically feasible. We kept the user goal and simplified the implementation.',
+    title: 'Constraints',
+    body: 'We explored showing existing access directly in Share, but live face-piles in the menu were not technically feasible.',
     visual: '/onedrive/access-constraints.svg',
-    alt: 'OneDrive existing-access exploration constrained by engineering feasibility',
+    alt: 'Manage Access face-pile exploration constrained by engineering feasibility',
   },
   {
-    id: 'entry',
-    title: 'Creating a clear entry point',
-    body: 'We narrowed the direction to a direct Manage Access entry in Share and a Shared with section in the dialog. The goal was to help people answer who already has access without adding another complex management surface.',
+    id: 'design-directions',
+    title: 'Design directions',
+    body: 'We narrowed the solution to Manage Access in the Share menu and Shared with inside the dialog.',
+    visual: '/onedrive/manage-directions.svg',
+    alt: 'Manage Access design directions',
+  },
+  {
+    id: 'clear-entry-point',
+    title: 'Clear entry point',
+    body: 'Manage Access became easier to find directly from Share without adding another complex management surface.',
     visual: '/onedrive/access-solution.svg',
-    alt: 'OneDrive Manage Access and Shared with entry-point solution',
+    alt: 'Final Manage Access entry point',
   },
   {
-    id: 'delivery',
-    title: 'Scaling the experience',
-    body: 'Because sharing is high-traffic, we rolled the redesign out in stages and monitored telemetry. I also documented accessibility requirements, mobile behavior, and reusable patterns for partner teams across Microsoft 365.',
+    id: 'incremental-rollout',
+    title: 'Incremental rollout',
+    body: 'We released the redesign in stages and used telemetry to evaluate behavior and reduce risk.',
+    visual: '/onedrive/rollout.svg',
+    alt: 'Incremental OneDrive sharing rollout',
+  },
+  {
+    id: 'accessibility',
+    title: 'Accessibility',
+    body: 'I documented keyboard, screen-reader, zoom, and high-contrast requirements for the sharing experience.',
     visual: '/onedrive/accessibility.svg',
     alt: 'OneDrive accessibility specifications',
+  },
+  {
+    id: 'mobile',
+    title: 'Mobile',
+    body: 'I created iOS and Android specifications so the sharing experience stayed consistent across platforms.',
+    visual: '/onedrive/mobile.svg',
+    alt: 'OneDrive mobile sharing specifications',
+  },
+  {
+    id: 'scaling',
+    title: 'Scaling the experience',
+    body: 'Validated patterns became reusable components and guidelines for Microsoft 365 partner teams.',
+    visual: '/onedrive/design-system.svg',
+    alt: 'OneDrive sharing design system assets',
+  },
+  {
+    id: 'illustrations',
+    title: 'Illustrations',
+    body: 'I also created first-run visuals for family and group sharing.',
+    visual: '/onedrive/illustrations.svg',
+    alt: 'OneDrive family and group sharing illustrations',
   },
 ];
 
 function ResearchBars() {
   return (
-    <div style={{ width: 696, height: 560, borderRadius: 40, background: SURFACE, padding: 54, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <p style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 38, lineHeight: 1 }}>Research signal</p>
-        <span style={{ fontFamily: BODY, fontSize: 13, color: GREY }}>2019 benchmark</span>
-      </div>
+    <div style={{ width: 696, height: 430, borderRadius: 40, background: SURFACE, padding: 54, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+      <p style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 38, lineHeight: 1 }}>Research signal</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginTop: 48 }}>
-        <div style={{ borderRadius: 30, background: '#FFFFFF', padding: '30px', minHeight: 230, boxSizing: 'border-box' }}>
-          <p style={{ margin: 0, fontFamily: BODY, fontWeight: 600, fontSize: 15, color: '#6E6E73' }}>Task completion</p>
-          <div style={{ marginTop: 34, fontFamily: TITLE, fontWeight: 300, fontSize: 92, lineHeight: .86, letterSpacing: '-.05em' }}>89%</div>
+        <div style={{ borderRadius: 30, background: 'rgba(52,199,89,.16)', padding: '30px', minHeight: 230, boxSizing: 'border-box' }}>
+          <p style={{ margin: 0, fontFamily: BODY, fontWeight: 600, fontSize: 15, color: '#248A3D' }}>Task completion</p>
+          <div style={{ marginTop: 34, fontFamily: TITLE, fontWeight: 300, fontSize: 92, lineHeight: .86, letterSpacing: '-.05em', color: '#248A3D' }}>89%</div>
         </div>
 
-        <div style={{ borderRadius: 30, background: 'rgba(0,120,212,.10)', padding: '30px', minHeight: 230, boxSizing: 'border-box' }}>
-          <p style={{ margin: 0, fontFamily: BODY, fontWeight: 600, fontSize: 15, color: BLUE }}>Satisfaction</p>
-          <div style={{ marginTop: 34, fontFamily: TITLE, fontWeight: 300, fontSize: 92, lineHeight: .86, letterSpacing: '-.05em', color: BLUE }}>73%</div>
+        <div style={{ borderRadius: 30, background: 'rgba(255,59,48,.14)', padding: '30px', minHeight: 230, boxSizing: 'border-box' }}>
+          <p style={{ margin: 0, fontFamily: BODY, fontWeight: 600, fontSize: 15, color: '#D70015' }}>Satisfaction</p>
+          <div style={{ marginTop: 34, fontFamily: TITLE, fontWeight: 300, fontSize: 92, lineHeight: .86, letterSpacing: '-.05em', color: '#D70015' }}>73%</div>
         </div>
       </div>
-
-      <p style={{ margin: '34px 0 0', fontFamily: BODY, fontWeight: 500, fontSize: 19, lineHeight: '29px', maxWidth: 520 }}>
-        People could complete sharing tasks, but satisfaction remained low.
-      </p>
     </div>
   );
 }
@@ -102,13 +165,13 @@ function ProcessSection() {
     <section style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '0 auto', padding: '220px 0 40px', display: 'grid', gridTemplateColumns: '360px minmax(0, 1fr)', gap: 64, alignItems: 'start', overflow: 'visible' }} className="od-process">
       <div style={{ position: 'relative', alignSelf: 'stretch', minHeight: '100%' }}>
         <div style={{ position: 'sticky', top: 96, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <ScrollFadeIn><h2 style={{ margin: '0 0 36px', fontFamily: TITLE, fontWeight: 300, fontSize: 48, lineHeight: 1 }}>Process</h2></ScrollFadeIn>
+        <ScrollFadeIn><h2 style={{ margin: '0 0 20px', fontFamily: TITLE, fontWeight: 300, fontSize: 42, lineHeight: 1 }}>Process</h2></ScrollFadeIn>
         {process.map((item, i) => (
-          <div key={item.id} style={{ borderTop: i === 0 ? 'none' : '1px solid #E5E7EB', padding: '20px 0' }}>
-            <div style={{ fontFamily: BODY, fontWeight: active === i ? 650 : 500, fontSize: 21, color: active === i ? '#000' : GREY, transition: 'color .35s ease' }}>{item.title}</div>
+          <div key={item.id} style={{ borderTop: i === 0 ? 'none' : '1px solid #E5E7EB', padding: '9px 0' }}>
+            <div style={{ fontFamily: BODY, fontWeight: active === i ? 650 : 500, fontSize: 16, color: active === i ? '#000' : GREY, transition: 'color .35s ease' }}>{item.title}</div>
             <div style={{ display: 'grid', gridTemplateRows: active === i ? '1fr' : '0fr', transition: 'grid-template-rows .45s ease' }}>
               <div style={{ overflow: 'hidden', minHeight: 0 }}>
-                <p style={{ margin: active === i ? '12px 12px 0 0' : '0 12px 0 0', opacity: active === i ? 1 : 0, transition: 'opacity .3s ease, margin .45s ease', fontFamily: BODY, fontSize: 16, lineHeight: '24px' }}>{item.body}</p>
+                <p style={{ margin: active === i ? '7px 12px 2px 0' : '0 12px 0 0', opacity: active === i ? 1 : 0, transition: 'opacity .3s ease, margin .45s ease', fontFamily: BODY, fontSize: 13, lineHeight: '19px' }}>{item.body}</p>
               </div>
             </div>
           </div>
@@ -122,10 +185,6 @@ function ProcessSection() {
             <img src={item.visual} alt={item.alt} style={{ display: 'block', maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
           </div>
         ))}
-        <div style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 40, background: SURFACE, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 26, padding: 42, boxSizing: 'border-box', overflow: 'hidden' }}>
-          <img src="/onedrive/mobile.svg" alt="OneDrive mobile sharing specifications" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-          <img src="/onedrive/illustrations.svg" alt="OneDrive first-run sharing illustrations" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-        </div>
       </div>
     </section>
   );
@@ -194,7 +253,7 @@ export function OneDrivePage() {
             <div>
               <WaveLabel text="MY CONTRIBUTION" fontSize={15} />
               <h2 style={{ margin: '18px 0 22px', fontFamily: TITLE, fontWeight: 300, fontSize: 50, lineHeight: 1 }}>Leading the sharing redesign</h2>
-              <p style={{ margin: 0, fontFamily: BODY, fontSize: 18, lineHeight: '29px' }}>I led the redesign across OneDrive web and mobile, partnering with Office, Product, UX Research, and Engineering. The experience appeared across 40+ Microsoft 365 entry points.</p>
+              <p style={{ margin: 0, fontFamily: BODY, fontSize: 18, lineHeight: '29px' }}>I led the redesign across OneDrive web and mobile, partnering with Office, Product, UX Research, and Engineering. Benchmarking showed high task completion (89%) but lower satisfaction (73%), revealing friction in a core experience used across 40+ Microsoft 365 entry points.</p>
             </div>
           </ScrollFadeIn>
           <ScrollFadeIn><ResearchBars /></ScrollFadeIn>
@@ -211,11 +270,28 @@ export function OneDrivePage() {
 
       <section style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '90px auto 0' }}>
         <ScrollFadeIn>
-          <div style={{ background: '#F0F1FA', borderRadius: 40, padding: 36, boxSizing: 'border-box' }}>
-            <img src="/onedrive/twitter-feedback.svg" alt="Public feedback comparing OneDrive sharing with Google Drive" style={{ display: 'block', width: '100%', borderRadius: 22 }} />
-            <p style={{ margin: '20px auto 0', maxWidth: 760, textAlign: 'center', fontFamily: BODY, fontSize: 15, lineHeight: '23px', color: '#6E6E73' }}>
-              Public feedback echoed the benchmark: people described OneDrive sharing as clunky, confusing, and less user-friendly than Google Drive.
-            </p>
+          <div>
+            <div style={{ maxWidth: 720, marginBottom: 30 }}>
+              <p style={{ margin: '0 0 8px', fontFamily: BODY, fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: GREY }}>User feedback</p>
+              <h3 style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 42, lineHeight: 1.05 }}>What people were saying</h3>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }} className="od-tweets">
+              {[
+                ['Noah Wyhof-Rudnick', '@rudnicknoah · Nov 30, 2018', '“Google Drive is far more user friendly than OneDrive or Dropbox.”'],
+                ['Tim Wagner', '@prranch · Mar 27, 2018', '“It all feels so clunky compared to Google Apps.”'],
+                ['Abbie', '@AbbieReal · May 1, 2019', '“OneDrive drives me nuts.”'],
+                ['Lino Casas III', '@HistoryMrCasas · Mar 6, 2019', '“Google products are better than Windows OneDrive.”'],
+              ].map(([name,meta,quote]) => (
+                <div key={name} style={{ background: '#F5F5F7', borderRadius: 28, padding: 28, minHeight: 180, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontFamily: BODY, fontSize: 15, fontWeight: 700 }}>{name}</div>
+                    <div style={{ marginTop: 3, fontFamily: BODY, fontSize: 13, color: '#8E8E93' }}>{meta}</div>
+                  </div>
+                  <p style={{ margin: '24px 0 0', fontFamily: BODY, fontSize: 18, lineHeight: '27px', fontWeight: 500 }}>{quote}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </ScrollFadeIn>
 
@@ -330,6 +406,7 @@ export function OneDrivePage() {
       <style>{`
         @media (max-width: 900px) {
           .od-principles { grid-template-columns: 1fr 1fr !important; }
+          .od-tweets { grid-template-columns: 1fr !important; }
           .od-copy-test, .od-delivery { grid-template-columns: 1fr !important; }
           .od-intro { grid-template-columns: 1fr !important; gap: 36px !important; }
           .od-intro > div:last-child > div { transform-origin: left top; }
