@@ -53,21 +53,59 @@ const process = [
 ];
 
 function ResearchBars() {
+  const rows = [
+    { name: 'OneDrive', completion: 89, satisfaction: 73, highlight: true },
+    { name: 'Google Drive', completion: 81, satisfaction: 80, highlight: false },
+    { name: 'Box', completion: 74, satisfaction: 79, highlight: false },
+  ];
+
   return (
-    <div style={{ width: 696, height: 430, borderRadius: 40, background: SURFACE, padding: 54, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
-      <p style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 38, lineHeight: 1 }}>Research signal</p>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginTop: 48 }}>
-        <div style={{ borderRadius: 30, background: 'rgba(52,199,89,.16)', padding: '30px', minHeight: 230, boxSizing: 'border-box' }}>
-          <p style={{ margin: 0, fontFamily: BODY, fontWeight: 600, fontSize: 15, color: '#248A3D' }}>Task completion</p>
-          <div style={{ marginTop: 34, fontFamily: TITLE, fontWeight: 300, fontSize: 92, lineHeight: .86, letterSpacing: '-.05em', color: '#248A3D' }}>89%</div>
+    <div style={{ width: 696, minHeight: 560, borderRadius: 40, background: SURFACE, padding: 50, boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 20 }}>
+        <div>
+          <p style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 38, lineHeight: 1 }}>Benchmark</p>
+          <p style={{ margin: '10px 0 0', fontFamily: BODY, fontSize: 14, lineHeight: '21px', color: '#6E6E73' }}>
+            Task completion vs. experience satisfaction
+          </p>
         </div>
-
-        <div style={{ borderRadius: 30, background: 'rgba(255,59,48,.14)', padding: '30px', minHeight: 230, boxSizing: 'border-box' }}>
-          <p style={{ margin: 0, fontFamily: BODY, fontWeight: 600, fontSize: 15, color: '#D70015' }}>Satisfaction</p>
-          <div style={{ marginTop: 34, fontFamily: TITLE, fontWeight: 300, fontSize: 92, lineHeight: .86, letterSpacing: '-.05em', color: '#D70015' }}>73%</div>
+        <div style={{ display: 'flex', gap: 16, fontFamily: BODY, fontSize: 12, color: '#6E6E73', whiteSpace: 'nowrap' }}>
+          <span><b style={{ color: '#248A3D' }}>●</b> Completion</span>
+          <span><b style={{ color: '#D70015' }}>●</b> Satisfaction</span>
         </div>
       </div>
+
+      <div style={{ marginTop: 38, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {rows.map((row) => (
+          <div
+            key={row.name}
+            style={{
+              borderRadius: 24,
+              background: row.highlight ? '#FFFFFF' : 'rgba(255,255,255,.55)',
+              border: row.highlight ? '1px solid #E5E7EB' : '1px solid transparent',
+              padding: row.highlight ? '24px 26px' : '18px 22px',
+              boxSizing: 'border-box',
+            }}
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 110px', gap: 16, alignItems: 'center' }}>
+              <div style={{ fontFamily: BODY, fontSize: row.highlight ? 18 : 16, fontWeight: row.highlight ? 700 : 600 }}>
+                {row.name}
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: row.highlight ? 42 : 30, lineHeight: 1, color: '#248A3D' }}>{row.completion}%</div>
+                <div style={{ marginTop: 5, fontFamily: BODY, fontSize: 11, color: '#6E6E73' }}>completion</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: row.highlight ? 42 : 30, lineHeight: 1, color: '#D70015' }}>{row.satisfaction}%</div>
+                <div style={{ marginTop: 5, fontFamily: BODY, fontSize: 11, color: '#6E6E73' }}>satisfaction</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p style={{ margin: '28px 0 0', fontFamily: BODY, fontSize: 17, lineHeight: '26px', fontWeight: 500 }}>
+        OneDrive had the highest task completion, but the lowest satisfaction of the three services.
+      </p>
     </div>
   );
 }
