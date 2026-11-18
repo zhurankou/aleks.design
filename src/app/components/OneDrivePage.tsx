@@ -286,7 +286,7 @@ export function OneDrivePage() {
                   <img src={src} alt={alt} style={{ display: 'block', width: '100%', height: 'auto' }} />
                 </div>
               ))}
-            </div>            </div>
+            </div>
           </div>
         </ScrollFadeIn>
       </section>
