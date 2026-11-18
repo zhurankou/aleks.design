@@ -271,7 +271,6 @@ export function OneDrivePage() {
         <ScrollFadeIn>
           <div>
             <div style={{ maxWidth: 720, marginBottom: 30 }}>
-              <p style={{ margin: '0 0 8px', fontFamily: BODY, fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: GREY }}>User feedback</p>
               <h3 style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 42, lineHeight: 1.05 }}>What people were saying</h3>
             </div>
 
