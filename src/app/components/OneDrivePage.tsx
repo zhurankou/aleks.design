@@ -1,161 +1,247 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { WaveLabel } from './ui/WaveLabel';
+import { ScrollFadeIn } from './ui/ScrollFadeIn';
 
-const RAW = 'https://raw.githubusercontent.com/zhurankou/portfolio/master/images';
-const CSS = `
-.od-root{min-height:100vh;overflow-x:hidden;background:#fff;color:#000;font-family:'Manrope',sans-serif}
-.od-shell{width:min(1120px,calc(100vw - 80px));margin:0 auto}
-.od-back{position:fixed;z-index:20;left:50%;top:22px;transform:translateX(-50%);padding:5px 14px;border:2px solid #000;border-radius:999px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);color:#000;text-decoration:none;font-family:'Stack Sans Notch',sans-serif;font-size:15px;font-weight:300;box-shadow:0 6px 24px rgba(0,0,0,.08)}
-.od-hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:92px 20px 72px;box-sizing:border-box}
-.od-hero h1,.od-section h2,.od-card h3,.od-study h3{font-family:'Stack Sans Notch',sans-serif;font-weight:300;margin:0}
-.od-hero h1{max-width:900px;margin:18px auto 22px;font-size:clamp(52px,7vw,88px);line-height:.95;letter-spacing:-.035em}
-.od-hero p{max-width:760px;margin:0 auto;font-size:20px;line-height:1.55;font-weight:500}
-.od-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:56px;text-align:left}
-.od-meta-card,.od-card,.od-study,.od-visual,.od-impact{background:#f5f5f7;border-radius:40px}
-.od-meta-card{padding:28px}
-.od-eyebrow{margin:0 0 8px!important;color:#6e6e73;text-transform:uppercase;letter-spacing:.08em;font-size:12px!important;font-weight:700!important}
-.od-meta-card p:last-child{margin:0;font-size:17px;line-height:1.5}
-.od-section{padding:108px 0 0}
-.od-section-head{max-width:860px;margin:0 auto 48px;text-align:center}
-.od-section h2{font-size:clamp(42px,5vw,64px);line-height:1;letter-spacing:-.025em}
-.od-section-head>p{margin:22px auto 0;max-width:760px;font-size:20px;line-height:1.6}
-.od-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-.od-card{min-height:280px;padding:36px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between}
-.od-card h3{font-size:34px;line-height:1.05}
-.od-card p{margin:20px 0 0;font-size:17px;line-height:1.55}
-.od-problems{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px}
-.od-problem{border-radius:24px;padding:28px 24px;background:#fff;border:1px solid #e7e7ea;font-size:17px;line-height:1.35;font-weight:600}
-.od-visual{margin:24px 0 0;padding:36px;box-sizing:border-box;overflow:hidden}
-.od-visual img{display:block;width:100%;max-height:720px;border-radius:18px;object-fit:contain}
-.od-visual figcaption{margin-top:20px;color:#6e6e73;text-align:center;font-size:14px}
-.od-step{display:grid;grid-template-columns:360px 1fr;gap:56px;align-items:start;padding:88px 0 0}
-.od-step-copy{position:sticky;top:110px}
-.od-step-copy h3{font-family:'Stack Sans Notch',sans-serif;font-size:38px;line-height:1.05;font-weight:300;margin:10px 0 18px}
-.od-step-copy p{font-size:17px;line-height:1.6;margin:0}
-.od-study{margin-top:24px;padding:40px}
-.od-study h3{font-size:32px;margin-bottom:28px}
-.od-study-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px}
-.od-study-grid p{margin:8px 0;font-size:15px;line-height:1.5}
-.od-impact{padding:48px;margin-top:32px}
-.od-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.od-metric{padding:28px;border-radius:28px;background:#fff;min-height:150px;box-sizing:border-box}
-.od-metric>div{font-family:'Stack Sans Notch',sans-serif;font-size:48px;line-height:1;font-weight:300;color:#0078d4}
-.od-metric p{margin:16px 0 0;font-size:15px;line-height:1.4}
-.od-extra{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:28px}
-.od-extra>div{padding:24px;border:1px solid #e7e7ea;border-radius:24px}
-.od-extra h4{margin:0 0 8px;font-size:17px}
-.od-extra p{margin:0;color:#6e6e73;font-size:14px;line-height:1.45}
-.od-end{text-align:center;padding:140px 20px 120px}
-.od-end h2{font-family:'Stack Sans Notch',sans-serif;font-size:clamp(48px,7vw,82px);font-weight:300;margin:20px 0 28px;line-height:.98}
-.od-end p{max-width:700px;margin:0 auto 32px;font-size:18px;line-height:1.6}
-.od-home-link{display:inline-block;border:2px solid #000;border-radius:999px;padding:9px 18px;color:#000;text-decoration:none;font-family:'Stack Sans Notch',sans-serif;font-size:16px}
-.od-blue{color:#0078d4}
-@media(max-width:820px){.od-shell{width:min(100% - 40px,680px)}.od-hero{min-height:auto;padding-top:120px}.od-hero h1{font-size:clamp(44px,13vw,64px)}.od-hero p,.od-section-head>p{font-size:17px}.od-meta,.od-grid-2,.od-study-grid{grid-template-columns:1fr}.od-problems{grid-template-columns:1fr 1fr}.od-step{grid-template-columns:1fr;gap:24px;padding-top:72px}.od-step-copy{position:static}.od-section{padding-top:88px}.od-visual{padding:18px;border-radius:28px}.od-study,.od-impact{padding:28px;border-radius:28px}.od-metrics,.od-extra{grid-template-columns:1fr 1fr}}
-@media(max-width:520px){.od-problems,.od-metrics,.od-extra{grid-template-columns:1fr}.od-meta-card,.od-card{border-radius:28px}.od-section h2{font-size:42px}.od-step-copy h3{font-size:34px}.od-impact{padding:20px}}
-`;
+const TITLE = "'Stack Sans Notch', sans-serif";
+const BODY = "'Manrope', sans-serif";
+const BLUE = '#0078D4';
+const GREY = '#A8AFB6';
+const SURFACE = '#F5F5F7';
 
-function Reveal({children,delay=0}:{children:React.ReactNode;delay?:number}){
-  const ref=useRef<HTMLDivElement>(null);
-  const [visible,setVisible]=useState(false);
-  useEffect(()=>{const el=ref.current;if(!el)return;const io=new IntersectionObserver(([entry])=>{if(entry.isIntersecting)setVisible(true)},{threshold:.12});io.observe(el);return()=>io.disconnect()},[]);
-  return <div ref={ref} style={{opacity:visible?1:0,transform:visible?'translateY(0)':'translateY(24px)',transition:'opacity .7s ease '+delay+'ms, transform .7s cubic-bezier(.22,1,.36,1) '+delay+'ms'}}>{children}</div>;
-}
+const process = [
+  {
+    id: 'model',
+    title: 'Simplifying the sharing model',
+    body: 'We compared unified and separated sharing models across OneDrive and Office. The trade-off was adding a step while making each decision easier: first choose how to share, then set permissions only when needed.',
+    visual: '/onedrive/exploration.svg',
+    alt: 'OneDrive unified and separated sharing model explorations',
+  },
+  {
+    id: 'permissions',
+    title: 'Clarifying audience and permissions',
+    body: 'People struggled to understand who each link option was for. We renamed the experience, simplified audience names, surfaced descriptions, and made permission controls consistent.',
+    visual: '/onedrive/permissions.svg',
+    alt: 'OneDrive redesigned sharing settings and permission controls',
+  },
+  {
+    id: 'constraints',
+    title: 'Designing within constraints',
+    body: 'We explored showing existing access directly in Share. Users liked the idea, but live face-piles in the menu were not technically feasible, so we kept the intent and simplified the implementation.',
+    visual: '/onedrive/access-constraints.svg',
+    alt: 'OneDrive existing-access exploration that was constrained by engineering feasibility',
+  },
+  {
+    id: 'entry',
+    title: 'Creating a clear entry point',
+    body: 'Manage Access had been buried in overflow menus and the details pane. We brought it directly into the sharing experience so people could quickly answer: who already has access?',
+    visual: '/onedrive/access-solution.svg',
+    alt: 'OneDrive Manage Access and Shared with entry-point solution',
+  },
+  {
+    id: 'delivery',
+    title: 'Scaling the experience',
+    body: 'Because sharing is high-traffic, we rolled the redesign out in stages and monitored telemetry. I also documented accessibility requirements, mobile behavior, and reusable patterns for partner teams.',
+    visual: '/onedrive/accessibility.svg',
+    alt: 'OneDrive accessibility specifications',
+  },
+];
 
-function CaseImage({src,alt,caption}:{src:string;alt:string;caption?:string}){
-  return <Reveal><figure className="od-visual"><img src={src} alt={alt}/>{caption?<figcaption>{caption}</figcaption>:null}</figure></Reveal>;
-}
-
-function StudyCard({title,settings,results}:{title:string;settings:string[];results:string[]}){
-  return <Reveal><div className="od-study"><h3>{title}</h3><div className="od-study-grid"><div><p className="od-eyebrow">Settings</p>{settings.map(item=><p key={item}>{item}</p>)}</div><div><p className="od-eyebrow">Results</p>{results.map(item=><p key={item}>{item}</p>)}</div></div></div></Reveal>;
-}
-
-function Metric({value,label}:{value:string;label:string}){
-  return <div className="od-metric"><div>{value}</div><p>{label}</p></div>;
-}
-
-export function OneDrivePage(){
-  return <main className="od-root">
-    <style>{CSS}</style>
-    <Link to="/" className="od-back">← Home</Link>
-
-    <section className="od-hero"><div className="od-shell">
-      <WaveLabel text="CASE STUDY" fontSize={16}/>
-      <h1>OneDrive <span className="od-blue">Sharing Experience</span></h1>
-      <p>Redesigning a powerful Microsoft 365 sharing system so people could make complex permission decisions with more clarity and confidence.</p>
-      <div className="od-meta">
-        <div className="od-meta-card"><p className="od-eyebrow">Role</p><p>UX/UI Designer, OneDrive<br/>Web + mobile</p></div>
-        <div className="od-meta-card"><p className="od-eyebrow">Scope</p><p>Core Microsoft 365 sharing journey across 40+ product entry points.</p></div>
-        <div className="od-meta-card"><p className="od-eyebrow">Collaboration</p><p>Office designers, Product, UX Research, Engineering, and partner teams.</p></div>
+function ResearchBars() {
+  const rows = [
+    { name: 'OneDrive', completion: 89, satisfaction: 73 },
+    { name: 'Google Drive', completion: 81, satisfaction: 80 },
+    { name: 'Box', completion: 74, satisfaction: 79 },
+  ];
+  return (
+    <div style={{ width: 696, height: 696, borderRadius: 40, background: SURFACE, padding: 56, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 36 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
+        <p style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 42, lineHeight: 1.05 }}>Research signal</p>
+        <div style={{ display: 'flex', gap: 18, fontFamily: BODY, fontSize: 12, color: '#666' }}>
+          <span>■ Completion</span><span style={{ color: BLUE }}>■ Satisfaction</span>
+        </div>
       </div>
-    </div></section>
-
-    <div className="od-shell">
-      <section className="od-section">
-        <Reveal><div className="od-section-head"><WaveLabel text="PROBLEM" fontSize={16}/><h2>A successful flow that still felt difficult</h2><p>People could complete sharing tasks, but satisfaction lagged behind. The experience had grown powerful—and fragmented—across Microsoft 365.</p></div></Reveal>
-        <div className="od-grid-2">
-          <Reveal><div className="od-card"><div><p className="od-eyebrow">Benchmark signal</p><h3>89% completion.<br/><span className="od-blue">73% satisfaction.</span></h3></div><p>OneDrive outperformed comparison products on task completion, while users rated the overall experience lower.</p></div></Reveal>
-          <Reveal delay={100}><div className="od-card"><div><p className="od-eyebrow">Customer job</p><h3>Share with the right people and permissions.</h3></div><p>Without losing control of who already has access.</p></div></Reveal>
-        </div>
-        <div className="od-problems">{['Inconsistent experiences','Confusing link types','Hidden controls','Hard-to-find access management'].map((item,i)=><Reveal key={item} delay={i*70}><div className="od-problem">{item}</div></Reveal>)}</div>
-        <CaseImage src={RAW+'/sharing/sharing1.png'} alt="OneDrive sharing benchmark and early sharing experience" caption="The redesign started with a benchmark signal and a detailed review of the existing sharing experience."/>
-      </section>
-
-      <section className="od-section">
-        <Reveal><div className="od-section-head"><WaveLabel text="APPROACH" fontSize={16}/><h2>Reduce the number of decisions people make at once</h2><p>I worked with Microsoft 365 partner teams to move sharing from a dense, all-in-one dialog toward a progressive flow: choose what to do first, then configure access only when needed.</p></div></Reveal>
-        <div className="od-step">
-          <div className="od-step-copy"><p className="od-eyebrow">01 · Align the model</p><h3>One experience, flexible across products</h3><p>We compared unified and separated sharing models, balancing a simpler mental model with the different entry points and constraints across OneDrive and Office.</p></div>
-          <div>
-            <CaseImage src={RAW+'/sharing/sharing8.png'} alt="Exploration of the OneDrive sharing flow" caption="A separated Share menu kept the first decision simple, while the dialog handled the deeper task."/>
-            <CaseImage src={RAW+'/sharing/sharing10.png'} alt="OneDrive sharing dialog with clearer role selection" caption="The redesigned dialog surfaced important controls and created a more consistent hierarchy."/>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 34 }}>
+        {rows.map((r) => (
+          <div key={r.name}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontFamily: BODY, fontSize: 16, fontWeight: 600 }}>
+              <span>{r.name}</span><span>{r.completion}% / {r.satisfaction}%</span>
+            </div>
+            <div style={{ height: 18, background: '#E2E4E8', borderRadius: 999, overflow: 'hidden', marginBottom: 8 }}>
+              <div style={{ width: `${r.completion}%`, height: '100%', background: '#000', borderRadius: 999 }} />
+            </div>
+            <div style={{ height: 18, background: '#E2E4E8', borderRadius: 999, overflow: 'hidden' }}>
+              <div style={{ width: `${r.satisfaction}%`, height: '100%', background: BLUE, borderRadius: 999 }} />
+            </div>
           </div>
-        </div>
-        <StudyCard title="Share dialog usability study" settings={['1:1 moderated remote sessions via Flash Feedback','40 minutes','Figma click-through prototype','Office 365 and GSuite users']} results={['All participants completed the given tasks','Participants understood “Email link”','All participants discovered Share','Email link and Copy link were intuitive']}/>
-      </section>
-
-      <section className="od-section">
-        <div className="od-step">
-          <div className="od-step-copy"><p className="od-eyebrow">02 · Clarify settings</p><h3>Make audience and permissions easier to understand</h3><p>“Link settings” mixed audience, editing rights, and security controls. We simplified names, added clearer descriptions, and made permission controls more consistent.</p></div>
-          <div>
-            <CaseImage src={RAW+'/link-settings/link-settings19.png'} alt="Original OneDrive Link settings dialog" caption="The original settings required users to interpret several similar audience options."/>
-            <CaseImage src={RAW+'/link-settings/link-settings13.png'} alt="Redesigned OneDrive sharing settings dialog" caption="We reframed the experience around Sharing settings and clearer audience choices."/>
-            <CaseImage src={RAW+'/link-settings/link-settings16.png'} alt="Refined OneDrive sharing settings" caption="Later iterations surfaced descriptions and clarified the selected audience."/>
-          </div>
-        </div>
-        <StudyCard title="Link settings usability study" settings={['Unmoderated remote sessions via UserTesting','12 participants','Figma click-through prototype','OneDrive and Google Drive users']} results={['External sharing was easy and seamless','“People with access” needed clarification','Descriptions were useful but not obvious enough','Block download wording needed improvement']}/>
-      </section>
-
-      <section className="od-section">
-        <div className="od-step">
-          <div className="od-step-copy"><p className="od-eyebrow">03 · Manage existing access</p><h3>Make a buried task visible</h3><p>Manage Access lived behind overflow menus and the details pane. We explored putting existing access directly into Share, but live face-piles in the menu were not technically feasible.</p></div>
-          <div>
-            <CaseImage src={RAW+'/manage-access/manage-access4.png'} alt="Original hidden Manage Access entry point" caption="The original entry point was easy to miss."/>
-            <CaseImage src={RAW+'/manage-access/manage-access6.png'} alt="Manage Access exploration with new entry points" caption="We explored showing access context directly in the sharing experience."/>
-            <CaseImage src={RAW+'/manage-access/manage-access7.png'} alt="Manage Access final design" caption="The technically constrained concept became a simple, explicit Manage Access entry point."/>
-          </div>
-        </div>
-        <StudyCard title="“Shared with” usability study" settings={['1:1 moderated remote sessions','60 minutes','Figma click-through prototype','Sharing-savvy and sharing-unfamiliar users']} results={['All participants understood the intent of face-piles','Existing access was clear and useful','Participants said the context would support faster sharing decisions']}/>
-      </section>
-
-      <section className="od-section">
-        <Reveal><div className="od-section-head"><WaveLabel text="DELIVERY" fontSize={16}/><h2>Roll out carefully, then scale the pattern</h2><p>Sharing is a high-traffic experience, so we released changes in stages, watched telemetry, and documented the system for accessibility, mobile platforms, and partner teams.</p></div></Reveal>
-        <CaseImage src={RAW+'/sharing/sharing20.png'} alt="Incremental OneDrive sharing rollout" caption="Incremental rollout let the team learn from production behavior while reducing risk."/>
-        <div className="od-extra">
-          <Reveal><div><h4>Accessibility</h4><p>Keyboard, screen reader, zoom, and high-contrast requirements.</p></div></Reveal>
-          <Reveal delay={70}><div><h4>Mobile</h4><p>Design specifications for iOS and Android sharing flows.</p></div></Reveal>
-          <Reveal delay={140}><div><h4>Design system</h4><p>Reusable components and guidelines for Microsoft 365 partner teams.</p></div></Reveal>
-          <Reveal delay={210}><div><h4>Visual design</h4><p>First-run experiences for family and group sharing.</p></div></Reveal>
-        </div>
-        <CaseImage src={RAW+'/illustrations/illustrations3.png'} alt="OneDrive first-run sharing illustration" caption="The broader sharing work also included first-run visual experiences for new sharing features."/>
-      </section>
-
-      <section className="od-section">
-        <Reveal><div className="od-section-head"><WaveLabel text="OUTCOME" fontSize={16}/><h2>Clearer sharing at Microsoft 365 scale</h2><p>The redesign connected a simpler sharing model, clearer permissions, better access management, and a system that partner teams could adopt.</p></div></Reveal>
-        <Reveal><div className="od-impact"><div className="od-metrics"><Metric value="+34%" label="Completed sharing actions"/><Metric value="+3.9%" label="Permission changes"/><Metric value="+27%" label="Copy link setting changes"/><Metric value="+64%" label="Manage Access engagement"/></div></div></Reveal>
-        <CaseImage src={RAW+'/manage-access/manage-access12.png'} alt="OneDrive Manage Access redesign outcome" caption="Production telemetry showed stronger engagement with the redesigned sharing and access-management experiences."/>
-      </section>
+        ))}
+      </div>
+      <p style={{ margin: 0, fontFamily: BODY, fontWeight: 500, fontSize: 18, lineHeight: '28px' }}>
+        Users could complete sharing tasks, but satisfaction with the experience was low.
+      </p>
     </div>
+  );
+}
 
-    <section className="od-end"><WaveLabel text="THANK YOU!" fontSize={16}/><h2>Turning sharing complexity into clarity.</h2><p>The project reinforced a lesson I still use: simplify the decision in front of the user, while keeping the underlying system powerful enough to scale.</p><Link to="/" className="od-home-link">Back home</Link></section>
-  </main>;
+function ProcessSection() {
+  const refs = useRef<(HTMLDivElement | null)[]>([]);
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const observers = refs.current.map((el, index) => {
+      if (!el) return null;
+      const io = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActive(index); },
+        { rootMargin: '-28% 0px -28% 0px', threshold: 0.05 },
+      );
+      io.observe(el);
+      return io;
+    });
+    return () => observers.forEach((io) => io?.disconnect());
+  }, []);
+
+  return (
+    <section style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '0 auto', padding: '150px 0 40px', display: 'grid', gridTemplateColumns: '360px 1fr', gap: 64, alignItems: 'start' }} className="od-process">
+      <div style={{ position: 'sticky', top: 90, minHeight: 640, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <ScrollFadeIn><h2 style={{ margin: '0 0 36px', fontFamily: TITLE, fontWeight: 300, fontSize: 48, lineHeight: 1 }}>Process</h2></ScrollFadeIn>
+        {process.map((item, i) => (
+          <div key={item.id} style={{ borderTop: i === 0 ? 'none' : '1px solid #E5E7EB', padding: '20px 0' }}>
+            <div style={{ fontFamily: BODY, fontWeight: active === i ? 650 : 500, fontSize: 21, color: active === i ? '#000' : GREY, transition: 'color .35s ease' }}>{item.title}</div>
+            <div style={{ display: 'grid', gridTemplateRows: active === i ? '1fr' : '0fr', transition: 'grid-template-rows .45s ease' }}>
+              <div style={{ overflow: 'hidden', minHeight: 0 }}>
+                <p style={{ margin: active === i ? '12px 12px 0 0' : '0 12px 0 0', opacity: active === i ? 1 : 0, transition: 'opacity .3s ease, margin .45s ease', fontFamily: BODY, fontSize: 16, lineHeight: '24px' }}>{item.body}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+        {process.map((item, i) => (
+          <div key={item.id} ref={(el) => { refs.current[i] = el; }} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 40, background: SURFACE, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxSizing: 'border-box', padding: i === 4 ? 34 : 42 }}>
+            <img src={item.visual} alt={item.alt} style={{ display: 'block', maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+          </div>
+        ))}
+        <div style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 40, background: SURFACE, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 26, padding: 42, boxSizing: 'border-box', overflow: 'hidden' }}>
+          <img src="/onedrive/mobile.svg" alt="OneDrive mobile sharing specifications" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <img src="/onedrive/illustrations.svg" alt="OneDrive first-run sharing illustrations" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ResearchSummary() {
+  const studies = [
+    ['Share dialog', 'Users discovered Share, understood Email link, and completed the tested tasks.'],
+    ['Link settings', 'External sharing was easy; “People with access” and hidden descriptions needed refinement.'],
+    ['Shared with', 'Participants understood the face-piles and valued seeing who already had access.'],
+  ];
+  return (
+    <section style={{ padding: '150px 0 0' }}>
+      <div style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '0 auto' }}>
+        <ScrollFadeIn>
+          <div style={{ textAlign: 'center', maxWidth: 780, margin: '0 auto 54px' }}>
+            <WaveLabel text="RESEARCH" fontSize={16} />
+            <h2 style={{ margin: '18px 0 20px', fontFamily: TITLE, fontWeight: 300, fontSize: 56, lineHeight: 1 }}>Research shaped what we removed, not just what we added</h2>
+            <p style={{ margin: 0, fontFamily: BODY, fontSize: 19, lineHeight: '30px' }}>Each round narrowed the experience: simplify the flow, clarify the language, and expose the access information people needed at the moment of sharing.</p>
+          </div>
+        </ScrollFadeIn>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18 }}>
+          {studies.map(([title, body], i) => (
+            <ScrollFadeIn key={title} delay={i * 90}>
+              <div style={{ minHeight: 230, borderRadius: 32, background: SURFACE, padding: 30, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <span style={{ fontFamily: BODY, fontSize: 13, color: GREY }}>0{i + 1}</span>
+                <div><h3 style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 30 }}>{title}</h3><p style={{ margin: '14px 0 0', fontFamily: BODY, fontSize: 15, lineHeight: '23px' }}>{body}</p></div>
+              </div>
+            </ScrollFadeIn>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function OneDrivePage() {
+  return (
+    <main style={{ width: '100%', minHeight: '100vh', background: '#fff', color: '#000', overflowX: 'hidden' }}>
+      <style>{`
+        @media (max-width: 820px) {
+          .od-process { grid-template-columns: 1fr !important; max-width: calc(100vw - 40px) !important; padding-top: 96px !important; }
+          .od-process > div:first-child { position: static !important; min-height: auto !important; }
+          .od-process > div:first-child > div { display: none; }
+          .od-process > div:first-child h2 { margin-bottom: 0 !important; text-align:center; }
+          .od-process > div:last-child { gap: 18px !important; }
+          .od-process > div:last-child > div { border-radius: 28px !important; padding: 22px !important; }
+        }
+      `}</style>
+
+      <Link to="/" style={{ position: 'fixed', top: 22, left: '50%', transform: 'translateX(-50%)', zIndex: 50, border: '2px solid #000', borderRadius: 999, padding: '6px 15px', textDecoration: 'none', color: '#000', background: 'rgba(255,255,255,.92)', backdropFilter: 'blur(12px)', fontFamily: TITLE, fontSize: 15 }}>← Home</Link>
+
+      <section style={{ minHeight: '92vh', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '100px 24px 70px', boxSizing: 'border-box' }}>
+        <div style={{ maxWidth: 920 }}>
+          <WaveLabel text="CASE STUDY" fontSize={16} />
+          <h1 style={{ margin: '18px 0 22px', fontFamily: TITLE, fontWeight: 300, fontSize: 'clamp(56px, 7vw, 88px)', lineHeight: .95, letterSpacing: '-.035em' }}>OneDrive<br />Sharing Experience</h1>
+          <p style={{ margin: '0 auto', maxWidth: 760, fontFamily: BODY, fontWeight: 500, fontSize: 20, lineHeight: '31px' }}>How might we simplify a powerful but complex sharing experience so people can share confidently and stay in control of access?</p>
+        </div>
+      </section>
+
+      <section style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '0 auto', paddingTop: 40 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }} className="od-intro">
+          <ScrollFadeIn>
+            <div>
+              <WaveLabel text="MY CONTRIBUTION" fontSize={15} />
+              <h2 style={{ margin: '18px 0 22px', fontFamily: TITLE, fontWeight: 300, fontSize: 50, lineHeight: 1 }}>Designing a core Microsoft 365 journey</h2>
+              <p style={{ margin: 0, fontFamily: BODY, fontSize: 18, lineHeight: '29px' }}>I led the redesign across OneDrive web and mobile, partnering with Office designers, Product, UX Research, and Engineering. The sharing experience appeared across more than 40 product entry points, so every decision had to work at scale.</p>
+            </div>
+          </ScrollFadeIn>
+          <ScrollFadeIn delay={100}><ResearchBars /></ScrollFadeIn>
+        </div>
+      </section>
+
+      <section style={{ padding: '160px 24px 20px', textAlign: 'center' }}>
+        <ScrollFadeIn>
+          <WaveLabel text="PROBLEM" fontSize={16} />
+          <h2 style={{ maxWidth: 900, margin: '18px auto 22px', fontFamily: TITLE, fontWeight: 300, fontSize: 60, lineHeight: 1 }}>Powerful sharing had become hard to understand</h2>
+          <p style={{ maxWidth: 760, margin: '0 auto', fontFamily: BODY, fontSize: 19, lineHeight: '30px' }}>The same flexibility that made OneDrive sharing powerful also created friction: inconsistent experiences, confusing link types, hidden controls, and access management that was difficult to find.</p>
+        </ScrollFadeIn>
+      </section>
+
+      <ProcessSection />
+      <ResearchSummary />
+
+      <section style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '0 auto', padding: '160px 0 0' }}>
+        <ScrollFadeIn>
+          <div style={{ textAlign: 'center', maxWidth: 820, margin: '0 auto 56px' }}>
+            <WaveLabel text="OUTCOME" fontSize={16} />
+            <h2 style={{ margin: '18px 0 22px', fontFamily: TITLE, fontWeight: 300, fontSize: 60, lineHeight: 1 }}>Clearer sharing at Microsoft 365 scale</h2>
+            <p style={{ margin: 0, fontFamily: BODY, fontSize: 19, lineHeight: '30px' }}>We unified the sharing model, clarified permissions and access choices, and used telemetry to guide a staged rollout across a high-traffic experience.</p>
+          </div>
+        </ScrollFadeIn>
+
+        <div style={{ borderRadius: 40, background: SURFACE, padding: 52, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }} className="od-metrics">
+          {[['+34%','Completed sharing actions'],['+3.9%','Permission changes'],['+27%','Copy Link setting changes'],['+64%','Manage Access engagement']].map(([value,label],i)=>(
+            <ScrollFadeIn key={label} delay={i*80}><div style={{ minHeight: 170, borderRadius: 28, background: '#fff', padding: 28, boxSizing: 'border-box' }}><div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 48, lineHeight: 1, color: BLUE }}>{value}</div><p style={{ margin: '18px 0 0', fontFamily: BODY, fontSize: 15, lineHeight: '22px' }}>{label}</p></div></ScrollFadeIn>
+          ))}
+        </div>
+      </section>
+
+      <section style={{ textAlign: 'center', padding: '170px 24px 130px' }}>
+        <WaveLabel text="THANK YOU!" fontSize={16} />
+        <h2 style={{ maxWidth: 820, margin: '18px auto 26px', fontFamily: TITLE, fontWeight: 300, fontSize: 64, lineHeight: 1 }}>Make the decision simple.<br />Keep the system powerful.</h2>
+        <Link to="/" style={{ display: 'inline-block', marginTop: 12, border: '2px solid #000', borderRadius: 999, padding: '8px 18px', color: '#000', textDecoration: 'none', fontFamily: TITLE, fontSize: 16 }}>Back home</Link>
+      </section>
+
+      <style>{`
+        @media (max-width: 900px) {
+          .od-intro { grid-template-columns: 1fr !important; gap: 36px !important; }
+          .od-intro > div:last-child > div { transform-origin: left top; }
+          .od-metrics { grid-template-columns: 1fr 1fr !important; padding: 28px !important; border-radius: 28px !important; }
+        }
+        @media (max-width: 520px) {
+          .od-metrics { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
+    </main>
+  );
 }
