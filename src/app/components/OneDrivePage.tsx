@@ -54,30 +54,34 @@ const process = [
 
 function ResearchBars() {
   const rows = [
-    { name: 'OneDrive', completion: 89, satisfaction: 73, color: '#5B9BD5', logo: 'onedrive' },
-    { name: 'Google Drive', completion: 81, satisfaction: 80, color: '#5FAD56', logo: 'gdrive' },
-    { name: 'Box', completion: 74, satisfaction: 79, color: '#0061D5', logo: 'box' },
+    { name: 'OneDrive', completion: 89, satisfaction: 73, logo: 'onedrive' },
+    { name: 'Google Drive', completion: 81, satisfaction: 80, logo: 'gdrive' },
+    { name: 'Box', completion: 74, satisfaction: 79, logo: 'box' },
   ];
 
-  const Logo = ({ type, color }: { type: string; color: string }) => {
+  const Logo = ({ type }: { type: string }) => {
     if (type === 'gdrive') {
       return (
-        <svg width="28" height="24" viewBox="0 0 28 24" aria-hidden="true">
-          <path d="M10.2 1.5h7.2L27 18h-7.1z" fill="#FFD54F"/>
-          <path d="M10.2 1.5 1 17.5l3.6 6.2 9.4-16.2z" fill="#43A047"/>
-          <path d="M4.6 23.7 8.2 17.5H27l-3.6 6.2z" fill="#1E88E5"/>
+        <svg width="44" height="38" viewBox="0 0 28 24" aria-label="Google Drive">
+          <path d="M10.2 1.5h7.2L27 18h-7.1z" fill="#FBC02D"/>
+          <path d="M10.2 1.5 1 17.5l3.6 6.2 9.4-16.2z" fill="#34A853"/>
+          <path d="M4.6 23.7 8.2 17.5H27l-3.6 6.2z" fill="#4285F4"/>
         </svg>
       );
     }
+
     if (type === 'box') {
       return (
-        <div style={{ fontFamily: BODY, fontWeight: 800, fontSize: 22, lineHeight: 1, color: '#0061D5', letterSpacing: '-.04em' }}>box</div>
+        <svg width="58" height="28" viewBox="0 0 90 40" aria-label="Box">
+          <text x="0" y="31" fontFamily="Arial, sans-serif" fontSize="38" fontWeight="700" fill="#0061D5">box</text>
+        </svg>
       );
     }
+
     return (
-      <svg width="30" height="24" viewBox="0 0 30 24" aria-hidden="true">
-        <path d="M11.5 18.5H25a4 4 0 0 0 .3-8 7 7 0 0 0-12.8-3.1A6 6 0 0 0 4 12.8a5.7 5.7 0 0 0 7.5 5.7Z" fill={color}/>
-        <path d="M2.5 19.2h13.8a4.3 4.3 0 0 0 .2-8.6A6.5 6.5 0 0 0 5.2 8.8 5.4 5.4 0 0 0 2.5 19.2Z" fill="#7FB3E6" opacity=".9"/>
+      <svg width="48" height="38" viewBox="0 0 48 38" aria-label="OneDrive">
+        <path d="M19 31H39a7 7 0 0 0 .5-14A12 12 0 0 0 17 13.5 9.5 9.5 0 0 0 19 31Z" fill="#0078D4"/>
+        <path d="M7 32h22a7.5 7.5 0 0 0 .4-15A10.8 10.8 0 0 0 10 14 9 9 0 0 0 7 32Z" fill="#50A8E8"/>
       </svg>
     );
   };
@@ -87,7 +91,7 @@ function ResearchBars() {
       <p style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 38, lineHeight: 1 }}>Benchmark</p>
 
       <div style={{ marginTop: 34 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px', gap: 18, padding: '0 8px 12px', borderBottom: '1px solid #D9DCE1' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 1fr', gap: 18, padding: '0 8px 12px', borderBottom: '1px solid #D9DCE1' }}>
           <div />
           <div style={{ fontFamily: BODY, fontSize: 12, color: '#8E8E93', textAlign: 'right' }}>Completion</div>
           <div style={{ fontFamily: BODY, fontSize: 12, color: '#8E8E93', textAlign: 'right' }}>Satisfaction</div>
@@ -98,27 +102,23 @@ function ResearchBars() {
             key={row.name}
             style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 120px 120px',
+              gridTemplateColumns: '120px 1fr 1fr',
               gap: 18,
               alignItems: 'center',
-              padding: '22px 8px',
+              padding: '24px 8px',
+              minHeight: 92,
               borderBottom: row.name === 'Box' ? 'none' : '1px solid #E5E7EB',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 34, display: 'flex', justifyContent: 'center', flex: '0 0 34px' }}>
-                <Logo type={row.logo} color={row.color} />
-              </div>
-              <div style={{ fontFamily: BODY, fontSize: 17, fontWeight: 650, color: '#111' }}>
-                {row.name}
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+              <Logo type={row.logo} />
             </div>
 
-            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 32, lineHeight: 1, textAlign: 'right', color: row.color }}>
+            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 34, lineHeight: 1, textAlign: 'right', color: '#58A96B' }}>
               {row.completion}%
             </div>
 
-            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 32, lineHeight: 1, textAlign: 'right', color: row.color }}>
+            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 34, lineHeight: 1, textAlign: 'right', color: '#D46A66' }}>
               {row.satisfaction}%
             </div>
           </div>
