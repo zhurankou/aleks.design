@@ -56,63 +56,27 @@ const process = [
 
 function ResearchBars() {
   return (
-    <div style={{ width: 696, height: 696, borderRadius: 40, background: SURFACE, padding: 54, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ width: 696, height: 560, borderRadius: 40, background: SURFACE, padding: 54, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <p style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 38, lineHeight: 1 }}>Research signal</p>
         <span style={{ fontFamily: BODY, fontSize: 13, color: GREY }}>2019 benchmark</span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginTop: 46 }}>
-        <div style={{ borderRadius: 30, background: '#FFFFFF', padding: '28px 30px 26px', minHeight: 220, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginTop: 48 }}>
+        <div style={{ borderRadius: 30, background: '#FFFFFF', padding: '30px', minHeight: 230, boxSizing: 'border-box' }}>
           <p style={{ margin: 0, fontFamily: BODY, fontWeight: 600, fontSize: 15, color: '#6E6E73' }}>Task completion</p>
-          <div>
-            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 88, lineHeight: .86, letterSpacing: '-.05em' }}>89%</div>
-            <div style={{ marginTop: 20, height: 8, borderRadius: 999, background: '#E5E7EB', overflow: 'hidden' }}>
-              <div style={{ width: '89%', height: '100%', background: '#000', borderRadius: 999 }} />
-            </div>
-          </div>
+          <div style={{ marginTop: 34, fontFamily: TITLE, fontWeight: 300, fontSize: 92, lineHeight: .86, letterSpacing: '-.05em' }}>89%</div>
         </div>
 
-        <div style={{ borderRadius: 30, background: 'rgba(0,120,212,.10)', padding: '28px 30px 26px', minHeight: 220, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div style={{ borderRadius: 30, background: 'rgba(0,120,212,.10)', padding: '30px', minHeight: 230, boxSizing: 'border-box' }}>
           <p style={{ margin: 0, fontFamily: BODY, fontWeight: 600, fontSize: 15, color: BLUE }}>Satisfaction</p>
-          <div>
-            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 88, lineHeight: .86, letterSpacing: '-.05em', color: BLUE }}>73%</div>
-            <div style={{ marginTop: 20, height: 8, borderRadius: 999, background: 'rgba(0,120,212,.16)', overflow: 'hidden' }}>
-              <div style={{ width: '73%', height: '100%', background: BLUE, borderRadius: 999 }} />
-            </div>
-          </div>
+          <div style={{ marginTop: 34, fontFamily: TITLE, fontWeight: 300, fontSize: 92, lineHeight: .86, letterSpacing: '-.05em', color: BLUE }}>73%</div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginTop: 34 }}>
-        <span style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 56, lineHeight: 1 }}>16 pts</span>
-        <span style={{ fontFamily: BODY, fontSize: 15, color: '#6E6E73' }}>gap between completion and satisfaction</span>
-      </div>
-
-      <p style={{ margin: '14px 0 0', fontFamily: BODY, fontWeight: 500, fontSize: 19, lineHeight: '29px', maxWidth: 520 }}>
-        People could get through sharing, but the experience still felt difficult.
+      <p style={{ margin: '34px 0 0', fontFamily: BODY, fontWeight: 500, fontSize: 19, lineHeight: '29px', maxWidth: 520 }}>
+        People could complete sharing tasks, but satisfaction remained low.
       </p>
-
-      <div style={{ marginTop: 'auto', paddingTop: 30, borderTop: '1px solid #E0E2E6', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        <div>
-          <p style={{ margin: 0, fontFamily: BODY, fontSize: 13, color: GREY }}>Google Drive</p>
-          <div style={{ display: 'flex', gap: 14, alignItems: 'baseline', marginTop: 5 }}>
-            <span style={{ fontFamily: TITLE, fontSize: 30, fontWeight: 300 }}>81%</span>
-            <span style={{ fontFamily: BODY, fontSize: 14, color: '#6E6E73' }}>completion</span>
-            <span style={{ fontFamily: TITLE, fontSize: 30, fontWeight: 300, color: BLUE }}>80%</span>
-            <span style={{ fontFamily: BODY, fontSize: 14, color: '#6E6E73' }}>satisfaction</span>
-          </div>
-        </div>
-        <div>
-          <p style={{ margin: 0, fontFamily: BODY, fontSize: 13, color: GREY }}>Box</p>
-          <div style={{ display: 'flex', gap: 14, alignItems: 'baseline', marginTop: 5 }}>
-            <span style={{ fontFamily: TITLE, fontSize: 30, fontWeight: 300 }}>74%</span>
-            <span style={{ fontFamily: BODY, fontSize: 14, color: '#6E6E73' }}>completion</span>
-            <span style={{ fontFamily: TITLE, fontSize: 30, fontWeight: 300, color: BLUE }}>79%</span>
-            <span style={{ fontFamily: BODY, fontSize: 14, color: '#6E6E73' }}>satisfaction</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
