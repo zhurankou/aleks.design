@@ -278,35 +278,51 @@ export function OneDrivePage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }} className="od-tweets">
               {[
-                ['Noah Wyhof-Rudnick', '@rudnicknoah · Nov 30, 2018', '“Google Drive is far more user friendly than OneDrive or Dropbox.”'],
-                ['Tim Wagner', '@prranch · Mar 27, 2018', '“It all feels so clunky compared to Google Apps.”'],
-                ['Abbie', '@AbbieReal · May 1, 2019', '“OneDrive drives me nuts.”'],
-                ['Lino Casas III', '@HistoryMrCasas · Mar 6, 2019', '“Google products are better than Windows OneDrive.”'],
-              ].map(([name,meta,quote]) => (
-                <div key={name} style={{ background: '#F5F5F7', borderRadius: 28, padding: 28, minHeight: 180, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ fontFamily: BODY, fontSize: 15, fontWeight: 700 }}>{name}</div>
-                    <div style={{ marginTop: 3, fontFamily: BODY, fontSize: 13, color: '#8E8E93' }}>{meta}</div>
+                {
+                  initials: 'NW',
+                  name: 'Noah Wyhof-Rudnick',
+                  meta: '@rudnicknoah · Nov 30, 2018',
+                  body: <>I personally like Outlook more than gmail but <mark>google drive is far more user friendly</mark> than <b>one drive</b> or dropbox and as more work becomes online <b>sharing</b> that has made them the overwhelming choice</>,
+                },
+                {
+                  initials: 'TW',
+                  name: 'Tim Wagner',
+                  meta: '@prranch · Mar 27, 2018',
+                  body: <>Google Apps for Business. I'm on Office 365 now, and it all feels so clunky compared to Google Apps. We still end up using Google Docs for <b>sharing</b> files because <mark>nobody really knows how to use MS "One Drive."</mark></>,
+                },
+                {
+                  initials: 'A',
+                  name: 'Abbie',
+                  meta: '@AbbieReal · May 1, 2019',
+                  body: <>Haha. We are baligtad. I hate file <b>sharing</b> that expires (well, this is for work anyway). Different for personal stuff. I have Google and iCloud for that. <mark>One Drive drives me nuts.</mark></>,
+                },
+                {
+                  initials: 'LC',
+                  name: 'Lino Casas III',
+                  meta: '@HistoryMrCasas · Mar 6, 2019',
+                  body: <>Hi! I love Google too. I love how students can share docs for projects. The other day I was <b>sharing</b> my notes to my group members on our project. I think <mark>Google products are better than Windows One Drive.</mark> I feel Windows products are way too slow.</>,
+                },
+              ].map((tweet) => (
+                <div key={tweet.name} style={{ background: '#fff', border: '1px solid #E1E8ED', borderRadius: 18, padding: 20, minHeight: 210, boxSizing: 'border-box', boxShadow: '0 10px 26px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#D9DEE4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: BODY, fontWeight: 700, fontSize: 12 }}>{tweet.initials}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontFamily: BODY, fontWeight: 700, fontSize: 15, lineHeight: '19px' }}>{tweet.name}</div>
+                      <div style={{ fontFamily: BODY, fontSize: 13, color: '#657786', lineHeight: '18px' }}>{tweet.meta}</div>
+                    </div>
+                    <div style={{ marginLeft: 'auto', color: '#657786', fontFamily: BODY, fontSize: 18 }}>•••</div>
                   </div>
-                  <p style={{ margin: '24px 0 0', fontFamily: BODY, fontSize: 18, lineHeight: '27px', fontWeight: 500 }}>{quote}</p>
+
+                  <p style={{ margin: '16px 0 18px', fontFamily: BODY, fontSize: 15, lineHeight: '22px', flex: 1 }}>
+                    {tweet.body}
+                  </p>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#657786', fontFamily: BODY, fontSize: 14, paddingRight: 8 }}>
+                    <span>◯</span><span>↻</span><span>♡</span><span>↗</span>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        </ScrollFadeIn>
-
-        <ScrollFadeIn>
-          <div style={{ marginTop: 28, display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 14 }} className="od-principles">
-            {[
-              'Recognizable across platforms',
-              'Familiar OneDrive sharing patterns',
-              'Clear options and decisions',
-              'Flexible across different use cases',
-            ].map((item) => (
-              <div key={item} style={{ border: '1px solid #E5E7EB', borderRadius: 26, padding: 24, minHeight: 110, boxSizing: 'border-box', fontFamily: BODY, fontSize: 16, lineHeight: '23px', display: 'flex', alignItems: 'flex-end' }}>
-                {item}
-              </div>
-            ))}
           </div>
         </ScrollFadeIn>
       </section>
@@ -404,9 +420,8 @@ export function OneDrivePage() {
       </section>
 
       <style>{`
-        @media (max-width: 900px) {
-          .od-principles { grid-template-columns: 1fr 1fr !important; }
-          .od-tweets { grid-template-columns: 1fr !important; }
+        mark{background:#F2E8A2;padding:0 .08em;color:inherit}
+        @media (max-width: 900px) {          .od-tweets { grid-template-columns: 1fr !important; }
           .od-copy-test, .od-delivery { grid-template-columns: 1fr !important; }
           .od-intro { grid-template-columns: 1fr !important; gap: 36px !important; }
           .od-intro > div:last-child > div { transform-origin: left top; }
