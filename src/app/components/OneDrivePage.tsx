@@ -8,6 +8,16 @@ const BODY = "'Manrope', sans-serif";
 const BLUE = '#0078D4';
 const GREY = '#A8AFB6';
 const SURFACE = '#F5F5F7';
+const OLY = {
+  red: '#FF3B30',
+  orange: '#FF9500',
+  green: '#34C759',
+  purple: '#AF52DE',
+  blue: '#007AFF',
+  pinkSoft: 'rgba(255, 45, 85, 0.16)',
+  cyanSoft: 'rgba(48, 176, 199, 0.16)',
+  purpleSoft: 'rgba(175, 82, 222, 0.16)',
+};
 
 const process = [
   {
@@ -16,6 +26,7 @@ const process = [
     body: 'We compared unified and separated sharing models across OneDrive and Office. The trade-off was adding a step while making each decision easier: first choose how to share, then set permissions only when needed.',
     visual: '/onedrive/exploration.svg',
     alt: 'OneDrive unified and separated sharing model explorations',
+    color: OLY.red,
   },
   {
     id: 'permissions',
@@ -23,6 +34,7 @@ const process = [
     body: 'People struggled to understand who each link option was for. We renamed the experience, simplified audience names, surfaced descriptions, and made permission controls consistent.',
     visual: '/onedrive/permissions.svg',
     alt: 'OneDrive redesigned sharing settings and permission controls',
+    color: OLY.orange,
   },
   {
     id: 'constraints',
@@ -30,6 +42,7 @@ const process = [
     body: 'We explored showing existing access directly in Share. Users liked the idea, but live face-piles in the menu were not technically feasible, so we kept the intent and simplified the implementation.',
     visual: '/onedrive/access-constraints.svg',
     alt: 'OneDrive existing-access exploration that was constrained by engineering feasibility',
+    color: OLY.green,
   },
   {
     id: 'entry',
@@ -37,6 +50,7 @@ const process = [
     body: 'Manage Access had been buried in overflow menus and the details pane. We brought it directly into the sharing experience so people could quickly answer: who already has access?',
     visual: '/onedrive/access-solution.svg',
     alt: 'OneDrive Manage Access and Shared with entry-point solution',
+    color: OLY.purple,
   },
   {
     id: 'delivery',
@@ -44,6 +58,7 @@ const process = [
     body: 'Because sharing is high-traffic, we rolled the redesign out in stages and monitored telemetry. I also documented accessibility requirements, mobile behavior, and reusable patterns for partner teams.',
     visual: '/onedrive/accessibility.svg',
     alt: 'OneDrive accessibility specifications',
+    color: OLY.blue,
   },
 ];
 
@@ -103,11 +118,11 @@ function ProcessSection() {
   return (
     <section style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '0 auto', padding: '150px 0 40px', display: 'grid', gridTemplateColumns: '360px minmax(0, 1fr)', gap: 64, alignItems: 'start', overflow: 'visible' }} className="od-process">
       <div style={{ position: 'relative', alignSelf: 'stretch', minHeight: '100%' }}>
-        <div style={{ position: 'sticky', top: '50vh', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{ position: 'sticky', top: 88, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <ScrollFadeIn><h2 style={{ margin: '0 0 36px', fontFamily: TITLE, fontWeight: 300, fontSize: 48, lineHeight: 1 }}>Process</h2></ScrollFadeIn>
         {process.map((item, i) => (
-          <div key={item.id} style={{ borderTop: i === 0 ? 'none' : '1px solid #E5E7EB', padding: '20px 0' }}>
-            <div style={{ fontFamily: BODY, fontWeight: active === i ? 650 : 500, fontSize: 21, color: active === i ? '#000' : GREY, transition: 'color .35s ease' }}>{item.title}</div>
+          <div key={item.id} style={{ borderTop: i === 0 ? 'none' : `1px solid ${active === i ? item.color : '#E5E7EB'}`, padding: '20px 0', transition: 'border-color .35s ease' }}>
+            <div style={{ fontFamily: BODY, fontWeight: active === i ? 650 : 500, fontSize: 21, color: active === i ? item.color : GREY, transition: 'color .35s ease' }}>{item.title}</div>
             <div style={{ display: 'grid', gridTemplateRows: active === i ? '1fr' : '0fr', transition: 'grid-template-rows .45s ease' }}>
               <div style={{ overflow: 'hidden', minHeight: 0 }}>
                 <p style={{ margin: active === i ? '12px 12px 0 0' : '0 12px 0 0', opacity: active === i ? 1 : 0, transition: 'opacity .3s ease, margin .45s ease', fontFamily: BODY, fontSize: 16, lineHeight: '24px' }}>{item.body}</p>
@@ -120,11 +135,11 @@ function ProcessSection() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
         {process.map((item, i) => (
-          <div key={item.id} ref={(el) => { refs.current[i] = el; }} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 40, background: SURFACE, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxSizing: 'border-box', padding: i === 4 ? 34 : 42 }}>
+          <div key={item.id} ref={(el) => { refs.current[i] = el; }} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 40, background: `color-mix(in srgb, ${item.color} 10%, #F5F5F7)`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxSizing: 'border-box', padding: i === 4 ? 34 : 42, transition: 'background .35s ease' }}>
             <img src={item.visual} alt={item.alt} style={{ display: 'block', maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
           </div>
         ))}
-        <div style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 40, background: SURFACE, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 26, padding: 42, boxSizing: 'border-box', overflow: 'hidden' }}>
+        <div style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 40, background: 'linear-gradient(135deg, rgba(48,176,199,.13), rgba(175,82,222,.13))', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 26, padding: 42, boxSizing: 'border-box', overflow: 'hidden' }}>
           <img src="/onedrive/mobile.svg" alt="OneDrive mobile sharing specifications" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           <img src="/onedrive/illustrations.svg" alt="OneDrive first-run sharing illustrations" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
@@ -135,9 +150,9 @@ function ProcessSection() {
 
 function ResearchSummary() {
   const studies = [
-    ['Share dialog', 'Users discovered Share, understood Email link, and completed the tested tasks.'],
-    ['Link settings', 'External sharing was easy; “People with access” and hidden descriptions needed refinement.'],
-    ['Shared with', 'Participants understood the face-piles and valued seeing who already had access.'],
+    ['Share dialog', 'Users discovered Share, understood Email link, and completed the tested tasks.', OLY.pinkSoft, OLY.red],
+    ['Link settings', 'External sharing was easy; “People with access” and hidden descriptions needed refinement.', OLY.cyanSoft, OLY.blue],
+    ['Shared with', 'Participants understood the face-piles and valued seeing who already had access.', OLY.purpleSoft, OLY.purple],
   ];
   return (
     <section style={{ padding: '150px 0 0' }}>
@@ -150,10 +165,10 @@ function ResearchSummary() {
           </div>
         </ScrollFadeIn>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18 }}>
-          {studies.map(([title, body], i) => (
+          {studies.map(([title, body, bg, accent], i) => (
             <ScrollFadeIn key={title}>
-              <div style={{ minHeight: 230, borderRadius: 32, background: SURFACE, padding: 30, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: BODY, fontSize: 13, color: GREY }}>0{i + 1}</span>
+              <div style={{ minHeight: 230, borderRadius: 32, background: bg, padding: 30, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <span style={{ fontFamily: BODY, fontSize: 13, color: accent }}>0{i + 1}</span>
                 <div><h3 style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 30 }}>{title}</h3><p style={{ margin: '14px 0 0', fontFamily: BODY, fontSize: 15, lineHeight: '23px' }}>{body}</p></div>
               </div>
             </ScrollFadeIn>
@@ -181,7 +196,7 @@ export function OneDrivePage() {
 
       <Link to="/" style={{ position: 'fixed', top: 22, left: '50%', transform: 'translateX(-50%)', zIndex: 50, border: '2px solid #000', borderRadius: 999, padding: '6px 15px', textDecoration: 'none', color: '#000', background: 'rgba(255,255,255,.92)', backdropFilter: 'blur(12px)', fontFamily: TITLE, fontSize: 15 }}>← Home</Link>
 
-      <section style={{ minHeight: '92vh', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '100px 24px 70px', boxSizing: 'border-box' }}>
+      <section style={{ minHeight: '92vh', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '100px 24px 70px', boxSizing: 'border-box', background: 'radial-gradient(circle at 20% 25%, rgba(255,59,48,.10), transparent 28%), radial-gradient(circle at 80% 25%, rgba(0,122,255,.11), transparent 30%), radial-gradient(circle at 50% 85%, rgba(175,82,222,.10), transparent 32%)' }}>
         <div style={{ maxWidth: 920 }}>
           <WaveLabel text="CASE STUDY" fontSize={16} />
           <h1 style={{ margin: '18px 0 22px', fontFamily: TITLE, fontWeight: 300, fontSize: 'clamp(56px, 7vw, 88px)', lineHeight: .95, letterSpacing: '-.035em' }}>OneDrive<br />Sharing Experience</h1>
@@ -222,9 +237,9 @@ export function OneDrivePage() {
           </div>
         </ScrollFadeIn>
 
-        <div style={{ borderRadius: 40, background: SURFACE, padding: 52, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }} className="od-metrics">
-          {[['+34%','Completed sharing actions'],['+3.9%','Permission changes'],['+27%','Copy Link setting changes'],['+64%','Manage Access engagement']].map(([value,label],i)=>(
-            <ScrollFadeIn key={label}><div style={{ minHeight: 170, borderRadius: 28, background: '#fff', padding: 28, boxSizing: 'border-box' }}><div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 48, lineHeight: 1, color: BLUE }}>{value}</div><p style={{ margin: '18px 0 0', fontFamily: BODY, fontSize: 15, lineHeight: '22px' }}>{label}</p></div></ScrollFadeIn>
+        <div style={{ borderRadius: 40, background: 'linear-gradient(135deg, rgba(255,59,48,.10), rgba(255,149,0,.10), rgba(52,199,89,.10), rgba(175,82,222,.10), rgba(0,122,255,.10))', padding: 52, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }} className="od-metrics">
+          {[['+34%','Completed sharing actions',OLY.red],['+3.9%','Permission changes',OLY.orange],['+27%','Copy Link setting changes',OLY.green],['+64%','Manage Access engagement',OLY.purple]].map(([value,label,color],i)=>(
+            <ScrollFadeIn key={label}><div style={{ minHeight: 170, borderRadius: 28, background: '#fff', padding: 28, boxSizing: 'border-box' }}><div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 48, lineHeight: 1, color }}>{value}</div><p style={{ margin: '18px 0 0', fontFamily: BODY, fontSize: 15, lineHeight: '22px' }}>{label}</p></div></ScrollFadeIn>
           ))}
         </div>
       </section>
