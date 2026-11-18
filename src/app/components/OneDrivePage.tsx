@@ -42,13 +42,12 @@ const process = [
   {
     id: 'scaling',
     title: 'Shipping and scaling the experience',
-    body: 'Because sharing is a high-traffic Microsoft 365 experience, we released the redesign incrementally and monitored telemetry rather than shipping everything at once. I also documented accessibility requirements, created mobile specifications, and helped turn validated patterns into reusable components and guidelines for partner teams. The work extended beyond the core dialog into first-run visual experiences for family and group sharing.',
+    body: 'Because sharing is a high-traffic Microsoft 365 experience, we released the redesign incrementally and monitored telemetry rather than shipping everything at once. I also documented accessibility requirements, created mobile specifications, and helped turn validated patterns into reusable components and guidelines for partner teams.',
     visuals: [
       { src: '/onedrive/rollout.svg', alt: 'Incremental OneDrive sharing rollout', nativeWidth: 908 },
       { src: '/onedrive/accessibility.svg', alt: 'OneDrive accessibility specifications', nativeWidth: 1042 },
       { src: '/onedrive/mobile.svg', alt: 'OneDrive mobile sharing specifications', nativeWidth: 946 },
       { src: '/onedrive/design-system.svg', alt: 'Reusable OneDrive sharing design system assets', nativeWidth: 1168 },
-      { src: '/onedrive/illustrations.svg', alt: 'OneDrive family and group sharing illustrations', nativeWidth: 998 },
     ],
   },
 ];
@@ -307,38 +306,19 @@ export function OneDrivePage() {
 
       <ResearchSummary />
 
-      <section style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '110px auto 0' }}>
+      <section style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '150px auto 0' }}>
         <ScrollFadeIn>
-          <div style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto 44px' }}>
-            <WaveLabel text="DELIVERY" fontSize={16} />
-            <h2 style={{ margin: '18px 0 20px', fontFamily: TITLE, fontWeight: 300, fontSize: 52, lineHeight: 1 }}>More than a dialog redesign</h2>
-            <p style={{ margin: 0, fontFamily: BODY, fontSize: 18, lineHeight: '29px' }}>
-              The work extended into rollout strategy, accessibility, mobile platforms, reusable components, and first-run visual design.
-            </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '360px minmax(0,1fr)', gap: 64, alignItems: 'center' }} className="od-extension">
+            <div>
+              <p style={{ margin: '0 0 8px', fontFamily: BODY, fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: GREY }}>Visual design</p>
+              <h2 style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 46, lineHeight: 1.02 }}>Extending sharing</h2>
+              <p style={{ margin: '18px 0 0', fontFamily: BODY, fontSize: 17, lineHeight: '27px' }}>I also designed first-run visuals for family and group sharing, extending the core sharing work into new feature onboarding.</p>
+            </div>
+            <div style={{ height: 540, background: SURFACE, borderRadius: 40, padding: 34, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <img src="/onedrive/illustrations.svg" alt="OneDrive family and group sharing illustrations" style={{ display: 'block', width: 'min(100%, 998px)', maxHeight: '100%', objectFit: 'contain' }} />
+            </div>
           </div>
         </ScrollFadeIn>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 18 }} className="od-delivery">
-          {[
-            ['Incremental rollout', 'We released changes in phases and monitored telemetry to reduce risk in a high-traffic sharing surface.'],
-            ['Accessibility', 'I documented keyboard order, screen-reader roles, zoom behavior, and high-contrast requirements.'],
-            ['Mobile', 'I created iOS and Android specs so the same sharing model stayed coherent across platforms.'],
-            ['Design system', 'Validated patterns became reusable components and guidelines for Microsoft 365 partner teams.'],
-            ['Visual design', 'I also designed first-run experiences for family and group sharing.'],
-          ].map(([title, body]) => (
-            <ScrollFadeIn key={title}>
-              <div style={{ background: SURFACE, borderRadius: 30, padding: 28, minHeight: 180, boxSizing: 'border-box' }}>
-                <h3 style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 29 }}>{title}</h3>
-                <p style={{ margin: '14px 0 0', fontFamily: BODY, fontSize: 15, lineHeight: '23px' }}>{body}</p>
-              </div>
-            </ScrollFadeIn>
-          ))}
-        </div>
-
-        <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }} className="od-delivery">
-          <div style={{ background: SURFACE, borderRadius: 34, padding: 28 }}><img src="/onedrive/mobile.svg" alt="OneDrive mobile sharing specifications" style={{ width: '100%', display: 'block' }} /></div>
-          <div style={{ background: SURFACE, borderRadius: 34, padding: 28 }}><img src="/onedrive/illustrations.svg" alt="OneDrive family sharing first-run illustrations" style={{ width: '100%', display: 'block' }} /></div>
-        </div>
       </section>
 
       <section style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '0 auto', padding: '160px 0 0' }}>
@@ -366,7 +346,7 @@ export function OneDrivePage() {
       <style>{`
         mark{background:#F2E8A2;padding:0 .08em;color:inherit}
         @media (max-width: 900px) {          .od-tweets { grid-template-columns: 1fr !important; }
-          .od-copy-test, .od-delivery { grid-template-columns: 1fr !important; }
+          .od-copy-test, .od-delivery, .od-extension { grid-template-columns: 1fr !important; }
           .od-intro { grid-template-columns: 1fr !important; gap: 36px !important; }
           .od-intro > div:last-child > div { transform-origin: left top; }
           .od-metrics { grid-template-columns: 1fr 1fr !important; padding: 28px !important; border-radius: 28px !important; }
