@@ -54,10 +54,33 @@ const process = [
 
 function ResearchBars() {
   const rows = [
-    { name: 'OneDrive', completion: 89, satisfaction: 73, primary: true },
-    { name: 'Google Drive', completion: 81, satisfaction: 80, primary: false },
-    { name: 'Box', completion: 74, satisfaction: 79, primary: false },
+    { name: 'OneDrive', completion: 89, satisfaction: 73, color: '#5B9BD5', logo: 'onedrive' },
+    { name: 'Google Drive', completion: 81, satisfaction: 80, color: '#5FAD56', logo: 'gdrive' },
+    { name: 'Box', completion: 74, satisfaction: 79, color: '#0061D5', logo: 'box' },
   ];
+
+  const Logo = ({ type, color }: { type: string; color: string }) => {
+    if (type === 'gdrive') {
+      return (
+        <svg width="28" height="24" viewBox="0 0 28 24" aria-hidden="true">
+          <path d="M10.2 1.5h7.2L27 18h-7.1z" fill="#FFD54F"/>
+          <path d="M10.2 1.5 1 17.5l3.6 6.2 9.4-16.2z" fill="#43A047"/>
+          <path d="M4.6 23.7 8.2 17.5H27l-3.6 6.2z" fill="#1E88E5"/>
+        </svg>
+      );
+    }
+    if (type === 'box') {
+      return (
+        <div style={{ fontFamily: BODY, fontWeight: 800, fontSize: 22, lineHeight: 1, color: '#0061D5', letterSpacing: '-.04em' }}>box</div>
+      );
+    }
+    return (
+      <svg width="30" height="24" viewBox="0 0 30 24" aria-hidden="true">
+        <path d="M11.5 18.5H25a4 4 0 0 0 .3-8 7 7 0 0 0-12.8-3.1A6 6 0 0 0 4 12.8a5.7 5.7 0 0 0 7.5 5.7Z" fill={color}/>
+        <path d="M2.5 19.2h13.8a4.3 4.3 0 0 0 .2-8.6A6.5 6.5 0 0 0 5.2 8.8 5.4 5.4 0 0 0 2.5 19.2Z" fill="#7FB3E6" opacity=".9"/>
+      </svg>
+    );
+  };
 
   return (
     <div style={{ width: 696, borderRadius: 40, background: SURFACE, padding: 48, boxSizing: 'border-box' }}>
@@ -82,13 +105,20 @@ function ResearchBars() {
               borderBottom: row.name === 'Box' ? 'none' : '1px solid #E5E7EB',
             }}
           >
-            <div style={{ fontFamily: BODY, fontSize: 17, fontWeight: row.primary ? 700 : 600 }}>
-              {row.name}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 34, display: 'flex', justifyContent: 'center', flex: '0 0 34px' }}>
+                <Logo type={row.logo} color={row.color} />
+              </div>
+              <div style={{ fontFamily: BODY, fontSize: 17, fontWeight: 650, color: '#111' }}>
+                {row.name}
+              </div>
             </div>
-            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: row.primary ? 36 : 30, lineHeight: 1, textAlign: 'right', color: '#111' }}>
+
+            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 32, lineHeight: 1, textAlign: 'right', color: row.color }}>
               {row.completion}%
             </div>
-            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: row.primary ? 36 : 30, lineHeight: 1, textAlign: 'right', color: '#111' }}>
+
+            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 32, lineHeight: 1, textAlign: 'right', color: row.color }}>
               {row.satisfaction}%
             </div>
           </div>
