@@ -166,7 +166,7 @@ function ResearchSummary() {
 
 export function OneDrivePage() {
   return (
-    <main style={{ width: '100%', minHeight: '100vh', background: '#fff', color: '#000', overflowX: 'hidden' }}>
+    <main style={{ width: '100%', minHeight: '100vh', background: '#fff', color: '#000', overflowX: 'clip' }}>
       <style>{`
         @media (max-width: 820px) {
           .od-process { grid-template-columns: 1fr !important; max-width: calc(100vw - 40px) !important; padding-top: 96px !important; }
