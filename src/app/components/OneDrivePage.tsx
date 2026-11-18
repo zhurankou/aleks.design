@@ -101,8 +101,9 @@ function ProcessSection() {
   }, []);
 
   return (
-    <section style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '0 auto', padding: '150px 0 40px', display: 'grid', gridTemplateColumns: '360px 1fr', gap: 64, alignItems: 'start' }} className="od-process">
-      <div style={{ position: 'sticky', top: 90, minHeight: 640, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+    <section style={{ width: 1120, maxWidth: 'calc(100vw - 80px)', margin: '0 auto', padding: '150px 0 40px', display: 'grid', gridTemplateColumns: '360px minmax(0, 1fr)', gap: 64, alignItems: 'start', overflow: 'visible' }} className="od-process">
+      <div style={{ position: 'relative', alignSelf: 'stretch', minHeight: '100%' }}>
+        <div style={{ position: 'sticky', top: '50vh', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <ScrollFadeIn><h2 style={{ margin: '0 0 36px', fontFamily: TITLE, fontWeight: 300, fontSize: 48, lineHeight: 1 }}>Process</h2></ScrollFadeIn>
         {process.map((item, i) => (
           <div key={item.id} style={{ borderTop: i === 0 ? 'none' : '1px solid #E5E7EB', padding: '20px 0' }}>
@@ -114,6 +115,7 @@ function ProcessSection() {
             </div>
           </div>
         ))}
+        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -169,7 +171,8 @@ export function OneDrivePage() {
         @media (max-width: 820px) {
           .od-process { grid-template-columns: 1fr !important; max-width: calc(100vw - 40px) !important; padding-top: 96px !important; }
           .od-process > div:first-child { position: static !important; min-height: auto !important; }
-          .od-process > div:first-child > div { display: none; }
+          .od-process > div:first-child > div { position: static !important; transform: none !important; }
+          .od-process > div:first-child > div > div { display: none; }
           .od-process > div:first-child h2 { margin-bottom: 0 !important; text-align:center; }
           .od-process > div:last-child { gap: 18px !important; }
           .od-process > div:last-child > div { border-radius: 28px !important; padding: 22px !important; }
