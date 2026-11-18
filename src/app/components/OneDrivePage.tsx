@@ -54,44 +54,32 @@ const process = [
 
 function ResearchBars() {
   const rows = [
-    { name: 'OneDrive', completion: 89, satisfaction: 73, logo: 'onedrive' },
-    { name: 'Google Drive', completion: 81, satisfaction: 80, logo: 'gdrive' },
-    { name: 'Box', completion: 74, satisfaction: 79, logo: 'box' },
+    {
+      name: 'OneDrive',
+      completion: 89,
+      satisfaction: 73,
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Microsoft_Office_OneDrive_%282019%E2%80%932025%29.svg/3840px-Microsoft_Office_OneDrive_%282019%E2%80%932025%29.svg.png',
+    },
+    {
+      name: 'Google Drive',
+      completion: 81,
+      satisfaction: 80,
+      logo: 'https://www.gstatic.com/images/branding/productlogos/drive_2026/v2/web-64dp/logo_drive_2026_color_2x_web_64dp.png',
+    },
+    {
+      name: 'Box',
+      completion: 74,
+      satisfaction: 79,
+      logo: 'https://logowik.com/content/uploads/images/box-inc8610.logowik.com.webp',
+    },
   ];
-
-  const Logo = ({ type }: { type: string }) => {
-    if (type === 'gdrive') {
-      return (
-        <svg width="44" height="38" viewBox="0 0 28 24" aria-label="Google Drive">
-          <path d="M10.2 1.5h7.2L27 18h-7.1z" fill="#FBC02D"/>
-          <path d="M10.2 1.5 1 17.5l3.6 6.2 9.4-16.2z" fill="#34A853"/>
-          <path d="M4.6 23.7 8.2 17.5H27l-3.6 6.2z" fill="#4285F4"/>
-        </svg>
-      );
-    }
-
-    if (type === 'box') {
-      return (
-        <svg width="58" height="28" viewBox="0 0 90 40" aria-label="Box">
-          <text x="0" y="31" fontFamily="Arial, sans-serif" fontSize="38" fontWeight="700" fill="#0061D5">box</text>
-        </svg>
-      );
-    }
-
-    return (
-      <svg width="48" height="38" viewBox="0 0 48 38" aria-label="OneDrive">
-        <path d="M19 31H39a7 7 0 0 0 .5-14A12 12 0 0 0 17 13.5 9.5 9.5 0 0 0 19 31Z" fill="#0078D4"/>
-        <path d="M7 32h22a7.5 7.5 0 0 0 .4-15A10.8 10.8 0 0 0 10 14 9 9 0 0 0 7 32Z" fill="#50A8E8"/>
-      </svg>
-    );
-  };
 
   return (
     <div style={{ width: 696, borderRadius: 40, background: SURFACE, padding: 48, boxSizing: 'border-box' }}>
       <p style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 38, lineHeight: 1 }}>Benchmark</p>
 
       <div style={{ marginTop: 34 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 1fr', gap: 18, padding: '0 8px 12px', borderBottom: '1px solid #D9DCE1' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 1fr', gap: 18, padding: '0 8px 12px', borderBottom: '1px solid #D9DCE1' }}>
           <div />
           <div style={{ fontFamily: BODY, fontSize: 12, color: '#8E8E93', textAlign: 'right' }}>Completion</div>
           <div style={{ fontFamily: BODY, fontSize: 12, color: '#8E8E93', textAlign: 'right' }}>Satisfaction</div>
@@ -102,7 +90,7 @@ function ResearchBars() {
             key={row.name}
             style={{
               display: 'grid',
-              gridTemplateColumns: '120px 1fr 1fr',
+              gridTemplateColumns: '110px 1fr 1fr',
               gap: 18,
               alignItems: 'center',
               padding: '24px 8px',
@@ -110,15 +98,26 @@ function ResearchBars() {
               borderBottom: row.name === 'Box' ? 'none' : '1px solid #E5E7EB',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-              <Logo type={row.logo} />
+            <div style={{ width: 76, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden' }}>
+              <img
+                src={row.logo}
+                alt={row.name}
+                style={{
+                  display: 'block',
+                  maxWidth: row.name === 'Box' ? 68 : 58,
+                  maxHeight: row.name === 'Google Drive' ? 38 : 34,
+                  width: 'auto',
+                  height: 'auto',
+                  objectFit: 'contain',
+                }}
+              />
             </div>
 
-            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 34, lineHeight: 1, textAlign: 'right', color: '#58A96B' }}>
+            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 34, lineHeight: 1, textAlign: 'right', color: '#111111' }}>
               {row.completion}%
             </div>
 
-            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 34, lineHeight: 1, textAlign: 'right', color: '#D46A66' }}>
+            <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 34, lineHeight: 1, textAlign: 'right', color: '#0078D4' }}>
               {row.satisfaction}%
             </div>
           </div>
