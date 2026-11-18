@@ -277,66 +277,16 @@ export function OneDrivePage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }} className="od-tweets">
               {[
-                {
-                  initials: 'NW',
-                  name: 'Noah Wyhof-Rudnick',
-                  meta: '@rudnicknoah · Nov 30, 2018',
-                  body: <>I personally like Outlook more than gmail but <mark>google drive is far more user friendly</mark> than <b>one drive</b> or dropbox and as more work becomes online <b>sharing</b> that has made them the overwhelming choice</>,
-                },
-                {
-                  initials: 'TW',
-                  name: 'Tim Wagner',
-                  meta: '@prranch · Mar 27, 2018',
-                  body: <>Google Apps for Business. I'm on Office 365 now, and it all feels so clunky compared to Google Apps. We still end up using Google Docs for <b>sharing</b> files because <mark>nobody really knows how to use MS "One Drive."</mark></>,
-                },
-                {
-                  initials: 'A',
-                  name: 'Abbie',
-                  meta: '@AbbieReal · May 1, 2019',
-                  body: <>Haha. We are baligtad. I hate file <b>sharing</b> that expires (well, this is for work anyway). Different for personal stuff. I have Google and iCloud for that. <mark>One Drive drives me nuts.</mark></>,
-                },
-                {
-                  initials: 'LC',
-                  name: 'Lino Casas III',
-                  meta: '@HistoryMrCasas · Mar 6, 2019',
-                  body: <>Hi! I love Google too. I love how students can share docs for projects. The other day I was <b>sharing</b> my notes to my group members on our project. I think <mark>Google products are better than Windows One Drive.</mark> I feel Windows products are way too slow.</>,
-                },
-              ].map((tweet) => (
-                <div key={tweet.name} style={{ background: '#fff', border: '1px solid #EFF3F4', borderRadius: 14, padding: '18px 20px 16px', minHeight: 205, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                    <div style={{ width: 42, height: 42, borderRadius: '50%', background: '#D8DEE4', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', fontFamily: BODY, fontWeight: 700, fontSize: 12, color: '#0F1419' }}>{tweet.initials}</div>
-
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 6, rowGap: 2 }}>
-                        <span style={{ fontFamily: BODY, fontWeight: 700, fontSize: 15, lineHeight: '20px', color: '#0F1419' }}>{tweet.name}</span>
-                        <span style={{ fontFamily: BODY, fontSize: 14, lineHeight: '20px', color: '#536471' }}>{tweet.meta}</span>
-                      </div>
-                    </div>
-
-                    <div style={{ marginLeft: 8, color: '#536471', fontFamily: BODY, fontSize: 16, lineHeight: '18px', letterSpacing: '2px' }}>•••</div>
-                  </div>
-
-                  <p style={{ margin: '15px 0 20px 54px', fontFamily: BODY, fontSize: 15, lineHeight: '22px', color: '#0F1419', flex: 1 }}>
-                    {tweet.body}
-                  </p>
-
-                  <div style={{ marginLeft: 54, width: 'calc(100% - 62px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#536471' }}>
-                    <span aria-label="Reply" style={{ display: 'inline-flex', width: 18, height: 18 }}>
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M20 15a4 4 0 0 1-4 4H8l-4 3V7a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4z"/></svg>
-                    </span>
-                    <span aria-label="Retweet" style={{ display: 'inline-flex', width: 18, height: 18 }}>
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M7 7h9l-2.5-2.5M17 17H8l2.5 2.5M16 4.5 18.5 7 16 9.5M8 14.5 5.5 17 8 19.5"/></svg>
-                    </span>
-                    <span aria-label="Like" style={{ display: 'inline-flex', width: 18, height: 18 }}>
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 20.5S4 16 4 9.5A4.5 4.5 0 0 1 12 6a4.5 4.5 0 0 1 8 3.5C20 16 12 20.5 12 20.5z"/></svg>
-                    </span>
-                    <span aria-label="Share" style={{ display: 'inline-flex', width: 18, height: 18 }}>
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 12v7h14v-7"/></svg>
-                    </span>
-                  </div>
+                ['/onedrive/tweet-noah.svg', 'Noah Wyhof-Rudnick tweet about Google Drive being more user friendly than OneDrive'],
+                ['/onedrive/tweet-tim.svg', 'Tim Wagner tweet describing Office 365 and OneDrive sharing as clunky'],
+                ['/onedrive/tweet-abbie.svg', 'Abbie tweet saying OneDrive drives her nuts'],
+                ['/onedrive/tweet-lino.svg', 'Lino Casas III tweet comparing Google products favorably with OneDrive'],
+              ].map(([src, alt]) => (
+                <div key={src} style={{ background: '#F0F1FA', borderRadius: 24, padding: 16, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  <img src={src} alt={alt} style={{ display: 'block', width: '100%', height: 'auto' }} />
                 </div>
               ))}
-            </div>
+            </div>            </div>
           </div>
         </ScrollFadeIn>
       </section>
