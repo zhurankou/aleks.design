@@ -54,13 +54,13 @@ const process = [
 
 function ResearchBars() {
   const rows = [
-    { name: 'OneDrive', completion: 89, satisfaction: 73, highlight: true },
-    { name: 'Google Drive', completion: 81, satisfaction: 80, highlight: false },
-    { name: 'Box', completion: 74, satisfaction: 79, highlight: false },
+    { name: 'OneDrive', completion: 89, satisfaction: 73 },
+    { name: 'Google Drive', completion: 81, satisfaction: 80 },
+    { name: 'Box', completion: 74, satisfaction: 79 },
   ];
 
   return (
-    <div style={{ width: 696, minHeight: 560, borderRadius: 40, background: SURFACE, padding: 50, boxSizing: 'border-box' }}>
+    <div style={{ width: 696, minHeight: 580, borderRadius: 40, background: SURFACE, padding: 50, boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 20 }}>
         <div>
           <p style={{ margin: 0, fontFamily: TITLE, fontWeight: 300, fontSize: 38, lineHeight: 1 }}>Benchmark</p>
@@ -69,41 +69,46 @@ function ResearchBars() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 16, fontFamily: BODY, fontSize: 12, color: '#6E6E73', whiteSpace: 'nowrap' }}>
-          <span><b style={{ color: '#248A3D' }}>●</b> Completion</span>
-          <span><b style={{ color: '#D70015' }}>●</b> Satisfaction</span>
+          <span><b style={{ color: '#58A96B' }}>●</b> Completion</span>
+          <span><b style={{ color: '#D46A66' }}>●</b> Satisfaction</span>
         </div>
       </div>
 
-      <div style={{ marginTop: 38, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 14 }}>
         {rows.map((row) => (
           <div
             key={row.name}
             style={{
               borderRadius: 24,
-              background: row.highlight ? '#FFFFFF' : 'rgba(255,255,255,.55)',
-              border: row.highlight ? '1px solid #E5E7EB' : '1px solid transparent',
-              padding: row.highlight ? '24px 26px' : '18px 22px',
+              background: '#FFFFFF',
+              border: '1px solid #E7E8EB',
+              padding: '18px 20px',
+              minHeight: 118,
               boxSizing: 'border-box',
+              display: 'grid',
+              gridTemplateColumns: '1fr 124px 124px',
+              gap: 14,
+              alignItems: 'center',
             }}
           >
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 110px', gap: 16, alignItems: 'center' }}>
-              <div style={{ fontFamily: BODY, fontSize: row.highlight ? 18 : 16, fontWeight: row.highlight ? 700 : 600 }}>
-                {row.name}
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: row.highlight ? 42 : 30, lineHeight: 1, color: '#248A3D' }}>{row.completion}%</div>
-                <div style={{ marginTop: 5, fontFamily: BODY, fontSize: 11, color: '#6E6E73' }}>completion</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: row.highlight ? 42 : 30, lineHeight: 1, color: '#D70015' }}>{row.satisfaction}%</div>
-                <div style={{ marginTop: 5, fontFamily: BODY, fontSize: 11, color: '#6E6E73' }}>satisfaction</div>
-              </div>
+            <div style={{ fontFamily: BODY, fontSize: 17, fontWeight: 650 }}>
+              {row.name}
+            </div>
+
+            <div style={{ borderRadius: 18, background: 'rgba(52,199,89,.12)', padding: '14px 12px', textAlign: 'center' }}>
+              <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 36, lineHeight: 1, color: '#58A96B' }}>{row.completion}%</div>
+              <div style={{ marginTop: 5, fontFamily: BODY, fontSize: 10, color: '#6E6E73' }}>completion</div>
+            </div>
+
+            <div style={{ borderRadius: 18, background: 'rgba(255,59,48,.10)', padding: '14px 12px', textAlign: 'center' }}>
+              <div style={{ fontFamily: TITLE, fontWeight: 300, fontSize: 36, lineHeight: 1, color: '#D46A66' }}>{row.satisfaction}%</div>
+              <div style={{ marginTop: 5, fontFamily: BODY, fontSize: 10, color: '#6E6E73' }}>satisfaction</div>
             </div>
           </div>
         ))}
       </div>
 
-      <p style={{ margin: '28px 0 0', fontFamily: BODY, fontSize: 17, lineHeight: '26px', fontWeight: 500 }}>
+      <p style={{ margin: '26px 0 0', fontFamily: BODY, fontSize: 17, lineHeight: '26px', fontWeight: 500 }}>
         OneDrive had the highest task completion, but the lowest satisfaction of the three services.
       </p>
     </div>
